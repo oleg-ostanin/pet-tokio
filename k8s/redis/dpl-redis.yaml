@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dpl-nilspetrust-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dpl-nilspetrust-redis
+  template:
+    metadata:
+      labels:
+        app: dpl-nilspetrust-redis
+    spec:
+      containers:
+        - name: nilspetrust-redis
+          image: nilspetrust-redis:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 6379

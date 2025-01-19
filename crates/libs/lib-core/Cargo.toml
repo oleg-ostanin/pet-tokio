@@ -10,6 +10,11 @@ doctest = false
 workspace = true
 
 [dependencies]
+
+axum = { version = "0.7", features = ["tokio", "http1"] }
 tokio = { version = "1", features = ["full"] }
+redis = "0.26.1"
+postgres = "0.19.3"
+tokio-postgres = { version = "0.7.11", features = ["with-chrono-0_4"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

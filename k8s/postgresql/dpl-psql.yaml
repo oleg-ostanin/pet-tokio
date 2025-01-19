@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dpl-nilspetrust-psql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dpl-nilspetrust-psql
+  template:
+    metadata:
+      labels:
+        app: dpl-nilspetrust-psql
+    spec:
+      containers:
+        - name: nilspetrust-postgresql
+          image: nilspetrust-postgresql:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5432

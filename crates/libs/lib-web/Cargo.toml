@@ -1,0 +1,56 @@
+[package]
+name = "lib-web"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+doctest = false
+
+[lints]
+workspace = true
+
+[dependencies]
+# nils dependencies
+axum = { version = "0.7", features = ["tokio", "http1"] }
+tokio = { version = "1", features = ["full"] }
+redis = "0.26.1"
+postgres = "0.19.3"
+tokio-postgres = "0.7.11"
+java-properties = "2.0.0"
+rust_decimal = { version = "1.36", features = ["db-postgres"] }
+rust_decimal_macros = "1.36"
+
+
+http-body-util = "0.1.0"
+hyper = { version = "1.0.0", features = ["full"] }
+hyper-util = { version = "0.1", features = ["client", "http1", "client-legacy"] }
+mime = "0.3"
+serde_json = "1.0"
+tower-http = { version = "0.5.0", features = ["trace"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+testcontainers = "0.14.0"
+tower = "0.5.1"
+
+
+# -- App Libs
+#lib-utils = { path = "../../libs/lib-utils"}
+#lib-rpc-core = { path = "../../libs/lib-rpc-core"}
+#lib-auth = { path = "../../libs/lib-auth"}
+lib-core = { path = "../../libs/lib-core"}
+
+# -- Async
+# -- Json
+serde = { version = "1", features = ["derive"] }
+serde_with = { workspace = true }
+# -- Web
+tower-cookies = "0.10"
+# -- Tracing
+# -- Rpc
+rpc-router = { workspace = true }
+# -- Others
+time = { workspace = true }
+uuid = {version = "1", features = ["v4","fast-rng",]}
+strum_macros = "0.26"
+derive_more = { workspace = true }

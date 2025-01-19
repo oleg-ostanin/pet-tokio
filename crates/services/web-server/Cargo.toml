@@ -1,14 +1,16 @@
 [package]
-name = "entry-point"
+name = "web-server"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 # -- App Libs
 lib-core = { path = "../../libs/lib-core"}
+lib-web = { path = "../../libs/lib-web"}
 
 # -- Async
 tokio = { version = "1", features = ["full"] }
+axum = {version = "0.7", features = ["macros"]}
 
 # -- Tracing
 tracing = "0.1"
