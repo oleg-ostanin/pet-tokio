@@ -1,6 +1,7 @@
 use std::ops::Deref;
 use std::sync::Arc;
 
+use sqlx::postgres::PgPool;
 use tokio_postgres::Client;
 
 
