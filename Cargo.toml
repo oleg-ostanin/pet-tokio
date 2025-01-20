@@ -7,6 +7,8 @@ members = [
     "crates/libs/lib-core",
 
     # -- Application Services
+    "crates/services/auth-server",
+    "crates/services/load-server",
     "crates/services/web-server",
     # -- Tests
     "crates/tests/it",

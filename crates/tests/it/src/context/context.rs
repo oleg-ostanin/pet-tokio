@@ -18,7 +18,7 @@ use tokio_postgres::NoTls;
 use tower::builder;
 use lib_core::context::app_context::ModelManager;
 use lib_web::app::app::create_app_context;
-use lib_web::app::app::app_nils;
+use lib_web::app::app::web_app;
 
 use tower_cookies::{Cookie, Cookies};
 use uuid::Uuid;
@@ -85,7 +85,7 @@ impl TestContext {
                 Arc::new(pool),
             ));
 
-        let app = app_nils(app_context).await;
+        let app = web_app(app_context).await;
 
         let listener = TcpListener::bind("0.0.0.0:0").await.unwrap();
         let socket_addr = listener.local_addr().unwrap();

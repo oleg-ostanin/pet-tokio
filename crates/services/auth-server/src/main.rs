@@ -17,6 +17,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let app = web_app(app_context).await;
 
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await.unwrap();
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:3001").await.unwrap();
     Ok(axum::serve(listener, app).await?)
 }

@@ -1,0 +1,32 @@
+[package]
+name = "load-server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# -- App Libs
+lib-core = { path = "../../libs/lib-core"}
+lib-web = { path = "../../libs/lib-web"}
+
+# -- Async
+tokio = { version = "1", features = ["full"] }
+axum = {version = "0.7", features = ["macros"]}
+
+# -- Http
+http-body-util = "0.1.0"
+hyper = { version = "1.0.0", features = ["full"] }
+hyper-util = { version = "0.1", features = ["client", "http1", "client-legacy"] }
+mime = "0.3"
+serde_json = "1.0"
+tower-http = { version = "0.5.0", features = ["trace"] }
+tower-cookies = "0.10"
+
+# -- Sql
+sqlx = { version = "0.8.3", features = ["postgres", "runtime-tokio-rustls"] }
+
+
+# -- Tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2.3"
+

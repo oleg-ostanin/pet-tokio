@@ -38,9 +38,7 @@ tower = "0.5.1"
 
 
 # -- App Libs
-#lib-utils = { path = "../../libs/lib-utils"}
-#lib-rpc-core = { path = "../../libs/lib-rpc-core"}
-#lib-auth = { path = "../../libs/lib-auth"}
+
 lib-core = { path = "../../libs/lib-core"}
 
 # -- Async
@@ -49,11 +47,7 @@ serde = { version = "1", features = ["derive"] }
 serde_with = { workspace = true }
 # -- Web
 tower-cookies = "0.10"
-# -- Tracing
-# -- Rpc
-rpc-router = { workspace = true }
+
 # -- Others
 time = { workspace = true }
 uuid = {version = "1", features = ["v4","fast-rng",]}
-strum_macros = "0.26"
-derive_more = { workspace = true }

@@ -1,0 +1,22 @@
+[package]
+name = "auth-server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# -- App Libs
+lib-core = { path = "../../libs/lib-core"}
+lib-web = { path = "../../libs/lib-web"}
+
+# -- Async
+tokio = { version = "1", features = ["full"] }
+axum = {version = "0.7", features = ["macros"]}
+
+sqlx = { version = "0.8.3", features = ["postgres", "runtime-tokio-rustls"] }
+
+
+# -- Tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2.3"
+

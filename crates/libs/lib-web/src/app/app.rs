@@ -35,7 +35,7 @@ pub async fn create_app_context() -> Arc<ModelManager> {
     app_context
 }
 
-pub async fn app_nils(app_context: Arc<ModelManager>) -> Router {
+pub async fn web_app(app_context: Arc<ModelManager>) -> Router {
     let routes_rpc = Router::new();
         // .route("/get-by-id/:user_id", get(get_by_id))
         // .route_layer(middleware::from_fn(mw_ctx_require));
@@ -92,7 +92,7 @@ async fn get_pool(db_url: &String) -> Pool<Postgres> {
         .unwrap();
 
     let db_migrations = read_db_migrations("local.properties");
-    sqlx::migrate!("../../../db/migrations").run(&pool).await.unwrap();
+    //sqlx::migrate!("../../../db/migrations").run(&pool).await.unwrap();
 
     pool
 }
