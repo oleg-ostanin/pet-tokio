@@ -9,7 +9,9 @@ use std::sync::{Arc, Mutex, OnceLock, RwLock};
 use axum::{extract::{Json, State}, middleware, Router, routing::{get, post}};
 use axum::http::StatusCode;
 use java_properties::read;
+use sqlx::{Pool, Postgres};
 use tokio_postgres::{Client, NoTls};
+use sqlx::postgres::PgPoolOptions;
 use tower_cookies::{CookieManagerLayer, Cookies};
 use tracing::debug;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -25,9 +27,10 @@ use lib_core::context::app_context::ModelManager;
 
 pub async fn create_app_context() -> Arc<ModelManager> {
     let db_url = read_db_url("local.properties");
-    let client = get_client(db_url).await;
+    let client = get_client(&db_url).await;
+    let pool = get_pool(&db_url).await;
 
-    let app_context: Arc<ModelManager> = Arc::new(ModelManager::create(Arc::new(client)));
+    let app_context: Arc<ModelManager> = Arc::new(ModelManager::create(Arc::new(client), Arc::new(pool)));
 
     app_context
 }
@@ -65,10 +68,10 @@ async fn get_books(
     Ok("res".to_string())
 }
 
-async fn get_client(db_url: String) -> Client {
+async fn get_client(db_url: &String) -> Client {
     //Unwrap because if we can't connect we must fail at once
     let (client, connection) =
-        tokio_postgres::connect(db_url.as_str(), NoTls).await.unwrap();
+        tokio_postgres::connect(db_url, NoTls).await.unwrap();
 
     // The connection object performs the actual communication with the database,
     // so spawn it off to run on its own.
@@ -81,6 +84,19 @@ async fn get_client(db_url: String) -> Client {
     client
 }
 
+async fn get_pool(db_url: &String) -> Pool<Postgres> {
+    let pool = PgPoolOptions::new()
+        .max_connections(5)
+        .connect(db_url)
+        .await
+        .unwrap();
+
+    let db_migrations = read_db_migrations("local.properties");
+    sqlx::migrate!("../../../db/migrations").run(&pool).await.unwrap();
+
+    pool
+}
+
 fn read_db_url(path: &str) -> String {
 
     // Reading
@@ -88,5 +104,14 @@ fn read_db_url(path: &str) -> String {
     let map2 = read(BufReader::new(f)).unwrap();
     let db_url = map2.get("db.url").unwrap().to_string();
     db_url
+}
+
+fn read_db_migrations(path: &str) -> String {
+
+    // Reading
+    let f = File::open(path).unwrap();
+    let map2 = read(BufReader::new(f)).unwrap();
+    let db_migrations = map2.get("db.migrations").unwrap().to_string();
+    db_migrations
 }
 
