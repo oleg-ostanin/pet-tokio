@@ -38,8 +38,8 @@ tower = "0.5.1"
 
 
 # -- App Libs
-
 lib-core = { path = "../../libs/lib-core"}
+lib-utils = { path = "../../libs/lib-utils"}
 
 # -- Async
 # -- Json

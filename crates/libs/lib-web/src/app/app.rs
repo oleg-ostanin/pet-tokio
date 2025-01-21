@@ -13,10 +13,12 @@ use sqlx::{Pool, Postgres};
 use tokio_postgres::{Client, NoTls};
 use sqlx::postgres::PgPoolOptions;
 use tower_cookies::{CookieManagerLayer, Cookies};
-use tracing::debug;
+use tracing::{debug, info};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use lib_core::context::app_context::ModelManager;
+use crate::middleware::mw_req_stamp::mw_req_stamp_resolver;
+use crate::middleware::mw_res_map::mw_response_map;
 // use lib_core::model::user::UserForCreate;
 // use crate::handlers::handlers_login::api_login_handler;
 // use crate::middleware::mw_auth::{mw_ctx_require, mw_ctx_resolver};
@@ -45,10 +47,10 @@ pub async fn web_app(app_context: Arc<ModelManager>) -> Router {
         .route("/get-books", get(get_books))
         // .route("/sign-in", post(api_login_handler))
         // .route("/sign-up", post(sign_up))
-        // .layer(middleware::map_response(mw_response_map))
+        .layer(middleware::map_response(mw_response_map))
         // .layer(middleware::from_fn_with_state(app_context.clone(), mw_ctx_resolver))
         .layer(CookieManagerLayer::new())
-        // .layer(middleware::from_fn(mw_req_stamp_resolver))
+        .layer(middleware::from_fn(mw_req_stamp_resolver))
         .with_state(app_context)
 }
 
@@ -57,6 +59,9 @@ async fn get_books(
     State(app_context): State<Arc<ModelManager>>,
     cookies: Cookies,
 ) -> Result<String, StatusCode> {
+    let var = String::from("nils");
+    info!("{:<12} - get books", var);
+
     println!("{:?}", "get books");
 
     let token = cookies.get("auth-token");
