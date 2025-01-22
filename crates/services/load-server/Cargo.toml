@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 # -- App Libs
 lib-core = { path = "../../libs/lib-core"}
+lib-dto = { path = "../../libs/lib-dto"}
 lib-web = { path = "../../libs/lib-web"}
 
 # -- Async

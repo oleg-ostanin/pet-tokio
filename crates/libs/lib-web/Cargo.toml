@@ -17,6 +17,8 @@ redis = "0.26.1"
 postgres = "0.19.3"
 tokio-postgres = "0.7.11"
 
+dotenv = "0.15.0"
+
 sqlx = { version = "0.8.3", features = ["postgres", "runtime-tokio-rustls"] }
 
 java-properties = "2.0.0"

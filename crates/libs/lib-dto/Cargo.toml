@@ -1,0 +1,30 @@
+[package]
+name = "lib-dto"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+doctest = false
+
+[lints]
+workspace = true
+
+[dependencies]
+
+axum = { version = "0.7", features = ["tokio", "http1"] }
+tokio = { version = "1", features = ["full"] }
+redis = "0.26.1"
+postgres = "0.19.3"
+tokio-postgres = { version = "0.7.11", features = ["with-chrono-0_4"] }
+sqlx = { version = "0.8.3", features = ["postgres", "runtime-tokio-rustls"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+serde = "1"
+serde_json = "1.0"
+
+uuid = {version = "1", features = ["v4","fast-rng",]}
+time = { workspace = true }
+
+derive_builder = "0.20.2"
+chrono = "0.4.39"

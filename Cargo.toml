@@ -5,6 +5,7 @@ unsafe_code = "forbid"
 resolver = "2"
 members = [
     "crates/libs/lib-core",
+    "crates/libs/lib-dto",
     "crates/libs/lib-utils",
 
     # -- Application Services
