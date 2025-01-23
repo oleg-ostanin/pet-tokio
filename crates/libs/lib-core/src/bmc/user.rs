@@ -44,8 +44,15 @@ impl UserBmc {
 
         let token_salt = Uuid::new_v4().to_string();
 
-        // mm.client().execute(INSERT_USER, &[&user.identity, &user.first_name,
-        //     &user.last_name, &pwd_hashed, &pwd_salt.to_string(), &token_salt]).await?;
+        let row: (i64,) = sqlx::query_as(INSERT_USER)
+            .bind(&user.identity)
+            .bind(&user.first_name)
+            .bind(&user.last_name)
+            .bind(&pwd_hashed)
+            .bind(&pwd_salt.to_string())
+            .bind(token_salt)
+            .fetch_one(mm.pg_pool())
+            .await?;
 
         Ok(())
     }

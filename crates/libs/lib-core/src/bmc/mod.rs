@@ -24,3 +24,9 @@ impl core::fmt::Display for Error {
 impl std::error::Error for Error {}
 
 // endregion: --- Error Boilerplate
+
+impl From<sqlx::Error> for Error {
+    fn from(value: sqlx::Error) -> Self {
+        Error::SomeError
+    }
+}
