@@ -13,14 +13,14 @@ use hyper::body::Incoming;
 use hyper_util::client::legacy::Client;
 use hyper_util::client::legacy::connect::HttpConnector;
 use serde_json::{json, Value};
-use tower_cookies::Cookies;
+use tower_cookies::{Cookie, Cookies};
 use tracing::info;
-
+use lib_core::constants::AUTH_TOKEN;
 use lib_core::context::app_context::ModelManager;
 use lib_dto::user::{AuthCode, UserForCreate};
 
 pub async fn login(
-    State(app_context): State<Arc<ModelManager>>,
+    cookies: Cookies,
     Json(user): Json<AuthCode>,
 ) -> Result<(), StatusCode> {
 
@@ -47,6 +47,11 @@ pub async fn login(
         .unwrap();
 
     if check_response.status() == StatusCode::OK {
+        let mut cookie = Cookie::new(AUTH_TOKEN, "nils-token".to_string());
+        cookie.set_http_only(true);
+        cookie.set_path("/");
+        cookies.add(cookie);
+
         info!("{:<12} - login code", &user.auth_code);
         return Ok(());
     }
