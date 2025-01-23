@@ -27,6 +27,7 @@ impl std::error::Error for Error {}
 
 impl From<sqlx::Error> for Error {
     fn from(value: sqlx::Error) -> Self {
+        println!("{:?}", value);
         Error::SomeError
     }
 }

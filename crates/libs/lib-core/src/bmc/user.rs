@@ -9,7 +9,7 @@ pub struct UserBmc;
 //todo return identity type
 const INSERT_USER: &str = r#"
 INSERT INTO users
-(identity, first_name, last_name, pwd
+(phone, first_name, last_name, pwd
   , pwd_salt, token_salt
   --, created_at, updated_at todo
 )
