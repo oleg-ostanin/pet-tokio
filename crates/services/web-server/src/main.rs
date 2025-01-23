@@ -3,9 +3,11 @@ use std::sync::Arc;
 use tracing::info;
 use lib_core::context::app_context::ModelManager;
 use lib_web::app::web_app::{web_app, create_app_context};
+use dotenv::dotenv;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    dotenv().ok();
     tracing_subscriber::fmt()
         .without_time() // For early local development.
         .with_target(false)

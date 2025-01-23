@@ -15,9 +15,11 @@ use hyper_util::client::legacy::connect::HttpConnector;
 use serde_json::{json, Value};
 use tower_cookies::{Cookie, Cookies};
 use tracing::info;
-use lib_core::constants::AUTH_TOKEN;
+use lib_utils::constants::AUTH_TOKEN;
+use lib_utils::constants::SERVICE_TOKEN_KEY;
 use lib_core::context::app_context::ModelManager;
 use lib_dto::user::{AuthCode, UserForCreate};
+use lib_utils::jwt::token;
 
 pub async fn login(
     cookies: Cookies,
@@ -47,7 +49,8 @@ pub async fn login(
         .unwrap();
 
     if check_response.status() == StatusCode::OK {
-        let mut cookie = Cookie::new(AUTH_TOKEN, "nils-token".to_string());
+        let token = token(&user.identity, SERVICE_TOKEN_KEY);
+        let mut cookie = Cookie::new(AUTH_TOKEN, token);
         cookie.set_http_only(true);
         cookie.set_path("/");
         cookies.add(cookie);
