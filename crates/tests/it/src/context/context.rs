@@ -81,7 +81,6 @@ impl TestContext {
         let pool = get_pool(&db_url).await;
         let app_context: Arc<ModelManager> = Arc::new(
             ModelManager::create(
-                Arc::new(pg_client),
                 Arc::new(pool),
             ));
 

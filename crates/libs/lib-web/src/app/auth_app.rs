@@ -38,40 +38,11 @@ pub async fn create_app_context() -> Arc<ModelManager> {
     app_context
 }
 
-pub async fn web_app(app_context: Arc<ModelManager>) -> Router {
-    let routes_rpc = Router::new();
-        // .route("/get-by-id/:user_id", get(get_by_id))
-        // .route_layer(middleware::from_fn(mw_ctx_require));
-
+pub async fn auth_app(app_context: Arc<ModelManager>) -> Router {
     Router::new()
-        .nest("/", routes_rpc)
-        .route("/get-books", get(get_books))
-        // .route("/sign-in", post(api_login_handler))
-        .route("/login", post(login))
-        .layer(middleware::map_response(mw_response_map))
-        // .layer(middleware::from_fn_with_state(app_context.clone(), mw_ctx_resolver))
-        .layer(CookieManagerLayer::new())
-        .layer(middleware::from_fn(mw_req_stamp_resolver))
+        //.route("/create-code", post(create_code))
+        //.route("/check-code", post(check_code))
         .with_state(app_context)
-}
-
-
-async fn get_books(
-    State(app_context): State<Arc<ModelManager>>,
-    cookies: Cookies,
-) -> Result<String, StatusCode> {
-    let var = String::from("nils");
-    info!("{:<12} - get books", var);
-
-    println!("{:?}", "get books");
-
-    let token = cookies.get("auth-token");
-    println!("books 1 {:?}", token);
-
-    let new_token = cookies.get("new-auth-token");
-    println!("books 2 {:?}", new_token);
-
-    Ok("res".to_string())
 }
 
 async fn get_client(db_url: &String) -> Client {

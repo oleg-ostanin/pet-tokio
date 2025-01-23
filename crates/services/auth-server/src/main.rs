@@ -7,15 +7,17 @@ use axum::{Json, Router};
 use axum::routing::{get, post};
 use tracing::info;
 use lib_core::context::app_context::ModelManager;
-use lib_web::app::web_app::{web_app, create_app_context};
+use lib_web::app::auth_app::{auth_app, create_app_context};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use dotenv::dotenv;
 
 use lib_dto::user::{AuthCode, UserForCreate};
 use uuid::Uuid;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    dotenv().ok();
     tracing_subscriber::fmt()
         .without_time() // For early local development.
         .with_target(false)
@@ -23,12 +25,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("info");
     println!("starts");
 
-    let codes = Arc::new(Mutex::new(HashMap::new()));
-    let app_context: Arc<Codes> = Arc::new(
-        Codes {
-            codes
-        }
-    );
+    let app_context: Arc<ModelManager> = create_app_context().await;
 
     let app = auth_app(app_context).await;
 
@@ -41,12 +38,12 @@ struct Codes {
     codes: Arc<Mutex<HashMap<String, String>>>
 }
 
-async fn auth_app(app_context: Arc<Codes>) -> Router {
-    Router::new()
-        .route("/create-code", post(create_code))
-        .route("/check-code", post(check_code))
-        .with_state(app_context)
-}
+// async fn auth_app(app_context: Arc<ModelManager>) -> Router {
+//     Router::new()
+//         .route("/create-code", post(create_code))
+//         .route("/check-code", post(check_code))
+//         .with_state(app_context)
+// }
 
 
 async fn create_code(
