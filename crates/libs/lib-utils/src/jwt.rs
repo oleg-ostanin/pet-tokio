@@ -31,6 +31,7 @@ mod tests {
 
     #[test]
     fn create() {
+        let token_key = std::env::var("SERVICE_TOKEN_KEY").expect("MAILCOACH_API_TOKEN must be set.");
         let token = token(TEST_SUB, TEST_TOKEN_KEY);
         assert_eq!(TEST_TOKEN, token)
     }

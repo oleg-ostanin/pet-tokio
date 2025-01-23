@@ -10,6 +10,8 @@ doctest = false
 workspace = true
 
 [dependencies]
+lib-dto = { path = "../../libs/lib-dto"}
+lib-utils = { path = "../../libs/lib-utils"}
 
 axum = { version = "0.7", features = ["tokio", "http1"] }
 tokio = { version = "1", features = ["full"] }
@@ -19,3 +21,7 @@ tokio-postgres = { version = "0.7.11", features = ["with-chrono-0_4"] }
 sqlx = { version = "0.8.3", features = ["postgres", "runtime-tokio-rustls"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1.12.1", features = ["v4"] }
+sha2 = "0.10.8"
+hmac = "0.12.1"
+serde = { version = "1.0.217", features = ["derive"] }

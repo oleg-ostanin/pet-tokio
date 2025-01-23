@@ -91,8 +91,8 @@ pub struct UserStored {
     pub first_name: String,
     pub last_name: String,
     pub pwd: String, // todo remove
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    //pub created_at: DateTime<Utc>,
+    //pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug)]
