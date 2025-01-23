@@ -18,6 +18,7 @@ pub struct UserForCreate {
 
 #[derive(Debug, Deserialize, Serialize, Builder)]
 pub struct AuthCode {
+    pub identity: String,
     pub auth_code: String,
 }
 

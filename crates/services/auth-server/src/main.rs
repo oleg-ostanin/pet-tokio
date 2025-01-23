@@ -44,7 +44,7 @@ struct Codes {
 async fn auth_app(app_context: Arc<Codes>) -> Router {
     Router::new()
         .route("/create-code", post(create_code))
-        //.route("/check-code", get(chek_code))
+        .route("/check-code", post(check_code))
         .with_state(app_context)
 }
 
@@ -59,12 +59,37 @@ async fn create_code(
     info!("{:<12} - code", &code);
 
     if let Ok(mut map) = app_context.codes.lock() {
-        map.insert(identity, code.clone().to_string());
+        map.insert(identity.clone(), code.clone().to_string());
     };
 
     let auth_code = Json(json!({
+        "identity": identity,
 		"auth_code": code.to_string()
 	}));
 
     Ok(auth_code)
+}
+
+async fn check_code(
+    State(app_context): State<Arc<Codes>>,
+    Json(user): Json<AuthCode>,
+) -> Result<Json<Value>, StatusCode> {
+    let identity = user.identity;
+    let code = user.auth_code;
+    info!("{:<12} - check identity", &identity);
+    info!("{:<12} - check code", &code);
+
+    if let Ok(map) = app_context.codes.lock() {
+        if let Some(auth_code) = map.get(&identity) {
+            if code.eq(auth_code) {
+                let result = Json(json!({
+                    "identity": identity,
+		            "auth_code": code.to_string()
+	            }));
+                return Ok(result);
+            }
+        }
+    };
+
+    Err(StatusCode::FORBIDDEN)
 }
