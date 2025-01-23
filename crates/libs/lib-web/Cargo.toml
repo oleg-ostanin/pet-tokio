@@ -10,6 +10,11 @@ doctest = false
 workspace = true
 
 [dependencies]
+# -- App Libs
+lib-core = { path = "../../libs/lib-core"}
+lib-dto = { path = "../../libs/lib-dto"}
+lib-utils = { path = "../../libs/lib-utils"}
+
 # nils dependencies
 axum = { version = "0.7", features = ["tokio", "http1"] }
 tokio = { version = "1", features = ["full"] }
@@ -37,11 +42,6 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 testcontainers = "0.14.0"
 tower = "0.5.1"
-
-
-# -- App Libs
-lib-core = { path = "../../libs/lib-core"}
-lib-utils = { path = "../../libs/lib-utils"}
 
 # -- Async
 # -- Json

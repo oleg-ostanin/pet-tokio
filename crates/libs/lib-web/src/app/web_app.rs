@@ -17,6 +17,7 @@ use tracing::{debug, info};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use lib_core::context::app_context::ModelManager;
+use crate::handlers::login::login;
 use crate::middleware::mw_req_stamp::mw_req_stamp_resolver;
 use crate::middleware::mw_res_map::mw_response_map;
 // use lib_core::model::user::UserForCreate;
@@ -46,7 +47,7 @@ pub async fn web_app(app_context: Arc<ModelManager>) -> Router {
         .nest("/", routes_rpc)
         .route("/get-books", get(get_books))
         // .route("/sign-in", post(api_login_handler))
-        // .route("/sign-up", post(sign_up))
+        .route("/login", post(login))
         .layer(middleware::map_response(mw_response_map))
         // .layer(middleware::from_fn_with_state(app_context.clone(), mw_ctx_resolver))
         .layer(CookieManagerLayer::new())

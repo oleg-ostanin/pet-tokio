@@ -89,7 +89,7 @@ async fn check_code(
                 return Ok(result);
             }
         }
-    };
+    }
 
     Err(StatusCode::FORBIDDEN)
 }

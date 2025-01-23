@@ -22,6 +22,12 @@ pub struct AuthCode {
     pub auth_code: String,
 }
 
+impl AuthCode {
+    pub fn new(identity: String, auth_code: String) -> Self {
+        Self { identity, auth_code }
+    }
+}
+
 impl UserForCreate {
     pub fn new(
         identity: impl Into<String>,

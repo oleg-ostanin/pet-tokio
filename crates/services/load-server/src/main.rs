@@ -27,27 +27,39 @@ async fn main() -> Result<(), Box<dyn Error>> {
         hyper_util::client::legacy::Client::builder(hyper_util::rt::TokioExecutor::new())
             .build_http();
 
-    let addr = "localhost:3001";
+    let auth_addr = "localhost:3001";
 
     let user_to_create = UserForCreate::new("2128506", "pwd", "John", "Doe");
 
-
-    let get_response = client
+    let create_response = client
         .request(Request::builder()
             .method(http::Method::POST)
-            .uri(format!("http://{addr}/create-code"))
+            .uri(format!("http://{auth_addr}/create-code"))
             .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-            .header("cookie", "auth-token=token".to_string())
-            .header("cookie", "new-auth-token=new-token".to_string())
-
             .body(Body::from(serde_json::to_string(&json!(user_to_create)).unwrap()))
             .unwrap())
         .await
         .unwrap();
 
-    let auth_code = message_from_response(get_response).await;
+    let auth_code = message_from_response(create_response).await;
 
     println!("{:?}", &auth_code);
+
+    let auth_code = AuthCode::new("2128506".to_string(), auth_code);
+
+    let web_addr = "localhost:3000";
+
+    let login_response = client
+        .request(Request::builder()
+            .method(http::Method::POST)
+            .uri(format!("http://{web_addr}/login"))
+            .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
+            .body(Body::from(serde_json::to_string(&json!(auth_code)).unwrap()))
+            .unwrap())
+        .await
+        .unwrap();
+
+    println!("{:?}", &login_response);
 
     Ok(())
 }
