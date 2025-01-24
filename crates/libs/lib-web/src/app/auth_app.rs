@@ -41,7 +41,7 @@ pub async fn create_app_context() -> Arc<ModelManager> {
 
 pub async fn auth_app(app_context: Arc<ModelManager>) -> Router {
     Router::new()
-        .route("/create-code", post(sign_up))
+        .route("/sign-up", post(sign_up))
         //.route("/check-code", post(check_code))
         .with_state(app_context)
 }

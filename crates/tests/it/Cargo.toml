@@ -15,6 +15,7 @@ with-rpc = ["rpc-router"]
 [dependencies]
 # -- App Libs
 lib-core = { path = "../../libs/lib-core"}
+lib-dto = { path = "../../libs/lib-dto"}
 lib-web = { path = "../../libs/lib-web"}
 
 # nils dependencies

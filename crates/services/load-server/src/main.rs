@@ -34,7 +34,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let create_response = client
         .request(Request::builder()
             .method(http::Method::POST)
-            .uri(format!("http://{auth_addr}/create-code"))
+            .uri(format!("http://{auth_addr}/sign-up"))
             .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
             .body(Body::from(serde_json::to_string(&json!(user_to_create)).unwrap()))
             .unwrap())

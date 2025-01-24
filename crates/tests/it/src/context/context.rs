@@ -19,9 +19,11 @@ use tower::builder;
 use lib_core::context::app_context::ModelManager;
 use lib_web::app::web_app::create_app_context;
 use lib_web::app::web_app::web_app;
+use lib_web::app::auth_app::auth_app;
 
 use tower_cookies::{Cookie, Cookies};
 use uuid::Uuid;
+use lib_dto::user::UserForCreate;
 //use lib_core::model::user::{UserForCreate, UserForLogin, UserForSignIn, UserStored};
 use crate::context::sql::{CREATE_IDENTITY_TYPE, CREATE_USER_TABLE};
 // for `call`, `oneshot`, and `ready`
@@ -84,7 +86,7 @@ impl TestContext {
                 Arc::new(pool),
             ));
 
-        let app = web_app(app_context).await;
+        let app = auth_app(app_context).await;
 
         let listener = TcpListener::bind("0.0.0.0:0").await.unwrap();
         let socket_addr = listener.local_addr().unwrap();
@@ -152,19 +154,19 @@ impl TestContext {
     //     Some(user)
     // }
     //
-    // pub(crate) async fn create_user(&self, user_body: &UserForCreate) -> Response<Incoming> {
-    //     let addr = &self.socket_addr;
-    //
-    //     self.client.request(Request::builder()
-    //             .method(http::Method::POST)
-    //             .uri(format!("http://{addr}/sign-up"))
-    //             .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-    //             .header("meta-cookie", "create_user")
-    //             .body(Body::from(serde_json::to_string(&json!(user_body)).unwrap()))
-    //             .unwrap())
-    //         .await
-    //         .unwrap()
-    // }
+    pub(crate) async fn create_user(&self, user_body: &UserForCreate) -> Response<Incoming> {
+        let addr = &self.socket_addr;
+
+        self.client.request(Request::builder()
+                .method(http::Method::POST)
+                .uri(format!("http://{addr}/sign-up"))
+                .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
+                .header("meta-cookie", "create_user")
+                .body(Body::from(serde_json::to_string(&json!(user_body)).unwrap()))
+                .unwrap())
+            .await
+            .unwrap()
+    }
     //
     // pub(crate) async fn sign_in_user(&mut self, user_body: UserForSignIn) -> Response<Incoming> {
     //     let addr = &self.socket_addr;
@@ -215,7 +217,7 @@ async fn get_pool(db_url: &String) -> Pool<sqlx::Postgres> {
         .await
         .unwrap();
 
-    sqlx::migrate!("../../../db/migrations").run(&pool).await.unwrap();
+    sqlx::migrate!("../../../db/migrations-auth").run(&pool).await.unwrap();
 
     pool
 }
