@@ -17,7 +17,7 @@ use tracing::{debug, info};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use lib_core::context::app_context::ModelManager;
-use crate::handlers::auth::{sign_in, sign_up};
+use crate::handlers::auth::{check_code, sign_in, sign_up};
 use crate::handlers::login::login;
 use crate::middleware::mw_req_stamp::mw_req_stamp_resolver;
 use crate::middleware::mw_res_map::mw_response_map;
@@ -43,7 +43,7 @@ pub async fn auth_app(app_context: Arc<ModelManager>) -> Router {
     Router::new()
         .route("/sign-up", post(sign_up))
         .route("/sign-in", post(sign_in))
-        //.route("/check-code", post(check_code))
+        .route("/check-code", post(check_code))
         .with_state(app_context)
 }
 

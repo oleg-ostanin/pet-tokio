@@ -24,9 +24,9 @@ use lib_web::app::auth_app::auth_app;
 use dotenv::dotenv;
 use tower_cookies::{Cookie, Cookies};
 use uuid::Uuid;
-use lib_dto::user::{UserForCreate, UserForSignIn};
+use lib_dto::user::{AuthCode, UserForCreate, UserForSignIn};
 //use lib_core::model::user::{UserForCreate, UserForLogin, UserForSignIn, UserStored};
-use crate::context::sql::{CREATE_phone_TYPE, CREATE_USER_TABLE};
+use crate::context::sql::{CREATE_PHONE_TYPE, CREATE_USER_TABLE};
 // for `call`, `oneshot`, and `ready`
 
 #[derive(Debug, Clone)]
@@ -185,6 +185,20 @@ impl TestContext {
             .unwrap()
     }
 
+    pub(crate) async fn check_code(&mut self, user_body: AuthCode) -> Response<Incoming> {
+        let addr = &self.socket_addr;
+
+        self.client
+            .request(Request::builder()
+                .method(http::Method::POST)
+                .uri(format!("http://{addr}/check-code"))
+                .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
+                .body(Body::from(serde_json::to_string(&json!(user_body)).unwrap()))
+                .unwrap())
+            .await
+            .unwrap()
+    }
+
     pub(crate) async fn get_auth_cookie(&mut self, sign_in_response: &Response<Incoming>) -> Option<String> {
         let sc = sign_in_response.headers().get("set-cookie");
         if let Some(hv) = sc {
@@ -226,6 +240,6 @@ async fn get_pool(db_url: &String) -> Pool<sqlx::Postgres> {
 }
 
 async fn init_db(pg_client: &tokio_postgres::Client) {
-    pg_client.execute(CREATE_phone_TYPE, &[]).await.unwrap();
+    pg_client.execute(CREATE_PHONE_TYPE, &[]).await.unwrap();
     pg_client.execute(CREATE_USER_TABLE, &[]).await.unwrap();
 }

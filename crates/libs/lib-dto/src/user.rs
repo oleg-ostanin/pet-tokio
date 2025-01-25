@@ -23,8 +23,8 @@ pub struct AuthCode {
 }
 
 impl AuthCode {
-    pub fn new(phone: String, auth_code: String) -> Self {
-        Self { phone, auth_code }
+    pub fn new(phone: impl Into<String>, auth_code: impl Into<String>) -> Self {
+        Self { phone: phone.into(), auth_code: auth_code.into() }
     }
 }
 

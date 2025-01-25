@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::sync::{Arc, PoisonError, RwLockWriteGuard};
+use std::sync::{Arc, PoisonError, RwLockReadGuard, RwLockWriteGuard};
 
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
@@ -60,6 +60,12 @@ impl From<lib_core::error::Error> for Error {
 
 impl From<PoisonError<RwLockWriteGuard<'_, HashMap<String, String>>>> for Error {
     fn from(value: PoisonError<RwLockWriteGuard<'_, HashMap<String, String>>>) -> Self {
+        Error::FailedToWriteCache
+    }
+}
+
+impl From<PoisonError<RwLockReadGuard<'_, HashMap<String, String>>>> for Error {
+    fn from(value: PoisonError<RwLockReadGuard<'_, HashMap<String, String>>>) -> Self {
         Error::FailedToWriteCache
     }
 }

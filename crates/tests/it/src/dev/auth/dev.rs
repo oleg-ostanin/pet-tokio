@@ -5,10 +5,10 @@ use tower::{Service, ServiceExt};
 #[cfg(test)]
 mod tests {
     use axum::http::StatusCode;
-    use lib_dto::user::{UserForCreate, UserForSignIn};
+    use lib_dto::user::{AuthCode, UserForCreate, UserForSignIn};
     // use lib_core::model::user::{UserForCreate, UserForSignIn};
     use crate::context::context::TestContext;
-    use crate::utils::body_utils::message_from_response;
+    use crate::utils::body_utils::{body, message_from_response, value};
 
     #[tokio::test]
     async fn auth() {
@@ -21,6 +21,12 @@ mod tests {
 
         let user_to_sigh_in = UserForSignIn::new("2128506", "pwd",);
         let response = ctx.sign_in_user(user_to_sigh_in).await;
+        assert_eq!(response.status(), StatusCode::OK);
+        let value = value(response).await;
+        let auth_code = body::<AuthCode>(value);
+
+        let user_to_sigh_in = AuthCode::new("2128506", auth_code.auth_code,);
+        let response = ctx.check_code(user_to_sigh_in).await;
         assert_eq!(response.status(), StatusCode::OK);
     }
 }
