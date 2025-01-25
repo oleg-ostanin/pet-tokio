@@ -21,11 +21,12 @@ use lib_web::app::web_app::create_app_context;
 use lib_web::app::web_app::web_app;
 use lib_web::app::auth_app::auth_app;
 
+use dotenv::dotenv;
 use tower_cookies::{Cookie, Cookies};
 use uuid::Uuid;
-use lib_dto::user::UserForCreate;
+use lib_dto::user::{UserForCreate, UserForSignIn};
 //use lib_core::model::user::{UserForCreate, UserForLogin, UserForSignIn, UserStored};
-use crate::context::sql::{CREATE_IDENTITY_TYPE, CREATE_USER_TABLE};
+use crate::context::sql::{CREATE_phone_TYPE, CREATE_USER_TABLE};
 // for `call`, `oneshot`, and `ready`
 
 #[derive(Debug, Clone)]
@@ -45,6 +46,8 @@ pub(crate) struct TestContext<> {
 
 impl TestContext {
     pub(crate) async fn new() -> Self {
+        dotenv().ok();
+
         let docker: &'static clients::Cli = Box::leak(Box::new(clients::Cli::default()));
 
         // Define a PostgreSQL container image
@@ -77,7 +80,7 @@ impl TestContext {
             }
         });
 
-        init_db(&pg_client).await;
+        //init_db(&pg_client).await;
 
         let db_url = format!("postgresql://postgres:root@localhost:{pg_port}/postgres");
         let pool = get_pool(&db_url).await;
@@ -167,20 +170,20 @@ impl TestContext {
             .await
             .unwrap()
     }
-    //
-    // pub(crate) async fn sign_in_user(&mut self, user_body: UserForSignIn) -> Response<Incoming> {
-    //     let addr = &self.socket_addr;
-    //
-    //     self.client
-    //         .request(Request::builder()
-    //             .method(http::Method::POST)
-    //             .uri(format!("http://{addr}/sign-in"))
-    //             .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-    //             .body(Body::from(serde_json::to_string(&json!(user_body)).unwrap()))
-    //             .unwrap())
-    //         .await
-    //         .unwrap()
-    // }
+
+    pub(crate) async fn sign_in_user(&mut self, user_body: UserForSignIn) -> Response<Incoming> {
+        let addr = &self.socket_addr;
+
+        self.client
+            .request(Request::builder()
+                .method(http::Method::POST)
+                .uri(format!("http://{addr}/sign-in"))
+                .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
+                .body(Body::from(serde_json::to_string(&json!(user_body)).unwrap()))
+                .unwrap())
+            .await
+            .unwrap()
+    }
 
     pub(crate) async fn get_auth_cookie(&mut self, sign_in_response: &Response<Incoming>) -> Option<String> {
         let sc = sign_in_response.headers().get("set-cookie");
@@ -223,6 +226,6 @@ async fn get_pool(db_url: &String) -> Pool<sqlx::Postgres> {
 }
 
 async fn init_db(pg_client: &tokio_postgres::Client) {
-    pg_client.execute(CREATE_IDENTITY_TYPE, &[]).await.unwrap();
+    pg_client.execute(CREATE_phone_TYPE, &[]).await.unwrap();
     pg_client.execute(CREATE_USER_TABLE, &[]).await.unwrap();
 }

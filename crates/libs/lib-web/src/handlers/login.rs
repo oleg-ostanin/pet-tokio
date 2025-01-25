@@ -26,7 +26,7 @@ pub async fn login(
     Json(user): Json<AuthCode>,
 ) -> Result<(), StatusCode> {
 
-    info!("{:<12} - login identity", &user.identity);
+    info!("{:<12} - login phone", &user.phone);
     info!("{:<12} - login code", &user.auth_code);
 
     let client: Client<HttpConnector, Body> =
@@ -50,7 +50,7 @@ pub async fn login(
 
     let token_key = std::env::var("SERVICE_TOKEN_KEY").expect("MAILCOACH_API_TOKEN must be set.");
     if check_response.status() == StatusCode::OK {
-        let token = token(&user.identity, token_key.as_str());
+        let token = token(&user.phone, token_key.as_str());
         let mut cookie = Cookie::new(AUTH_TOKEN, token);
         cookie.set_http_only(true);
         cookie.set_path("/");

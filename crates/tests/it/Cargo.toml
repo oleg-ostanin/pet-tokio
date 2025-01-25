@@ -44,6 +44,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 testcontainers = "0.14.0"
 tower = "0.5.1"
 
+dotenv = "0.15.0"
 
 
 # -- App Libs

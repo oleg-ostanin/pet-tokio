@@ -7,7 +7,7 @@ use lib_utils::b64::{b64u_decode, b64u_encode};
 use sha2::Sha512;
 use std::env;
 
-use super::{Result, Error};
+use crate::error::{Result, Error};
 
 
 pub struct Scheme;
@@ -19,12 +19,12 @@ impl Scheme  {
 		hash(&key, to_hash)
 	}
 
-	fn validate(&self, to_hash: &ContentToHash, raw_pwd_ref: &str) -> Result<()> {
+	pub(crate) fn validate(&self, to_hash: &ContentToHash, raw_pwd_ref: String) -> Result<()> {
 		let raw_pwd_new = self.hash(to_hash)?;
-		if raw_pwd_new == raw_pwd_ref {
+		if raw_pwd_new.eq(&raw_pwd_ref) {
 			Ok(())
 		} else {
-			Err(Error::SomeError)
+			Err(Error::CoreError)
 		}
 	}
 }
@@ -34,7 +34,7 @@ fn hash(key: &[u8], to_hash: &ContentToHash) -> Result<String> {
 
 	// -- Create a HMAC-SHA-512 from key.
 	let mut hmac_sha512 =
-		Hmac::<Sha512>::new_from_slice(key).map_err(|_| Error::SomeError)?;
+		Hmac::<Sha512>::new_from_slice(key).map_err(|_| Error::CoreError)?;
 
 	// -- Add content.
 	hmac_sha512.update(content.as_bytes());

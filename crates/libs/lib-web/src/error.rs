@@ -1,4 +1,5 @@
-use std::sync::Arc;
+use std::collections::HashMap;
+use std::sync::{Arc, PoisonError, RwLockWriteGuard};
 
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
@@ -14,6 +15,9 @@ pub type Result<T> = core::result::Result<T, Error>;
 #[derive(Debug, Serialize)]
 pub enum Error {
 	// -- Extractors
+    WebError,
+    FailedToWriteCache,
+    FailedToReadCache,
 	ReqStampNotInReqExt,
 }
 
@@ -48,4 +52,14 @@ impl std::error::Error for Error {}
 
 // endregion: --- Error Boilerplate
 
+impl From<lib_core::error::Error> for Error {
+    fn from(value: lib_core::error::Error) -> Self {
+        Error::WebError
+    }
+}
 
+impl From<PoisonError<RwLockWriteGuard<'_, HashMap<String, String>>>> for Error {
+    fn from(value: PoisonError<RwLockWriteGuard<'_, HashMap<String, String>>>) -> Self {
+        Error::FailedToWriteCache
+    }
+}

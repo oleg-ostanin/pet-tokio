@@ -4,19 +4,19 @@ use sha2::Sha256;
 use std::collections::BTreeMap;
 use jwt::VerifyWithKey;
 
-pub fn token(identity: impl Into<String>, token_key: &str) -> String {
+pub fn token(phone: impl Into<String>, token_key: &str) -> String {
     let key: Hmac<Sha256> = Hmac::new_from_slice(token_key.as_bytes()).unwrap();
     let mut claims = BTreeMap::new();
-    claims.insert("sub", identity.into());
+    claims.insert("sub", phone.into());
 
     claims.sign_with_key(&key).unwrap()
 }
 
-fn verify_token(identity: impl Into<String>, token: impl Into<String>, token_key: &str) -> bool {
+fn verify_token(phone: impl Into<String>, token: impl Into<String>, token_key: &str) -> bool {
     let key: Hmac<Sha256> = Hmac::new_from_slice(token_key.as_bytes()).unwrap();
     let claims: BTreeMap<String, String> = token.into().verify_with_key(&key).unwrap();
     if let Some(sub) = claims.get("sub") {
-        return sub.eq(&identity.into())
+        return sub.eq(&phone.into())
     }
     false
 }

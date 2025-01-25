@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize, Builder)]
 pub struct UserForCreate {
-    pub identity: String,
+    pub phone: String,
     pub password: String,
     pub first_name: String,
     pub last_name: String,
@@ -18,25 +18,25 @@ pub struct UserForCreate {
 
 #[derive(Debug, Deserialize, Serialize, Builder)]
 pub struct AuthCode {
-    pub identity: String,
+    pub phone: String,
     pub auth_code: String,
 }
 
 impl AuthCode {
-    pub fn new(identity: String, auth_code: String) -> Self {
-        Self { identity, auth_code }
+    pub fn new(phone: String, auth_code: String) -> Self {
+        Self { phone, auth_code }
     }
 }
 
 impl UserForCreate {
     pub fn new(
-        identity: impl Into<String>,
+        phone: impl Into<String>,
         password: impl Into<String>,
         first_name: impl Into<String>,
         last_name: impl Into<String>,
     ) -> Self {
         UserForCreate {
-            identity: identity.into(),
+            phone: phone.into(),
             password: password.into(),
             first_name: first_name.into(),
             last_name: last_name.into(),
@@ -46,18 +46,18 @@ impl UserForCreate {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UserForSignIn {
-    pub identity: String,
+    pub phone: String,
     pub password: String,
 }
 
 impl UserForSignIn {
     pub fn new(
-        identity: impl Into<String>,
+        phone: impl Into<String>,
         password: impl Into<String>,
 
     ) -> Self {
         UserForSignIn {
-            identity: identity.into(),
+            phone: phone.into(),
             password: password.into(),
         }
     }
@@ -66,7 +66,7 @@ impl UserForSignIn {
 #[derive(Clone, FromRow, Debug)]
 pub struct UserForAuth {
     pub id: i64,
-    pub identity: String,
+    pub phone: String,
 
     // -- token info
     pub token_salt: Uuid,
@@ -75,19 +75,17 @@ pub struct UserForAuth {
 #[derive(Clone, FromRow, Debug)]
 pub struct UserForLogin {
     pub id: i64,
-    pub identity: String,
-    pub pwd: Option<String>,
+    pub phone: String,
+    pub pwd: String,
 
     // -- pwd info
-    pub pwd_salt: Uuid,
-    // -- token info
-    pub token_salt: Uuid,
+    pub pwd_salt: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UserStored {
     pub id: i64,
-    pub identity: String,
+    pub phone: String,
     pub first_name: String,
     pub last_name: String,
     pub pwd: String, // todo remove
@@ -96,7 +94,7 @@ pub struct UserStored {
 }
 
 #[derive(Debug)]
-pub enum UserIdentity {
+pub enum Userphone {
     Phone(String),
     Email(String),
 }

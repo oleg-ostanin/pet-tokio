@@ -50,17 +50,17 @@ async fn create_code(
     State(app_context): State<Arc<Codes>>,
     Json(user): Json<UserForCreate>,
 ) -> Result<Json<Value>, StatusCode> {
-    let identity = user.identity;
+    let phone = user.phone;
     let code = Uuid::new_v4();
-    info!("{:<12} - identity", &identity);
+    info!("{:<12} - phone", &phone);
     info!("{:<12} - code", &code);
 
     if let Ok(mut map) = app_context.codes.lock() {
-        map.insert(identity.clone(), code.clone().to_string());
+        map.insert(phone.clone(), code.clone().to_string());
     };
 
     let auth_code = Json(json!({
-        "identity": identity,
+        "phone": phone,
 		"auth_code": code.to_string()
 	}));
 
@@ -71,16 +71,16 @@ async fn check_code(
     State(app_context): State<Arc<Codes>>,
     Json(user): Json<AuthCode>,
 ) -> Result<Json<Value>, StatusCode> {
-    let identity = user.identity;
+    let phone = user.phone;
     let code = user.auth_code;
-    info!("{:<12} - check identity", &identity);
+    info!("{:<12} - check phone", &phone);
     info!("{:<12} - check code", &code);
 
     if let Ok(map) = app_context.codes.lock() {
-        if let Some(auth_code) = map.get(&identity) {
+        if let Some(auth_code) = map.get(&phone) {
             if code.eq(auth_code) {
                 let result = Json(json!({
-                    "identity": identity,
+                    "phone": phone,
 		            "auth_code": code.to_string()
 	            }));
                 return Ok(result);

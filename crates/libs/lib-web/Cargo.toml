@@ -18,13 +18,13 @@ lib-utils = { path = "../../libs/lib-utils"}
 # nils dependencies
 axum = { version = "0.7", features = ["tokio", "http1"] }
 tokio = { version = "1", features = ["full"] }
-redis = "0.26.1"
 postgres = "0.19.3"
 tokio-postgres = "0.7.11"
 
 dotenv = "0.15.0"
 
 sqlx = { version = "0.8.3", features = ["postgres", "runtime-tokio-rustls"] }
+redis = "0.28.1"
 
 java-properties = "2.0.0"
 rust_decimal = { version = "1.36", features = ["db-postgres"] }
