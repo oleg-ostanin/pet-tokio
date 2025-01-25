@@ -18,6 +18,8 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use lib_core::context::app_context::ModelManager;
 use crate::handlers::login::login;
+use crate::handlers::rpc::rpc;
+use crate::middleware::mw_ctx::{mw_ctx_check, mw_ctx_create};
 use crate::middleware::mw_req_stamp::mw_req_stamp_resolver;
 use crate::middleware::mw_res_map::mw_response_map;
 // use lib_core::model::user::UserForCreate;
@@ -39,17 +41,17 @@ pub async fn create_app_context() -> Arc<ModelManager> {
 }
 
 pub async fn web_app(app_context: Arc<ModelManager>) -> Router {
-    let routes_rpc = Router::new();
-        // .route("/get-by-id/:user_id", get(get_by_id))
-        // .route_layer(middleware::from_fn(mw_ctx_require));
+    let routes_rpc = Router::new()
+        .route("/rpc", post(rpc))
+        .route_layer(middleware::from_fn(mw_ctx_check));
 
     Router::new()
-        .nest("/", routes_rpc)
-        .route("/get-books", get(get_books))
+        .nest("/api", routes_rpc)
+        //.route("/get-books", get(get_books))
         // .route("/sign-in", post(api_login_handler))
         .route("/login", post(login))
         .layer(middleware::map_response(mw_response_map))
-        // .layer(middleware::from_fn_with_state(app_context.clone(), mw_ctx_resolver))
+        .layer(middleware::from_fn_with_state(app_context.clone(), mw_ctx_create))
         .layer(CookieManagerLayer::new())
         .layer(middleware::from_fn(mw_req_stamp_resolver))
         .with_state(app_context)

@@ -48,7 +48,7 @@ pub async fn login(
         .await
         .unwrap();
 
-    let token_key = std::env::var("SERVICE_TOKEN_KEY").expect("MAILCOACH_API_TOKEN must be set.");
+    let token_key = std::env::var("SERVICE_TOKEN_KEY").expect("TOKEN must be set.");
     if check_response.status() == StatusCode::OK {
         let token = token(&user.phone, token_key.as_str());
         let mut cookie = Cookie::new(AUTH_TOKEN, token);

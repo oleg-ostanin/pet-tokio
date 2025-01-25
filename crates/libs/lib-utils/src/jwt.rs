@@ -21,6 +21,12 @@ fn verify_token(phone: impl Into<String>, token: impl Into<String>, token_key: &
     false
 }
 
+pub fn phone_from_token(token: String, token_key: &str) -> Option<String> {
+    let key: Hmac<Sha256> = Hmac::new_from_slice(token_key.as_bytes()).unwrap();
+    let claims: BTreeMap<String, String> = token.verify_with_key(&key).unwrap();
+    claims.get("sub").cloned()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -43,13 +43,15 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 testcontainers = "0.14.0"
 tower = "0.5.1"
 
-# -- Async
 # -- Json
 serde = { version = "1", features = ["derive"] }
 serde_with = { workspace = true }
+
 # -- Web
 tower-cookies = "0.10"
+rpc-router = "0.1.3"
 
 # -- Others
 time = { workspace = true }
 uuid = {version = "1", features = ["v4","fast-rng",]}
+thiserror = "2.0.11"

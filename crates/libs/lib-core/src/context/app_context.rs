@@ -4,7 +4,8 @@ use std::sync::{Arc, RwLock};
 
 use sqlx::postgres::PgPool;
 
-
+#[cfg_attr(feature = "with-rpc", derive(rpc_router::RpcResource))]
+#[derive(Clone)]
 pub struct ModelManager {
     pool: Arc<PgPool>,
     cache: Arc<RwLock<HashMap<String, String>>>
