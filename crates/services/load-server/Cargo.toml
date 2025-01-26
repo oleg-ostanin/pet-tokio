@@ -7,6 +7,7 @@ edition = "2021"
 # -- App Libs
 lib-core = { path = "../../libs/lib-core"}
 lib-dto = { path = "../../libs/lib-dto"}
+lib-utils = { path = "../../libs/lib-utils"}
 lib-web = { path = "../../libs/lib-web"}
 
 # -- Async
