@@ -22,6 +22,7 @@ use lib_dto::user::{AuthCode, UserForCreate};
 use lib_utils::jwt::token;
 
 pub async fn login(
+    State(mm): State<Arc<ModelManager>>,
     cookies: Cookies,
     Json(user): Json<AuthCode>,
 ) -> Result<(), StatusCode> {
@@ -33,12 +34,12 @@ pub async fn login(
         hyper_util::client::legacy::Client::builder(hyper_util::rt::TokioExecutor::new())
             .build_http();
 
-    let addr = "localhost:3001";
+    let addr = mm.app_config().auth_url.as_str();
 
     let check_response = client
         .request(Request::builder()
             .method(http::Method::POST)
-            .uri(format!("http://{addr}/check-code"))
+            .uri(format!("{addr}/check-code"))
             .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
             .header("cookie", "auth-token=token".to_string())
             .header("cookie", "new-auth-token=new-token".to_string())
