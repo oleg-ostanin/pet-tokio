@@ -7,13 +7,13 @@ mod tests {
     use axum::http::StatusCode;
     use lib_dto::user::{AuthCode, UserForCreate, UserForSignIn};
     // use lib_core::model::user::{UserForCreate, UserForSignIn};
-    use crate::context::context::TestContext;
+    use crate::context::context::{ServiceType, TestContext};
     use lib_utils::json::{body, value};
 
 
     #[tokio::test]
     async fn auth() {
-        let mut ctx = TestContext::new().await;
+        let mut ctx = TestContext::new(ServiceType::Auth).await;
 
         // when new user then OK
         let user_to_create = UserForCreate::new("2128506", "pwd", "John", "Doe");

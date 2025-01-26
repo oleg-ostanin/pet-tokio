@@ -42,13 +42,19 @@ pub(crate) struct TestContext<> {
     docker: &'static clients::Cli,
     pg_container: &'static(Container<'static, Postgres>),
     client: Client<HttpConnector, Body>,
+    mock_server: MockServer,
     socket_addr: SocketAddr,
     auth_token: Option<String>,
     headers: Vec<HeaderWrapper>,
 }
 
+pub(crate) enum ServiceType {
+    Auth,
+    Web,
+}
+
 impl TestContext {
-    pub(crate) async fn new() -> Self {
+    pub(crate) async fn new(service_type: ServiceType) -> Self {
         dotenv().ok();
         let mock_server = MockServer::start().await;
 
@@ -97,11 +103,14 @@ impl TestContext {
                 Arc::new(pool),
             ));
 
-        let app = auth_app(app_context).await;
 
         let listener = TcpListener::bind("0.0.0.0:0").await.unwrap();
         let socket_addr = listener.local_addr().unwrap();
 
+        let app = match service_type {
+            ServiceType::Auth => auth_app(app_context).await,
+            ServiceType::Web => web_app(app_context).await,
+        };
         tokio::spawn(async move {
             axum::serve(listener, app).await.unwrap();
         });
@@ -114,6 +123,7 @@ impl TestContext {
             docker,
             pg_container,
             client,
+            mock_server,
             socket_addr,
             auth_token: None,
             headers: Vec::new(),
