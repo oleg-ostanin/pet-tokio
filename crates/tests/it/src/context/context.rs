@@ -16,7 +16,7 @@ use testcontainers::{clients, Container, images::postgres::Postgres};
 use tokio::net::TcpListener;
 use tokio_postgres::NoTls;
 use tower::builder;
-use lib_core::context::app_context::ModelManager;
+use lib_core::context::app_context::{AppConfig, ModelManager};
 use lib_web::app::web_app::create_app_context;
 use lib_web::app::web_app::web_app;
 use lib_web::app::auth_app::auth_app;
@@ -28,6 +28,9 @@ use lib_dto::user::{AuthCode, UserForCreate, UserForSignIn};
 //use lib_core::model::user::{UserForCreate, UserForLogin, UserForSignIn, UserStored};
 use crate::context::sql::{CREATE_PHONE_TYPE, CREATE_USER_TABLE};
 // for `call`, `oneshot`, and `ready`
+
+use wiremock::{MockServer, Mock, ResponseTemplate};
+use wiremock::matchers::{method, path};
 
 #[derive(Debug, Clone)]
 struct HeaderWrapper {
@@ -47,6 +50,7 @@ pub(crate) struct TestContext<> {
 impl TestContext {
     pub(crate) async fn new() -> Self {
         dotenv().ok();
+        let mock_server = MockServer::start().await;
 
         let docker: &'static clients::Cli = Box::leak(Box::new(clients::Cli::default()));
 
@@ -81,11 +85,15 @@ impl TestContext {
         });
 
         //init_db(&pg_client).await;
+        let mock_auth_url = mock_server.address();
+        println!("mock_auth_url: {:?}", &mock_auth_url);
+        let app_config: AppConfig = AppConfig { auth_url: Arc::new(mock_auth_url.to_string())};
 
         let db_url = format!("postgresql://postgres:root@localhost:{pg_port}/postgres");
         let pool = get_pool(&db_url).await;
         let app_context: Arc<ModelManager> = Arc::new(
             ModelManager::create(
+                app_config,
                 Arc::new(pool),
             ));
 

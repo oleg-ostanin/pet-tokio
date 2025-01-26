@@ -16,6 +16,7 @@ with-rpc = ["rpc-router"]
 # -- App Libs
 lib-core = { path = "../../libs/lib-core"}
 lib-dto = { path = "../../libs/lib-dto"}
+lib-utils = { path = "../../libs/lib-utils"}
 lib-web = { path = "../../libs/lib-web"}
 
 # nils dependencies
@@ -45,7 +46,7 @@ testcontainers = "0.14.0"
 tower = "0.5.1"
 
 dotenv = "0.15.0"
-
+wiremock = "0.6.2"
 
 # -- App Libs
 #lib-utils = { path = "../../libs/lib-utils"}

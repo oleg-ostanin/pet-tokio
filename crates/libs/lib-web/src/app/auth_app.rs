@@ -16,7 +16,7 @@ use tower_cookies::{CookieManagerLayer, Cookies};
 use tracing::{debug, info};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use lib_core::context::app_context::ModelManager;
+use lib_core::context::app_context::{AppConfig, ModelManager};
 use crate::handlers::auth::{check_code, sign_in, sign_up};
 use crate::handlers::login::login;
 use crate::middleware::mw_req_stamp::mw_req_stamp_resolver;
@@ -34,7 +34,12 @@ pub async fn create_app_context() -> Arc<ModelManager> {
     let client = get_client(&db_url).await;
     let pool = get_pool(&db_url).await;
 
-    let app_context: Arc<ModelManager> = Arc::new(ModelManager::create(Arc::new(pool)));
+    let app_config: AppConfig = AppConfig { auth_url: Arc::new("http://127.0.0.1:3001".to_string())};
+
+    let app_context: Arc<ModelManager> = Arc::new(ModelManager::create(
+        app_config,
+        Arc::new(pool),
+    ));
 
     app_context
 }

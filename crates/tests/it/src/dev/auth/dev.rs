@@ -8,7 +8,8 @@ mod tests {
     use lib_dto::user::{AuthCode, UserForCreate, UserForSignIn};
     // use lib_core::model::user::{UserForCreate, UserForSignIn};
     use crate::context::context::TestContext;
-    use crate::utils::body_utils::{body, message_from_response, value};
+    use lib_utils::json::{body, value};
+
 
     #[tokio::test]
     async fn auth() {

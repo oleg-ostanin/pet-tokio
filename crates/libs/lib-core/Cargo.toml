@@ -29,5 +29,8 @@ sha2 = "0.10.8"
 hmac = "0.12.1"
 serde = { version = "1.0.217", features = ["derive"] }
 
+hyper = { version = "1.0.0", features = ["full"] }
+hyper-util = { version = "0.1", features = ["client", "http1", "client-legacy"] }
+
 # -- Feature: with-rpc
 rpc-router = { workspace = true, optional = true }
