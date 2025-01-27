@@ -45,42 +45,6 @@ pub async fn create_app_context() -> Arc<ModelManager> {
     app_context
 }
 
-pub async fn web_app(app_context: Arc<ModelManager>) -> Router {
-    let routes_rpc = Router::new()
-        .route("/rpc", post(rpc))
-        .route_layer(middleware::from_fn(mw_ctx_check));
-
-    Router::new()
-        .nest("/api", routes_rpc)
-        //.route("/get-books", get(get_books))
-        // .route("/sign-in", post(api_login_handler))
-        .route("/login", post(login))
-        .layer(middleware::map_response(mw_response_map))
-        .layer(middleware::from_fn_with_state(app_context.clone(), mw_ctx_create))
-        .layer(CookieManagerLayer::new())
-        .layer(middleware::from_fn(mw_req_stamp_resolver))
-        .with_state(app_context)
-}
-
-
-async fn get_books(
-    State(app_context): State<Arc<ModelManager>>,
-    cookies: Cookies,
-) -> Result<String, StatusCode> {
-    let var = String::from("nils");
-    info!("{:<12} - get books", var);
-
-    println!("{:?}", "get books");
-
-    let token = cookies.get("auth-token");
-    println!("books 1 {:?}", token);
-
-    let new_token = cookies.get("new-auth-token");
-    println!("books 2 {:?}", new_token);
-
-    Ok("res".to_string())
-}
-
 async fn get_client(db_url: &String) -> Client {
     //Unwrap because if we can't connect we must fail at once
     let (client, connection) =

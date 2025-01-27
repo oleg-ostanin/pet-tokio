@@ -17,7 +17,6 @@ use tokio::net::TcpListener;
 use tokio_postgres::NoTls;
 use tower::builder;
 use lib_core::context::app_context::{AppConfig, ModelManager};
-use lib_web::app::web_app::create_app_context;
 use lib_web::app::web_app::web_app;
 use lib_web::app::auth_app::auth_app;
 
