@@ -35,15 +35,13 @@ pub async fn login(
             .build_http();
 
     let addr = mm.app_config().auth_url.as_str();
+    info!("{:<12} - auth url", &addr);
 
     let check_response = client
         .request(Request::builder()
             .method(http::Method::POST)
             .uri(format!("{addr}/check-code"))
             .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-            .header("cookie", "auth-token=token".to_string())
-            .header("cookie", "new-auth-token=new-token".to_string())
-
             .body(Body::from(serde_json::to_string(&json!(user)).unwrap()))
             .unwrap())
         .await
