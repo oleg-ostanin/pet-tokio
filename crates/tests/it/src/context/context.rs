@@ -3,6 +3,7 @@ use std::fmt::Debug;
 use std::sync::Arc;
 
 use axum::{body::Body, Error, http::{self, Request, StatusCode}};
+use axum::http::HeaderValue;
 use axum::response::Response;
 use axum::routing::get;
 use http_body_util::BodyExt;
@@ -149,7 +150,7 @@ impl TestContext {
         self.auth_token.take()
     }
 
-    pub(crate) async fn create_user(&self, user_body: &UserForCreate) -> Response<Incoming> {
+    pub(crate) async fn create_user(&mut self, user_body: &UserForCreate) -> Response<Incoming> {
         self.post("/sign-up", json!(user_body)).await
     }
 
@@ -161,7 +162,7 @@ impl TestContext {
         self.post("/check-code", json!(user_body)).await
     }
 
-    pub(crate) async fn post(&self, path: impl Into<String>, body: Value) -> Response<Incoming> {
+    pub(crate) async fn post(&mut self, path: impl Into<String>, body: Value) -> Response<Incoming> {
         let addr = &self.socket_addr;
         let path: String = path.into();
 
@@ -175,12 +176,27 @@ impl TestContext {
         }
 
         let builder = builder.body(Body::from(serde_json::to_string(&json!(body)).unwrap())).unwrap();
-
-        self.client
+        let response = self.client
             .request(builder)
             .await
-            .unwrap()
+            .unwrap();
+
+        let token = extract_token(&response);
+        if let Some(token) = token {
+            self.auth_token = Some(token);
+        }
+
+        response
     }
+}
+
+pub(crate) fn extract_token(response: &Response<Incoming>) -> Option<String> {
+    let headers = response.headers();
+    let value: Option<&HeaderValue> = headers.get("set-cookie");
+    if let Some(value) = value {
+        return Some(value.to_str().unwrap().to_string())
+    }
+    None
 }
 
 async fn get_pool(db_url: &String) -> Pool<sqlx::Postgres> {

@@ -33,40 +33,19 @@ mod tests {
 
         println!("{:?}", &login_response);
 
-        let token = extract_token(login_response);
-
         //{"jsonrpc": "2.0", "method": "subtract", "params": {"minuend": 42, "subtrahend": 23}, "id": 4}
-        let request = Json(json!({
+        let request = json!({
         "jsonrpc": "2.0",
         "method": "get",
         "params": {"minuend": 42, "subtrahend": 23},
-        "id": 4})
-        );
-        let request_str = request.to_string();
+        "id": 4});
+        let request_str = &request.to_string();
         println!("request_str: {:?}", &request_str);
 
-        let rpc_response = ctx.client
-            .request(Request::builder()
-                .method(http::Method::POST)
-                .uri(format!("http://{web_addr}/api/rpc"))
-                .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-                .header("cookie", token)
-                .body(Body::from(request_str))
-                .unwrap())
-            .await
-            .unwrap();
+        let rpc_response = ctx.post("/api/rpc", request).await;
 
         println!("{:?}", &rpc_response);
         let value = value(rpc_response).await;
         println!("{:?}", &value);
     }
-}
-
-pub(crate) fn extract_token(response: Response<Incoming>) -> String {
-    let headers = response.headers();
-    let value: Option<&HeaderValue> = headers.get("set-cookie");
-    let s = value.unwrap().to_str().unwrap();
-
-    println!("auth token: {:?}", &s);
-    s.to_string()
 }
