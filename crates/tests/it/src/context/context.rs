@@ -1,4 +1,5 @@
 use core::net::SocketAddr;
+use std::fmt::Debug;
 use std::sync::Arc;
 
 use axum::{body::Body, Error, http::{self, Request, StatusCode}};
@@ -9,7 +10,7 @@ use hyper::body::{Buf, Incoming};
 use hyper_util::client::legacy::Client;
 use hyper_util::client::legacy::connect::HttpConnector;
 // for `collect`
-use serde_json::json;
+use serde_json::{json, Value};
 use sqlx::Pool;
 use sqlx::postgres::PgPoolOptions;
 use testcontainers::{clients, Container, images::postgres::Postgres};
@@ -148,47 +149,6 @@ impl TestContext {
         self.auth_token.take()
     }
 
-    pub(crate) async fn get_books(&self) -> () {
-        let addr = &self.socket_addr;
-
-        let mut cookie = Cookie::new("AUTH_TOKEN", "token".to_string());
-
-        let get_response = self.client
-            .request(Request::builder()
-                .method(http::Method::GET)
-                .uri(format!("http://{addr}/get-books"))
-                .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-                .header("cookie", "auth-token=token".to_string())
-                .header("cookie", "new-auth-token=new-token".to_string())
-
-                .body(Body::empty())
-                .unwrap())
-            .await
-            .unwrap();
-
-        assert_eq!(get_response.status(), StatusCode::OK);
-    }
-
-    pub(crate) async fn get_user_response_by_id(&self, user_id: i64) -> Response<Incoming> {
-        let path = format!("/get-by-id/{user_id}");
-
-        self.client
-            .request(self.get_builder(path))
-            .await
-            .unwrap()
-    }
-
-    // pub(crate) async fn get_user_by_id(&self, user_id: i64) -> Option<UserStored> {
-    //     let response = self.get_user_response_by_id(user_id).await;
-    //     Self::user_from_response(response).await
-    // }
-    //
-    // async fn user_from_response(response: Response<Incoming>) -> Option<UserStored> {
-    //     let body = response.collect().await.unwrap().aggregate();
-    //     let user: UserStored = serde_json::from_reader(body.reader()).unwrap();
-    //     Some(user)
-    // }
-    //
     pub(crate) async fn create_user(&self, user_body: &UserForCreate) -> Response<Incoming> {
         let addr = &self.socket_addr;
 
@@ -196,7 +156,6 @@ impl TestContext {
                 .method(http::Method::POST)
                 .uri(format!("http://{addr}/sign-up"))
                 .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-                .header("meta-cookie", "create_user")
                 .body(Body::from(serde_json::to_string(&json!(user_body)).unwrap()))
                 .unwrap())
             .await
@@ -217,37 +176,17 @@ impl TestContext {
             .unwrap()
     }
 
+
     pub(crate) async fn check_code(&mut self, user_body: AuthCode) -> Response<Incoming> {
-        let addr = &self.socket_addr;
-
-        self.client
-            .request(Request::builder()
-                .method(http::Method::POST)
-                .uri(format!("http://{addr}/check-code"))
-                .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-                .body(Body::from(serde_json::to_string(&json!(user_body)).unwrap()))
-                .unwrap())
-            .await
-            .unwrap()
+        self.post("/check-code", json!(user_body)).await
     }
 
-    pub(crate) async fn get_auth_cookie(&mut self, sign_in_response: &Response<Incoming>) -> Option<String> {
-        let sc = sign_in_response.headers().get("set-cookie");
-        if let Some(hv) = sc {
-            let hv_str = hv.to_str().unwrap().to_string();
-            self.auth_token = Some(hv_str.clone());
-            Some(hv_str.to_string())
-        } else {
-            None
-        }
-    }
-
-    fn get_builder(&self, path: impl Into<String>) -> Request<Body> {
+    async fn post(&self, path: impl Into<String>, body: Value) -> Response<Incoming> {
         let addr = &self.socket_addr;
         let path: String = path.into();
 
         let mut builder = Request::builder()
-            .method(http::Method::GET)
+            .method(http::Method::POST)
             .uri(format!("http://{addr}{path}"))
             .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref());
 
@@ -255,7 +194,12 @@ impl TestContext {
             builder = builder.header("cookie", auth_token)
         }
 
-        builder.body(Body::empty()).unwrap()
+        let builder = builder.body(Body::from(serde_json::to_string(&json!(body)).unwrap())).unwrap();
+
+        self.client
+            .request(builder)
+            .await
+            .unwrap()
     }
 }
 
