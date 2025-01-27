@@ -122,10 +122,7 @@ pub(crate) fn extract_token(response: Response<Incoming>) -> String {
     let headers = response.headers();
     let value: Option<&HeaderValue> = headers.get("set-cookie");
     let s = value.unwrap().to_str().unwrap();
-    //let s = s.replace("auth-token=", "");
-    //let s = s.replace("; HttpOnly; Path=/", "");
 
-    println!("{:?}", &s);
-
+    println!("auth token: {:?}", &s);
     s.to_string()
 }

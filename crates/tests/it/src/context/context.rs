@@ -23,6 +23,7 @@ use lib_web::app::auth_app::auth_app;
 
 use dotenv::dotenv;
 use tower_cookies::{Cookie, Cookies};
+use tracing::info;
 use uuid::Uuid;
 use lib_dto::user::{AuthCode, UserForCreate, UserForSignIn};
 //use lib_core::model::user::{UserForCreate, UserForLogin, UserForSignIn, UserStored};
@@ -41,9 +42,9 @@ struct HeaderWrapper {
 pub(crate) struct TestContext<> {
     docker: &'static clients::Cli,
     pg_container: &'static(Container<'static, Postgres>),
-    client: Client<HttpConnector, Body>,
+    pub(crate) client: Client<HttpConnector, Body>,
     mock_server: MockServer,
-    socket_addr: SocketAddr,
+    pub(crate) socket_addr: SocketAddr,
     auth_token: Option<String>,
     headers: Vec<HeaderWrapper>,
 }
@@ -56,6 +57,12 @@ pub(crate) enum ServiceType {
 impl TestContext {
     pub(crate) async fn new(service_type: ServiceType) -> Self {
         dotenv().ok();
+        tracing_subscriber::fmt()
+            .without_time() // For early local development.
+            .with_target(false)
+            .init();
+        info!("info");
+
         let mock_server = MockServer::start().await;
 
         let docker: &'static clients::Cli = Box::leak(Box::new(clients::Cli::default()));
@@ -128,6 +135,14 @@ impl TestContext {
             auth_token: None,
             headers: Vec::new(),
         }
+    }
+
+    pub(crate) async fn setup_mock(&self) {
+        Mock::given(method("POST"))
+            .and(path("/check-code"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&self.mock_server)
+            .await;
     }
 
     pub(crate) fn invalidate_token(&mut self) -> Option<String> {
