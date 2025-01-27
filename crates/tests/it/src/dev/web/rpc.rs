@@ -29,15 +29,7 @@ mod tests {
         let auth_code = AuthCode::new("2128506".to_string(), "any_string");
         let web_addr = &ctx.socket_addr;
 
-        let login_response = ctx.client
-            .request(Request::builder()
-                .method(http::Method::POST)
-                .uri(format!("http://{web_addr}/login"))
-                .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-                .body(Body::from(serde_json::to_string(&json!(auth_code)).unwrap()))
-                .unwrap())
-            .await
-            .unwrap();
+        let login_response = ctx.post("/login", json!(auth_code)).await;
 
         println!("{:?}", &login_response);
 

@@ -150,38 +150,18 @@ impl TestContext {
     }
 
     pub(crate) async fn create_user(&self, user_body: &UserForCreate) -> Response<Incoming> {
-        let addr = &self.socket_addr;
-
-        self.client.request(Request::builder()
-                .method(http::Method::POST)
-                .uri(format!("http://{addr}/sign-up"))
-                .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-                .body(Body::from(serde_json::to_string(&json!(user_body)).unwrap()))
-                .unwrap())
-            .await
-            .unwrap()
+        self.post("/sign-up", json!(user_body)).await
     }
 
     pub(crate) async fn sign_in_user(&mut self, user_body: UserForSignIn) -> Response<Incoming> {
-        let addr = &self.socket_addr;
-
-        self.client
-            .request(Request::builder()
-                .method(http::Method::POST)
-                .uri(format!("http://{addr}/sign-in"))
-                .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-                .body(Body::from(serde_json::to_string(&json!(user_body)).unwrap()))
-                .unwrap())
-            .await
-            .unwrap()
+        self.post("/sign-in", json!(user_body)).await
     }
-
 
     pub(crate) async fn check_code(&mut self, user_body: AuthCode) -> Response<Incoming> {
         self.post("/check-code", json!(user_body)).await
     }
 
-    async fn post(&self, path: impl Into<String>, body: Value) -> Response<Incoming> {
+    pub(crate) async fn post(&self, path: impl Into<String>, body: Value) -> Response<Incoming> {
         let addr = &self.socket_addr;
         let path: String = path.into();
 
