@@ -48,6 +48,7 @@ pub async fn rpc(
 
 	let call_res = match rpc_req.method.as_str() {
 		"get" => get().await,
+		"add_books" => add_books(rpc_req.params.expect("must be")).await,
 		_ => unreachable!(),
 	};
 
@@ -87,6 +88,13 @@ pub async fn rpc(
 	res
 
 	//StatusCode::OK.into_response()
+}
+
+async fn add_books(params: Value) -> Result<Value> {
+	Ok(json!({
+			"phone": "212",
+			"password": params.to_string(),
+	}))
 }
 
 async fn get() -> Result<Value> {
