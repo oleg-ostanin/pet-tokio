@@ -8,7 +8,7 @@ use tokio_postgres::{Error, Row};
 use tokio_postgres::types::ToSql;
 use uuid::Uuid;
 
-#[derive(Debug, Deserialize, Serialize, Builder)]
+#[derive(Debug, Deserialize, Serialize, Builder, FromRow)]
 pub struct BookInfo {
     pub title: String,
     pub author: Option<String>,
