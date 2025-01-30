@@ -10,7 +10,7 @@ pub struct BookBmc;
 //todo return phone type
 const INSERT_BOOK: &str = r#"
 INSERT INTO book_info
-(title, author, isbn, description,
+(title, author, isbn, description
   --, created_at, updated_at todo
 )
 VALUES

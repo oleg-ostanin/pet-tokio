@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS "book_info" (
   title varchar(128) NOT NULL UNIQUE,
   author varchar(256),
   isbn varchar(128) NOT NULL UNIQUE,
-  description varchar(1024),
+  description TEXT,
 
     -- Timestamps
     created_at timestamp with time zone NOT NULL DEFAULT now(),

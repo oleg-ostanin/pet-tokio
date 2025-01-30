@@ -1,3 +1,4 @@
+use std::ops::Deref;
 use axum::extract::State;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
@@ -5,7 +6,9 @@ use rpc_router::resources_builder;
 use serde_json::{json, Value};
 use std::sync::Arc;
 use axum::http::StatusCode;
+use lib_core::bmc::book_info::BookBmc;
 use lib_core::context::app_context::ModelManager;
+use lib_dto::book::BookList;
 use crate::ctx::CtxW;
 
 use crate::error::{Error, Result};
@@ -48,7 +51,7 @@ pub async fn rpc(
 
 	let call_res = match rpc_req.method.as_str() {
 		"get" => get().await,
-		"add_books" => add_books(rpc_req.params.expect("must be")).await,
+		"add_books" => add_books(app_context.deref(), rpc_req.params.expect("must be")).await,
 		_ => unreachable!(),
 	};
 
@@ -90,10 +93,14 @@ pub async fn rpc(
 	//StatusCode::OK.into_response()
 }
 
-async fn add_books(params: Value) -> Result<Value> {
+async fn add_books(mm: &ModelManager, params: Value) -> Result<Value> {
+	let book_list: BookList = serde_json::from_str(&params.to_string()).unwrap();
+	for book_info in book_list.book_list.into_iter() {
+		BookBmc::create(mm, book_info).await.unwrap();
+	}
 	Ok(json!({
 			"phone": "212",
-			"password": params.to_string(),
+			"password": "result_password",
 	}))
 }
 
