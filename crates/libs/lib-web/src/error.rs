@@ -8,6 +8,8 @@ use serde_json::Value;
 use serde_with::{DisplayFromStr, serde_as};
 use tracing::{debug, warn};
 
+use strum_macros;
+
 use crate::middleware;
 
 pub type Result<T> = core::result::Result<T, Error>;
@@ -68,4 +70,82 @@ impl From<PoisonError<RwLockReadGuard<'_, HashMap<String, String>>>> for Error {
     fn from(value: PoisonError<RwLockReadGuard<'_, HashMap<String, String>>>) -> Self {
         Error::FailedToWriteCache
     }
+}
+
+/// From the root error to the http status code and ClientError
+impl Error {
+    pub fn client_status_and_error(&self) -> (StatusCode, ClientError) {
+        use Error::*; // TODO: should change to `use web::Error as E`
+
+        match self {
+            // -- Login
+            WebError => {
+                (StatusCode::FORBIDDEN, ClientError::LOGIN_FAIL)
+            }
+
+            // // -- Auth
+            // CtxExt(_) => (StatusCode::FORBIDDEN, ClientError::NO_AUTH),
+            //
+            // // -- Model
+            // Model(model::Error::EntityNotFound { entity, id }) => (
+            //     StatusCode::BAD_REQUEST,
+            //     ClientError::ENTITY_NOT_FOUND { entity, id: *id },
+            // ),
+            //
+            // // -- Rpc
+            // RpcRequestParsing(req_parsing_err) => (
+            //     StatusCode::BAD_REQUEST,
+            //     ClientError::RPC_REQUEST_INVALID(req_parsing_err.to_string()),
+            // ),
+            // RpcRouter {
+            //     error: rpc_router::Error::MethodUnknown,
+            //     method,
+            //     ..
+            // } => (
+            //     StatusCode::BAD_REQUEST,
+            //     ClientError::RPC_REQUEST_METHOD_UNKNOWN(format!(
+            //         "rpc method '{method}' unknown"
+            //     )),
+            // ),
+            // RpcRouter {
+            //     error: rpc_router::Error::ParamsParsing(params_parsing_err),
+            //     ..
+            // } => (
+            //     StatusCode::BAD_REQUEST,
+            //     ClientError::RPC_PARAMS_INVALID(params_parsing_err.to_string()),
+            // ),
+            // RpcRouter {
+            //     error: rpc_router::Error::ParamsMissingButRequested,
+            //     method,
+            //     ..
+            // } => (
+            //     StatusCode::BAD_REQUEST,
+            //     ClientError::RPC_PARAMS_INVALID(format!(
+            //         "Params missing. Method '{method}' requires params"
+            //     )),
+            // ),
+
+            // -- Fallback.
+            _ => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ClientError::SERVICE_ERROR,
+            ),
+        }
+    }
+}
+
+
+#[derive(Debug, Serialize, strum_macros::AsRefStr)]
+#[serde(tag = "message", content = "detail")]
+#[allow(non_camel_case_types)]
+pub enum ClientError {
+    LOGIN_FAIL,
+    NO_AUTH,
+    ENTITY_NOT_FOUND { entity: &'static str, id: i64 },
+
+    RPC_REQUEST_INVALID(String),
+    RPC_REQUEST_METHOD_UNKNOWN(String),
+    RPC_PARAMS_INVALID(String),
+
+    SERVICE_ERROR,
 }

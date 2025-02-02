@@ -12,28 +12,52 @@ use std::sync::Arc;
 use tower_cookies::Cookies;
 use tracing::debug;
 use uuid::Uuid;
+use crate::ctx::CtxW;
+use crate::handlers::rpc::RpcInfo;
 
 pub async fn mw_response_map(
-	//ctx: Option<CtxW>,
+	ctx: Option<CtxW>,
 	uri: Uri,
 	req_method: Method,
 	req_stamp: ReqStamp,
 	res: Response,
 ) -> Response {
-	//let ctx = ctx.map(|ctx| ctx.0);
+	let ctx = ctx.map(|ctx| ctx.0);
 
-	debug!("{:<12} - mw_response_map", "RES_MAPPER");
+	debug!("{:<12} - mw_reponse_map", "RES_MAPPER");
 	let uuid = Uuid::new_v4();
 
-	//let rpc_info = res.extensions().get::<Arc<RpcInfo>>().map(Arc::as_ref);
+	let rpc_info = res.extensions().get::<Arc<RpcInfo>>().map(Arc::as_ref);
 
 	// -- Get the eventual response error.
 	let web_error = res.extensions().get::<Arc<Error>>().map(Arc::as_ref);
+	let client_status_error = web_error.map(|se| se.client_status_and_error());
 
-    if let Some(web_error) = res.extensions().get::<Arc<Error>>().map(Arc::as_ref) {
-		// -- If client error, build the new response.
-		return  StatusCode::INTERNAL_SERVER_ERROR.into_response();
-	}
+	// -- If client error, build the new reponse.
+	let error_response =
+		client_status_error
+			.as_ref()
+			.map(|(status_code, client_error)| {
+				let client_error = to_value(client_error).ok();
+				let message = client_error.as_ref().and_then(|v| v.get("message"));
+				let detail = client_error.as_ref().and_then(|v| v.get("detail"));
 
-	res
+				let client_error_body = json!({
+					"id": rpc_info.as_ref().map(|rpc| rpc.id.clone()),
+					"error": {
+						"message": message, // Variant name
+						"data": {
+							"req_uuid": uuid.to_string(),
+							"detail": detail
+						},
+					}
+				});
+
+				debug!("CLIENT ERROR BODY:\n{client_error_body}");
+
+				// Build the new response from the client_error_body
+				(*status_code, Json(client_error_body)).into_response()
+			});
+
+	error_response.unwrap_or(res)
 }
