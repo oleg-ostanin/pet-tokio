@@ -4,6 +4,7 @@ use tower::{Service, ServiceExt};
 
 #[cfg(test)]
 mod tests {
+    use serde_json::Value;
     use lib_dto::book::BookList;
     use lib_utils::json::value;
 
@@ -19,11 +20,17 @@ mod tests {
 
         let book_list: BookList = from_file("books_refactored.json");
         let request = request("add_books", Some(book_list));
-
         let rpc_response = ctx.post("/api/rpc", request).await;
 
         println!("{:?}", &rpc_response);
         let value = value(rpc_response).await;
         println!("{:?}", &value);
+
+        let request = crate::dev::web::request("all_books", Some(Value::Null));
+        let rpc_response = ctx.post("/api/rpc", request).await;
+
+        println!("all books response: {:?}", &rpc_response);
+        let value = lib_utils::json::value(rpc_response).await;
+        println!("all books: {:?}", &value);
     }
 }

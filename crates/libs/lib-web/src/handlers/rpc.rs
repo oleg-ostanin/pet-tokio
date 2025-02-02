@@ -52,6 +52,7 @@ pub async fn rpc(
 	let call_res = match rpc_req.method.as_str() {
 		"get" => get().await,
 		"add_books" => add_books(app_context.deref(), rpc_req.params.expect("must be")).await,
+		"all_books" => all_books(app_context.deref()).await,
 		_ => unreachable!(),
 	};
 
@@ -98,10 +99,11 @@ async fn add_books(mm: &ModelManager, params: Value) -> Result<Value> {
 	for book_info in book_list.book_list.into_iter() {
 		BookBmc::create(mm, book_info).await.unwrap();
 	}
-	Ok(json!({
-			"phone": "212",
-			"password": "result_password",
-	}))
+	Ok(Value::Null)
+}
+
+async fn all_books(mm: &ModelManager) -> Result<Value> {
+	Ok(json!(BookBmc::get_all(mm).await?))
 }
 
 async fn get() -> Result<Value> {
