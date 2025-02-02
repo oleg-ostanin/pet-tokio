@@ -37,18 +37,12 @@ impl<S: Send + Sync> FromRequestParts<S> for CtxW {
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self> {
         info!("{:<12} - Ctx", "EXTRACTOR");
 
-        let res = parts
+        parts
             .extensions
             .get::<CtxExtResult>()
-            //.ok_or(Error::CtxExt(CtxExtError::CtxNotInRequestExt))?
-            .ok_or(Error::WebError)?
-            .clone();
-            //.map_err(Error::CtxExt)
-
-        match res {
-            Ok(res) => Ok(res),
-            Err(_) => Err(Error::WebError)
-        }
+            .ok_or(Error::CtxExt(CtxExtError::CtxNotInRequestExt))?
+            .clone()
+            .map_err(Error::CtxExt)
     }
 }
 // endregion: --- Ctx Extractor

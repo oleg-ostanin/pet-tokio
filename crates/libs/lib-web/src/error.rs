@@ -6,7 +6,7 @@ use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 use serde_json::Value;
 use serde_with::{DisplayFromStr, serde_as};
-use tracing::{debug, warn};
+use tracing::{debug, info, warn};
 
 use strum_macros;
 
@@ -32,7 +32,7 @@ pub enum Error {
 // region:    --- Axum IntoResponse
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        debug!("{:<12} - model::Error {self:?}", "INTO_RES");
+        info!("{:<12} - model::Error {self:?}", "INTO_RES");
 
         // Create a placeholder Axum response.
         let mut response = StatusCode::INTERNAL_SERVER_ERROR.into_response();
@@ -95,8 +95,8 @@ impl Error {
                 (StatusCode::FORBIDDEN, ClientError::LOGIN_FAIL)
             }
 
-            // // -- Auth
-            // CtxExt(_) => (StatusCode::FORBIDDEN, ClientError::NO_AUTH),
+            // -- Auth
+            CtxExt(_) => (StatusCode::FORBIDDEN, ClientError::LOGIN_FAIL),
             //
             // // -- Model
             // Model(model::Error::EntityNotFound { entity, id }) => (
