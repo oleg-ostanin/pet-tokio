@@ -10,7 +10,7 @@ use axum::Json;
 use serde_json::{json, to_value};
 use std::sync::Arc;
 use tower_cookies::Cookies;
-use tracing::debug;
+use tracing::{debug, info};
 use uuid::Uuid;
 use crate::ctx::CtxW;
 use crate::handlers::rpc::RpcInfo;
@@ -24,7 +24,7 @@ pub async fn mw_response_map(
 ) -> Response {
 	let ctx = ctx.map(|ctx| ctx.0);
 
-	debug!("{:<12} - mw_reponse_map", "RES_MAPPER");
+	info!("{:<12} - mw_response_map", "RES_MAPPER");
 	let uuid = Uuid::new_v4();
 
 	let rpc_info = res.extensions().get::<Arc<RpcInfo>>().map(Arc::as_ref);
@@ -39,8 +39,12 @@ pub async fn mw_response_map(
 			.as_ref()
 			.map(|(status_code, client_error)| {
 				let client_error = to_value(client_error).ok();
+				info!("client_error: {:?}", &client_error);
 				let message = client_error.as_ref().and_then(|v| v.get("message"));
+				info!("message: {:?}", &message);
 				let detail = client_error.as_ref().and_then(|v| v.get("detail"));
+				info!("detail: {:?}", &detail);
+
 
 				let client_error_body = json!({
 					"id": rpc_info.as_ref().map(|rpc| rpc.id.clone()),

@@ -11,13 +11,19 @@ use tracing::{debug, warn};
 use strum_macros;
 
 use crate::middleware;
+use crate::ctx::CtxExtError;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
-#[derive(Debug, Serialize)]
+//#[serde_as]
+#[derive(Debug, Serialize, strum_macros::AsRefStr)]
+#[serde(tag = "type", content = "data")]
 pub enum Error {
-	// -- Extractors
     WebError,
+
+    // -- CtxExtError
+    CtxExt(CtxExtError),
+
     FailedToWriteCache,
     FailedToReadCache,
 	ReqStampNotInReqExt,
@@ -57,6 +63,12 @@ impl std::error::Error for Error {}
 impl From<lib_core::error::Error> for Error {
     fn from(value: lib_core::error::Error) -> Self {
         Error::WebError
+    }
+}
+
+impl From<CtxExtError> for Error {
+    fn from(value: CtxExtError) -> Self {
+        Error::CtxExt(value)
     }
 }
 

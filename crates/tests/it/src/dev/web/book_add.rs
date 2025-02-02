@@ -4,6 +4,7 @@ use tower::{Service, ServiceExt};
 
 #[cfg(test)]
 mod tests {
+    use axum::http::StatusCode;
     use serde_json::Value;
     use lib_dto::book::BookList;
     use lib_utils::json::value;
@@ -11,6 +12,7 @@ mod tests {
     use crate::context::context::{ServiceType, TestContext};
     use crate::dev::web::login;
     use crate::dev::web::request;
+    use crate::utils::body_utils::message_from_response;
     use crate::utils::file_utils::from_file;
 
     #[tokio::test]
@@ -32,5 +34,19 @@ mod tests {
         println!("all books response: {:?}", &rpc_response);
         let value = lib_utils::json::value(rpc_response).await;
         println!("all books: {:?}", &value);
+    }
+
+    #[tokio::test]
+    async fn without_login() {
+        let mut ctx = TestContext::new(ServiceType::Web).await;
+        //login(&mut ctx).await;
+
+        let book_list: BookList = from_file("books_refactored.json");
+        let request = request("add_books", Some(book_list));
+        let rpc_response = ctx.post("/api/rpc", request).await;
+
+        assert_eq!(rpc_response.status(), StatusCode::FORBIDDEN);
+        let message = message_from_response(rpc_response).await;
+        assert_eq!(message, "LOGIN_FAIL");
     }
 }
