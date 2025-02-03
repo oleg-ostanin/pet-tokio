@@ -6,7 +6,7 @@ use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 use serde_json::Value;
 use serde_with::{DisplayFromStr, serde_as};
-use tracing::{debug, info, warn};
+use tracing::{debug, error, info, warn};
 
 use strum_macros;
 
@@ -24,6 +24,8 @@ pub enum Error {
     // -- CtxExtError
     CtxExt(CtxExtError),
 
+    FailedToConvertJson,
+    FailedToSendRequest,
     FailedToWriteCache,
     FailedToReadCache,
 	ReqStampNotInReqExt,
@@ -66,6 +68,20 @@ impl From<lib_core::error::Error> for Error {
     }
 }
 
+impl From<serde_json::Error> for Error {
+    fn from(value: serde_json::Error) -> Self {
+        error!("{:?}", value);
+        Error::FailedToConvertJson
+    }
+}
+
+impl From<hyper_util::client::legacy::Error> for Error {
+    fn from(value: hyper_util::client::legacy::Error) -> Self {
+        error!("{:?}", value);
+        Error::FailedToSendRequest
+    }
+}
+
 impl From<CtxExtError> for Error {
     fn from(value: CtxExtError) -> Self {
         Error::CtxExt(value)
@@ -97,6 +113,9 @@ impl Error {
 
             // -- Auth
             CtxExt(_) => (StatusCode::FORBIDDEN, ClientError::LOGIN_FAIL),
+
+            // -- Auth
+            FailedToConvertJson => (StatusCode::BAD_REQUEST, ClientError::LOGIN_FAIL),
             //
             // // -- Model
             // Model(model::Error::EntityNotFound { entity, id }) => (

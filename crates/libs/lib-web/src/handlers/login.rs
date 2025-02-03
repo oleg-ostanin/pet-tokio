@@ -1,4 +1,3 @@
-use std::error::Error;
 use std::sync::Arc;
 
 use axum::body::Body;
@@ -21,11 +20,15 @@ use lib_core::context::app_context::ModelManager;
 use lib_dto::user::{AuthCode, UserForCreate};
 use lib_utils::jwt::token;
 
+use crate::error::{Error, Result};
+
+
 pub async fn login(
     State(mm): State<Arc<ModelManager>>,
     cookies: Cookies,
-    Json(user): Json<AuthCode>,
-) -> Result<(), StatusCode> {
+    Json(user): Json<Value>,
+) -> Result<()> {
+    let user: AuthCode = serde_json::from_value(user)?;
 
     info!("{:<12} - login phone", &user.phone);
     info!("{:<12} - login code", &user.auth_code);
@@ -36,28 +39,29 @@ pub async fn login(
 
     let addr = mm.app_config().auth_url.as_str();
     info!("{:<12} - auth url", &addr);
+    let body_str = serde_json::to_string(&json!(user)).expect("User should be valid");
+    let request = Request::builder()
+        .method(http::Method::POST)
+        .uri(format!("{addr}/check-code"))
+        .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
+        .body(Body::from(body_str)).expect("Request should be valid");
 
     let check_response = client
-        .request(Request::builder()
-            .method(http::Method::POST)
-            .uri(format!("{addr}/check-code"))
-            .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-            .body(Body::from(serde_json::to_string(&json!(user)).unwrap()))
-            .unwrap())
-        .await
-        .unwrap();
+        .request(request)
+        .await?;
 
-    let token_key = std::env::var("SERVICE_TOKEN_KEY").expect("TOKEN must be set.");
-    if check_response.status() == StatusCode::OK {
-        let token = token(&user.phone, token_key.as_str());
-        let mut cookie = Cookie::new(AUTH_TOKEN, token);
-        cookie.set_http_only(true);
-        cookie.set_path("/");
-        cookies.add(cookie);
+    let token_key = std::env::var("SERVICE_TOKEN_KEY").expect("Token must be set.");
+    match check_response.status() {
+        StatusCode::OK => {
+            let token = token(&user.phone, token_key.as_str());
+            let mut cookie = Cookie::new(AUTH_TOKEN, token);
+            cookie.set_http_only(true);
+            cookie.set_path("/");
+            cookies.add(cookie);
 
-        info!("{:<12} - login code", &user.auth_code);
-        return Ok(());
+            info!("{:<12} - login code", &user.auth_code);
+            return Ok(());
+        }
+        _ => Err(Error::WebError)
     }
-
-    Err(StatusCode::FORBIDDEN)
 }

@@ -1,4 +1,5 @@
 use serde::Serialize;
+use tracing::info;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -24,7 +25,7 @@ impl std::error::Error for Error {}
 
 impl From<sqlx::Error> for Error {
     fn from(value: sqlx::Error) -> Self {
-        println!("{:?}", value);
+        info!("sqlx error: {:?}", value);
         Error::CoreError
     }
 }
