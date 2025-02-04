@@ -10,7 +10,7 @@ mod book_add;
 
 /// performs login for further RPC requests
 async fn login(ctx: &mut TestContext) {
-    ctx.setup_mock().await;
+    ctx.mock_ok().await;
     let auth_code = AuthCode::new("2128506".to_string(), "any_string");
     let login_response = ctx.post("/login", json!(auth_code)).await;
     info!("{:?}", &login_response);

@@ -138,10 +138,18 @@ impl TestContext {
         }
     }
 
-    pub(crate) async fn setup_mock(&self) {
+    pub(crate) async fn mock_ok(&self) {
         Mock::given(method("POST"))
             .and(path("/check-code"))
             .respond_with(ResponseTemplate::new(200))
+            .mount(&self.mock_server)
+            .await;
+    }
+
+    pub(crate) async fn mock_forbidden(&self) {
+        Mock::given(method("POST"))
+            .and(path("/check-code"))
+            .respond_with(ResponseTemplate::new(403))
             .mount(&self.mock_server)
             .await;
     }

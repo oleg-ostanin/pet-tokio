@@ -50,9 +50,9 @@ pub async fn login(
         .request(request)
         .await?;
 
-    let token_key = std::env::var("SERVICE_TOKEN_KEY").expect("Token must be set.");
     match check_response.status() {
         StatusCode::OK => {
+            let token_key = std::env::var("SERVICE_TOKEN_KEY").expect("Token must be set.");
             let token = token(&user.phone, token_key.as_str());
             let mut cookie = Cookie::new(AUTH_TOKEN, token);
             cookie.set_http_only(true);
@@ -61,6 +61,10 @@ pub async fn login(
 
             info!("{:<12} - login code", &user.auth_code);
             return Ok(());
+        }
+        StatusCode::FORBIDDEN => {
+            info!("{:<12} - status code: FORBIDDEN", &user.phone);
+            Err(Error::WebError)
         }
         _ => Err(Error::WebError)
     }

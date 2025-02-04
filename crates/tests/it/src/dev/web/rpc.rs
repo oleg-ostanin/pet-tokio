@@ -25,7 +25,7 @@ mod tests {
     #[tokio::test]
     async fn rpc() {
         let mut ctx = TestContext::new(ServiceType::Web).await;
-        ctx.setup_mock().await;
+        ctx.mock_ok().await;
         let auth_code = AuthCode::new("2128506".to_string(), "any_string");
         let web_addr = &ctx.socket_addr;
 
