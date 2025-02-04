@@ -32,7 +32,7 @@ use crate::context::sql::{CREATE_PHONE_TYPE, CREATE_USER_TABLE};
 // for `call`, `oneshot`, and `ready`
 
 use wiremock::{MockServer, Mock, ResponseTemplate};
-use wiremock::matchers::{method, path};
+use wiremock::matchers::{body_json, method, path};
 
 #[derive(Debug, Clone)]
 struct HeaderWrapper {
@@ -44,7 +44,7 @@ pub(crate) struct TestContext<> {
     docker: &'static clients::Cli,
     pg_container: &'static(Container<'static, Postgres>),
     pub(crate) client: Client<HttpConnector, Body>,
-    mock_server: MockServer,
+    pub(crate) mock_server: MockServer,
     pub(crate) socket_addr: SocketAddr,
     auth_token: Option<String>,
     headers: Vec<HeaderWrapper>,
@@ -138,17 +138,19 @@ impl TestContext {
         }
     }
 
-    pub(crate) async fn mock_ok(&self) {
+    pub(crate) async fn mock_ok(&self, value: Value) {
         Mock::given(method("POST"))
             .and(path("/check-code"))
+            .and(body_json(&value))
             .respond_with(ResponseTemplate::new(200))
             .mount(&self.mock_server)
             .await;
     }
 
-    pub(crate) async fn mock_forbidden(&self) {
+    pub(crate) async fn mock_forbidden(&self, value: Value) {
         Mock::given(method("POST"))
             .and(path("/check-code"))
+            .and(body_json(&value))
             .respond_with(ResponseTemplate::new(403))
             .mount(&self.mock_server)
             .await;

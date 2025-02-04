@@ -5,8 +5,9 @@ use tower::{Service, ServiceExt};
 #[cfg(test)]
 mod tests {
     use axum::http::StatusCode;
-    use serde_json::Value;
+    use serde_json::{json, Value};
     use lib_dto::book::BookList;
+    use lib_dto::user::AuthCode;
     use lib_utils::json::value;
     use lib_utils::json::body;
 
@@ -44,7 +45,6 @@ mod tests {
     #[tokio::test]
     async fn without_login() {
         let mut ctx = TestContext::new(ServiceType::Web).await;
-        //login(&mut ctx).await;
 
         let book_list: BookList = from_file("books_refactored.json");
         let request = request("add_books", Some(book_list));
@@ -59,7 +59,8 @@ mod tests {
     async fn login_forbidden() {
         let mut ctx = TestContext::new(ServiceType::Web).await;
         login(&mut ctx).await;
-        ctx.mock_forbidden().await;
+        let auth_code_invalid = AuthCode::new("2128506".to_string(), "invalid_code");
+        ctx.mock_forbidden(json!(auth_code_invalid)).await;
 
         let book_list: BookList = from_file("books_refactored.json");
         let request = request("add_books", Some(book_list));
