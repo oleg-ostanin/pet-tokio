@@ -35,10 +35,10 @@ mod tests {
         let rpc_response = ctx.post("/api/rpc", request).await;
         assert_eq!(rpc_response.status(), StatusCode::OK);
         println!("all books response: {:?}", &rpc_response);
-        let v = value(rpc_response).await;
+        let v = value(rpc_response).await.expect("should be valid");
         println!("all books value: {:?}", &v);
         let result = v.get("result").expect("should be valid");
-        let body: BookList = body(result.clone());
+        let body: BookList = body(result.clone()).expect("should ve valid");
         println!("all books: {:?}", &body);
         assert_eq!(5, body.book_list.len());
     }

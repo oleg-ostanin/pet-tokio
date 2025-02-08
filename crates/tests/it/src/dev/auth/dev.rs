@@ -24,9 +24,9 @@ mod tests {
         let response = ctx.sign_in_user(user_to_sigh_in).await;
         assert_eq!(response.status(), StatusCode::OK);
         let value = value(response).await;
-        let auth_code = body::<AuthCode>(value);
+        let auth_code = body::<AuthCode>(value.expect("should ve valid"));
 
-        let user_to_sigh_in = AuthCode::new("2128506", auth_code.auth_code,);
+        let user_to_sigh_in = AuthCode::new("2128506", auth_code.expect("should ve valid").auth_code,);
         let response = ctx.check_code(user_to_sigh_in).await;
         assert_eq!(response.status(), StatusCode::OK);
     }

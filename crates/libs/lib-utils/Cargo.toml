@@ -57,6 +57,7 @@ serde_with = { workspace = true }
 # -- Tracing
 # -- Others
 uuid = {version = "1", features = ["v4","fast-rng",]}
+anyhow = "1.0.95"
 #time = { workspace = true }
 #derive_more = { workspace = true }
 
