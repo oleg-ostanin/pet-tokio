@@ -1,3 +1,4 @@
+use chrono::prelude::*;
 use uuid::Uuid;
 
 use lib_dto::user::{UserForCreate, UserForLogin, UserForSignIn};
@@ -7,18 +8,11 @@ use crate::context::app_context::ModelManager;
 use crate::error::{Error, Result};
 
 pub struct UserBmc;
-//todo timestamps
 const INSERT_USER: &str = r#"
 INSERT INTO users
-(phone, first_name, last_name, pwd
-  , pwd_salt, token_salt
-  --, created_at, updated_at todo
-)
+(phone, first_name, last_name, pwd, pwd_salt, token_salt, created_at, updated_at)
 VALUES
-($1, $2, $3, $4
-  , $5, $6
-  -- , $7, $8 todo
-)
+($1, $2, $3, $4, $5, $6, $7, $8)
 RETURNING id;
 "#;
 
@@ -42,15 +36,17 @@ impl UserBmc {
         };
 
         let pwd_hashed = hash_pwd(to_hash).await?;
-        let token_salt = Uuid::new_v4().to_string();
+        let token_salt = Uuid::new_v4();
 
         sqlx::query_as(INSERT_USER)
             .bind(&user.phone)
             .bind(&user.first_name)
             .bind(&user.last_name)
             .bind(&pwd_hashed)
-            .bind(&pwd_salt.to_string())
+            .bind(&pwd_salt)
             .bind(token_salt)
+            .bind(Utc::now())
+            .bind(Utc::now())
             .fetch_one(mm.pg_pool())
             .await?;
 
@@ -102,7 +98,7 @@ impl UserBmc {
 
         let to_hash = ContentToHash {
             content: user_for_sign_in.password.clone(),
-            salt: Uuid::parse_str(&user.pwd_salt).unwrap(), // todo make it uuid in the database
+            salt: user.pwd_salt,
         };
 
         validate_pwd(to_hash, user.pwd).await?;

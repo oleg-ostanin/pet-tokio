@@ -1,4 +1,5 @@
 use base64::engine::{Engine, general_purpose};
+use thiserror::Error;
 
 pub fn b64u_encode(content: impl AsRef<[u8]>) -> String {
 	general_purpose::URL_SAFE_NO_PAD.encode(content)
@@ -17,26 +18,10 @@ pub fn b64u_decode_to_string(b64u: &str) -> Result<String> {
 		.ok_or(Error::FailToB64uDecode)
 }
 
-// region:    --- Error
-
 pub type Result<T> = core::result::Result<T, Error>;
 
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum Error {
+	#[error("Failed to decode B64u")]
 	FailToB64uDecode,
 }
-
-// region:    --- Error Boilerplate
-impl core::fmt::Display for Error {
-	fn fmt(
-		&self,
-		fmt: &mut core::fmt::Formatter,
-	) -> core::result::Result<(), core::fmt::Error> {
-		write!(fmt, "{self:?}")
-	}
-}
-
-impl std::error::Error for Error {}
-// endregion: --- Error Boilerplate
-
-// endregion: --- Error

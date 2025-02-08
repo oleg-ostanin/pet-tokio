@@ -24,16 +24,8 @@ pub async fn value(response: Response<Incoming>) -> Result<Value> {
     Ok(json_value)
 }
 
-//pub(crate) fn body<T: Deserialize>(json: Value) -> T { // todo investigate why does not work
 pub fn body<T: for<'a> Deserialize<'a>>(json: Value) -> Option<T> {
     serde_json::from_value::<Option<T>>(json)
         .map_err(|e| error!("Failed to parse value: {}", e.to_string()))
         .ok()?
 }
-
-// pub async fn value0(response: Response<Incoming>) -> Result<Value> {
-//     let body = response.collect().await
-//         .and_then(|collected| collected.aggregate())
-//         .and_then(z);
-//     serde_json::from_reader(body.reader())?
-// }

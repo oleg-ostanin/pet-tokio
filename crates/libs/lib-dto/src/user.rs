@@ -80,7 +80,7 @@ pub struct UserForLogin {
     pub pwd: String,
 
     // -- pwd info
-    pub pwd_salt: String,
+    pub pwd_salt: Uuid,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -90,12 +90,6 @@ pub struct UserStored {
     pub first_name: String,
     pub last_name: String,
     pub pwd: String, // todo remove
-    //pub created_at: DateTime<Utc>,
-    //pub updated_at: DateTime<Utc>,
-}
-
-#[derive(Debug)]
-pub enum Userphone {
-    Phone(String),
-    Email(String),
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
