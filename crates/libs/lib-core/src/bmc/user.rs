@@ -7,7 +7,7 @@ use crate::context::app_context::ModelManager;
 use crate::error::{Error, Result};
 
 pub struct UserBmc;
-//todo return phone type
+//todo timestamps
 const INSERT_USER: &str = r#"
 INSERT INTO users
 (phone, first_name, last_name, pwd
@@ -44,7 +44,7 @@ impl UserBmc {
         let pwd_hashed = hash_pwd(to_hash).await?;
         let token_salt = Uuid::new_v4().to_string();
 
-        let row: (i64,) = sqlx::query_as(INSERT_USER)
+        sqlx::query_as(INSERT_USER)
             .bind(&user.phone)
             .bind(&user.first_name)
             .bind(&user.last_name)

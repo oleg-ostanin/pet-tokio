@@ -16,8 +16,8 @@ pub struct Scheme;
 
 impl Scheme  {
 	pub fn hash(&self, to_hash: &ContentToHash) -> Result<String> {
-		let key_str = env::var("SERVICE_PWD_KEY").expect("TOKEN must be set.");
-		let key = b64u_decode(key_str.as_str()).unwrap();
+		let key_str = env::var("SERVICE_PWD_KEY")?;
+		let key = b64u_decode(key_str.as_str()).expect("Key from env must be valid");
 		hash(&key, to_hash)
 	}
 
@@ -26,7 +26,7 @@ impl Scheme  {
 		if raw_pwd_new.eq(&raw_pwd_ref) {
 			Ok(())
 		} else {
-			Err(Error::CoreError)
+			Err(Error::WrongPassword)
 		}
 	}
 }

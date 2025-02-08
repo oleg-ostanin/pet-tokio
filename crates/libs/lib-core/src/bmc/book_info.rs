@@ -4,7 +4,6 @@ use crate::context::app_context::ModelManager;
 use crate::error::Result;
 
 pub struct BookBmc;
-//todo return phone type
 const INSERT_BOOK: &str = r#"
 INSERT INTO book_info
 (title, author, isbn, description

@@ -1,3 +1,4 @@
+use std::env::VarError;
 use serde::Serialize;
 use thiserror::Error;
 use tracing::{error, info};
@@ -10,6 +11,10 @@ pub enum Error {
     Sqlx(sqlx::Error),
     #[error("Core error")]
     CoreError,
+    #[error("Wrong password")]
+    WrongPassword,
+    #[error("Var error: {0}")]
+    VarError(#[from] VarError),
 }
 
 impl From<sqlx::Error> for Error {
