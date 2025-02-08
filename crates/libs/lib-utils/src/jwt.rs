@@ -5,27 +5,29 @@ use jwt::SignWithKey;
 use jwt::VerifyWithKey;
 use sha2::Sha256;
 
-pub fn token(phone: impl Into<String>, token_key: &str) -> String {
-    let key: Hmac<Sha256> = Hmac::new_from_slice(token_key.as_bytes()).unwrap();
+use anyhow::{Result};
+
+pub fn token(phone: impl Into<String>, token_key: &str) -> Result<String> {
+    let key: Hmac<Sha256> = Hmac::new_from_slice(token_key.as_bytes())?;
     let mut claims = BTreeMap::new();
     claims.insert("sub", phone.into());
 
-    claims.sign_with_key(&key).unwrap()
+    Ok(claims.sign_with_key(&key)?)
 }
 
-fn verify_token(phone: impl Into<String>, token: impl Into<String>, token_key: &str) -> bool {
-    let key: Hmac<Sha256> = Hmac::new_from_slice(token_key.as_bytes()).unwrap();
-    let claims: BTreeMap<String, String> = token.into().verify_with_key(&key).unwrap();
+fn verify_token(phone: impl Into<String>, token: impl Into<String>, token_key: &str) -> Result<bool> {
+    let key: Hmac<Sha256> = Hmac::new_from_slice(token_key.as_bytes())?;
+    let claims: BTreeMap<String, String> = token.into().verify_with_key(&key)?;
     if let Some(sub) = claims.get("sub") {
-        return sub.eq(&phone.into())
+        return Ok(sub.eq(&phone.into()))
     }
-    false
+    Ok(false)
 }
 
 pub fn phone_from_token(token: String, token_key: &str) -> Option<String> {
-    let key: Hmac<Sha256> = Hmac::new_from_slice(token_key.as_bytes()).unwrap();
-    let claims: BTreeMap<String, String> = token.verify_with_key(&key).unwrap();
-    claims.get("sub").cloned()
+    let key: Hmac<Sha256> = Hmac::new_from_slice(token_key.as_bytes()).ok()?;
+    let claims: BTreeMap<String, String> = token.verify_with_key(&key).ok()?;
+    claims.get("sub").cloned() // todo remove clone
 }
 
 #[cfg(test)]
@@ -38,18 +40,17 @@ mod tests {
 
     #[test]
     fn create() {
-        let token_key = std::env::var("SERVICE_TOKEN_KEY").expect("MAILCOACH_API_TOKEN must be set.");
         let token = token(TEST_SUB, TEST_TOKEN_KEY);
-        assert_eq!(TEST_TOKEN, token)
+        assert_eq!(TEST_TOKEN, token.expect("should be there"))
     }
 
     #[test]
     fn verify() {
-        assert!(verify_token(TEST_SUB, TEST_TOKEN, TEST_TOKEN_KEY))
+        assert!(verify_token(TEST_SUB, TEST_TOKEN, TEST_TOKEN_KEY).expect("should be ok"))
     }
 
     #[test]
     fn verify_fail() {
-        assert_eq!(false, verify_token("wrong_sub", TEST_TOKEN, TEST_TOKEN_KEY))
+        assert_eq!(false, verify_token("wrong_sub", TEST_TOKEN, TEST_TOKEN_KEY).expect("should be ok"))
     }
 }

@@ -19,6 +19,7 @@ pub type Result<T> = core::result::Result<T, Error>;
 #[serde(tag = "type", content = "data")]
 pub enum Error {
     WebError,
+    Anyhow,
 
     // -- CtxExtError
     CtxExt(CtxExtError),
@@ -78,6 +79,13 @@ impl From<hyper_util::client::legacy::Error> for Error {
     fn from(value: hyper_util::client::legacy::Error) -> Self {
         error!("{:?}", value);
         Error::FailedToSendRequest
+    }
+}
+
+impl From<anyhow::Error> for Error {
+    fn from(value: anyhow::Error) -> Self {
+        error!("{:?}", &value);
+        Error::Anyhow
     }
 }
 
