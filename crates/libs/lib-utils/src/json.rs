@@ -12,7 +12,7 @@ use tracing_subscriber::fmt::format;
 pub async fn value(response: Response<Incoming>) -> Result<Value> {
     let body = response.collect().await
         .map_err(|e| {
-            error!("Failed to collect: {}", e.to_string());
+            error!("Failed to collect bytes from response: {}", e.to_string());
             anyhow!(e)
         })?
         .aggregate();

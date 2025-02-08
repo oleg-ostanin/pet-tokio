@@ -34,3 +34,5 @@ hyper-util = { version = "0.1", features = ["client", "http1", "client-legacy"] 
 
 # -- Feature: with-rpc
 rpc-router = { workspace = true, optional = true }
+
+thiserror = "2.0.11"
