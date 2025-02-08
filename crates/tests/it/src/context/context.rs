@@ -6,6 +6,7 @@ use axum::{body::Body, Error, http::{self, Request, StatusCode}};
 use axum::http::HeaderValue;
 use axum::response::Response;
 use axum::routing::get;
+use dotenv::dotenv;
 use http_body_util::BodyExt;
 use hyper::body::{Buf, Incoming};
 use hyper_util::client::legacy::Client;
@@ -18,21 +19,21 @@ use testcontainers::{clients, Container, images::postgres::Postgres};
 use tokio::net::TcpListener;
 use tokio_postgres::NoTls;
 use tower::builder;
-use lib_core::context::app_context::{AppConfig, ModelManager};
-use lib_web::app::web_app::web_app;
-use lib_web::app::auth_app::auth_app;
-
-use dotenv::dotenv;
 use tower_cookies::{Cookie, Cookies};
 use tracing::info;
 use uuid::Uuid;
+use wiremock::{Mock, MockServer, ResponseTemplate};
+use wiremock::matchers::{body_json, method, path};
+
+use lib_core::context::app_context::{AppConfig, ModelManager};
 use lib_dto::user::{AuthCode, UserForCreate, UserForSignIn};
+use lib_web::app::auth_app::auth_app;
+use lib_web::app::web_app::web_app;
+
 //use lib_core::model::user::{UserForCreate, UserForLogin, UserForSignIn, UserStored};
 use crate::context::sql::{CREATE_PHONE_TYPE, CREATE_USER_TABLE};
-// for `call`, `oneshot`, and `ready`
 
-use wiremock::{MockServer, Mock, ResponseTemplate};
-use wiremock::matchers::{body_json, method, path};
+// for `call`, `oneshot`, and `ready`
 
 #[derive(Debug, Clone)]
 struct HeaderWrapper {

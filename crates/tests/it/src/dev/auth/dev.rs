@@ -5,10 +5,11 @@ use tower::{Service, ServiceExt};
 #[cfg(test)]
 mod tests {
     use axum::http::StatusCode;
+
     use lib_dto::user::{AuthCode, UserForCreate, UserForSignIn};
-    use crate::context::context::{ServiceType, TestContext};
     use lib_utils::json::{body, value};
 
+    use crate::context::context::{ServiceType, TestContext};
 
     #[tokio::test]
     async fn auth() {

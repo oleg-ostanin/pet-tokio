@@ -1,7 +1,8 @@
 use std::sync::Arc;
+
 use axum::async_trait;
-use axum::http::request::Parts;
 use axum::extract::{FromRequestParts, State};
+use axum::http::request::Parts;
 use serde::Serialize;
 use tracing::info;
 

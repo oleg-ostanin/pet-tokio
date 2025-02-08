@@ -1,10 +1,7 @@
-use uuid::Uuid;
 use lib_dto::book::{BookInfo, BookList};
-use lib_dto::user::{UserForCreate, UserForLogin, UserForSignIn};
-use crate::bmc::scheme::Scheme;
-use crate::context::app_context::ModelManager;
 
-use crate::error::{Result, Error};
+use crate::context::app_context::ModelManager;
+use crate::error::Result;
 
 pub struct BookBmc;
 //todo return phone type

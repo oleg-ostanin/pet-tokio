@@ -1,14 +1,16 @@
+use std::env;
+
+use hmac::{Hmac, Mac};
+use sha2::Sha512;
+
+use lib_utils::b64::{b64u_decode, b64u_encode};
+
+use crate::error::{Error, Result};
+
 //use super::{Error, Result};
 //use crate::auth_config;
 //use crate::pwd::scheme::Scheme;
 use super::user::ContentToHash;
-use hmac::{Hmac, Mac};
-use lib_utils::b64::{b64u_decode, b64u_encode};
-use sha2::Sha512;
-use std::env;
-
-use crate::error::{Result, Error};
-
 
 pub struct Scheme;
 
@@ -52,14 +54,15 @@ fn hash(key: &[u8], to_hash: &ContentToHash) -> Result<String> {
 // region:    --- Tests
 #[cfg(test)]
 mod tests {
-	pub type Result<T> = core::result::Result<T, Error>;
+    //use crate::auth_config;
+    use uuid::Uuid;
+
+    use super::*;
+
+    pub type Result<T> = core::result::Result<T, Error>;
 	pub type Error = Box<dyn std::error::Error>; // For early tests.
 
-	use super::*;
-	//use crate::auth_config;
-	use uuid::Uuid;
-
-	const SERVICE_PWD_KEY: &str =
+    const SERVICE_PWD_KEY: &str =
 		"CKUGFOD9_2Qf6Pn3ZFRYgPYb8ht4vKqEG9PGMXTB7497bT0367DjoaD6ydFnEVaIRda0kKeBZVCT5Hb62m2sCA";
 
 	#[test]

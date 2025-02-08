@@ -1,8 +1,5 @@
-use axum::{body::Body, http::{self, Request}};
-use axum::http::HeaderValue;
-use axum::response::Response;
 use http_body_util::BodyExt;
-use hyper::body::{Buf, Incoming};
+use hyper::body::Buf;
 // for `collect`
 use serde_json::json;
 use tower::{Service, ServiceExt};
@@ -13,8 +10,6 @@ use lib_dto::user::AuthCode;
 
 #[cfg(test)]
 mod tests {
-    use axum::Json;
-
     use lib_dto::user::AuthCode;
     use lib_utils::json::value;
 

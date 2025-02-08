@@ -1,9 +1,10 @@
 use uuid::Uuid;
+
 use lib_dto::user::{UserForCreate, UserForLogin, UserForSignIn};
+
 use crate::bmc::scheme::Scheme;
 use crate::context::app_context::ModelManager;
-
-use crate::error::{Result, Error};
+use crate::error::{Error, Result};
 
 pub struct UserBmc;
 //todo return phone type

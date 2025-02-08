@@ -2,7 +2,9 @@ use serde::Serialize;
 use serde_json::{json, Value};
 use tracing::info;
 use uuid::Uuid;
+
 use lib_dto::user::AuthCode;
+
 use crate::context::context::{ServiceType, TestContext};
 
 mod rpc;

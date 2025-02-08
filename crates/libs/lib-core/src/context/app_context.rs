@@ -1,10 +1,11 @@
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::{Arc, RwLock};
+
 use axum::body::Body;
-use sqlx::postgres::PgPool;
 use hyper_util::client::legacy::Client;
 use hyper_util::client::legacy::connect::HttpConnector;
+use sqlx::postgres::PgPool;
 
 #[derive(Clone)]
 pub struct ModelManager {

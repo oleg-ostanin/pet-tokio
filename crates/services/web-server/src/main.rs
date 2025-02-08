@@ -1,10 +1,12 @@
 use std::error::Error;
 use std::sync::Arc;
-use tracing::info;
-use lib_core::context::app_context::ModelManager;
-use lib_web::app::web_app::web_app;
+
 use dotenv::dotenv;
+use tracing::info;
+
+use lib_core::context::app_context::ModelManager;
 use lib_web::app::context::create_app_context;
+use lib_web::app::web_app::web_app;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {

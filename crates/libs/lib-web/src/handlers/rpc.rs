@@ -1,17 +1,18 @@
 use std::ops::Deref;
-use axum::extract::State;
-use axum::response::{IntoResponse, Response};
-use axum::Json;
-use rpc_router::resources_builder;
-use serde_json::{json, Value};
 use std::sync::Arc;
+
+use axum::extract::State;
 use axum::http::StatusCode;
+use axum::Json;
+use axum::response::{IntoResponse, Response};
+use serde_json::{json, Value};
+
 use lib_core::bmc::book_info::BookBmc;
 use lib_core::context::app_context::ModelManager;
 use lib_dto::book::BookList;
-use crate::ctx::CtxW;
 
-use crate::error::{Error, Result};
+use crate::ctx::CtxW;
+use crate::error::Result;
 
 /// RPC ID and Method Capture
 /// Note: This will be injected into the Axum Response extensions so that

@@ -1,19 +1,20 @@
 use std::collections::HashMap;
 use std::error::Error;
 use std::sync::{Arc, Mutex};
+
+use axum::{Json, Router};
 use axum::extract::State;
 use axum::http::StatusCode;
-use axum::{Json, Router};
 use axum::routing::{get, post};
-use tracing::info;
-use lib_core::context::app_context::ModelManager;
-use lib_web::app::auth_app::auth_app;
+use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use dotenv::dotenv;
-
-use lib_dto::user::{AuthCode, UserForCreate};
+use tracing::info;
 use uuid::Uuid;
+
+use lib_core::context::app_context::ModelManager;
+use lib_dto::user::{AuthCode, UserForCreate};
+use lib_web::app::auth_app::auth_app;
 use lib_web::app::context::create_app_context;
 
 #[tokio::main]

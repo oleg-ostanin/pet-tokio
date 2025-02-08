@@ -6,12 +6,11 @@ use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 use serde_json::Value;
 use serde_with::{DisplayFromStr, serde_as};
+use strum_macros;
 use tracing::{debug, error, info, warn};
 
-use strum_macros;
-
-use crate::middleware;
 use crate::ctx::CtxExtError;
+use crate::middleware;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
