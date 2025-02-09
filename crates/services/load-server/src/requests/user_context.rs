@@ -42,11 +42,6 @@ pub(crate) struct UserContext<> {
 impl UserContext {
     pub(crate) async fn new(phone: String) -> Self {
         dotenv().ok();
-        tracing_subscriber::fmt()
-            .without_time() // For early local development.
-            .with_target(false)
-            .init();
-        info!("delete me");
 
         let client: Client<HttpConnector, Body> =
             hyper_util::client::legacy::Client::builder(hyper_util::rt::TokioExecutor::new())
@@ -103,7 +98,7 @@ impl UserContext {
         response
     }
 
-    fn socket_addr(path: &str) -> String {
+    fn socket_addr(&self, path: &str) -> String {
         if path.starts_with("/login") || path.starts_with("/api") {
             info!("returning web socket address");
             return std::env::var(WEB_SOCKET_ADDR).expect("Must be set.");
