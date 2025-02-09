@@ -1,3 +1,5 @@
+mod requests;
+
 use std::error::Error;
 use std::sync::Arc;
 

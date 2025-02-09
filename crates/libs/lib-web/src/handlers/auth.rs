@@ -25,6 +25,16 @@ pub async fn sign_up(
     Ok(auth_code)
 }
 
+pub async fn check_if_exists(
+    State(app_context): State<Arc<ModelManager>>,
+    Json(user): Json<UserForCreate>,
+) -> Result<Json<Value>> {
+    let phone = user.phone;
+    info!("Checking user {:<12}", &phone);
+    let user_exists = UserBmc::check_if_exists(app_context.deref(), phone).await?;
+    Ok(Json(json!(user_exists)))
+}
+
 pub async fn sign_in(
     State(app_context): State<Arc<ModelManager>>,
     Json(user): Json<UserForSignIn>,

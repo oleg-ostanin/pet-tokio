@@ -33,8 +33,6 @@ use lib_web::app::web_app::web_app;
 //use lib_core::model::user::{UserForCreate, UserForLogin, UserForSignIn, UserStored};
 use crate::context::sql::{CREATE_PHONE_TYPE, CREATE_USER_TABLE};
 
-// for `call`, `oneshot`, and `ready`
-
 #[derive(Debug, Clone)]
 struct HeaderWrapper {
     key: String,

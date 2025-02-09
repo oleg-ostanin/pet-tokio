@@ -1,7 +1,7 @@
 use chrono::prelude::*;
 use uuid::Uuid;
 
-use lib_dto::user::{UserForCreate, UserForLogin, UserForSignIn};
+use lib_dto::user::{UserExists, UserForCreate, UserForLogin, UserForSignIn};
 
 use crate::bmc::scheme::Scheme;
 use crate::context::app_context::ModelManager;
@@ -86,7 +86,6 @@ impl UserBmc {
     //     UserForAuth::try_from(v)
     // }
     //
-    // // todo make these two functions generic
     pub async fn validate(
         mm: &ModelManager,
         user_for_sign_in: &UserForSignIn,
@@ -104,6 +103,20 @@ impl UserBmc {
         validate_pwd(to_hash, user.pwd).await?;
 
         Ok(())
+    }
+
+    pub async fn check_if_exists(
+        mm: &ModelManager,
+        phone: String,
+    ) -> Result<UserExists> {
+        let users: Vec<UserForLogin> = sqlx::query_as(SELECT_BY_PHONE)
+            .bind(&phone)
+            .fetch_all(mm.pg_pool())
+            .await?;
+
+        let user_exists = UserExists::new(!users.is_empty());
+
+        Ok(user_exists)
     }
 }
 

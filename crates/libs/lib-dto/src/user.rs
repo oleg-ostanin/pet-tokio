@@ -64,6 +64,17 @@ impl UserForSignIn {
     }
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct UserExists {
+    pub exists: bool,
+}
+
+impl UserExists {
+    pub fn new(exists: bool) -> Self {
+        Self { exists }
+    }
+}
+
 #[derive(Clone, FromRow, Debug)]
 pub struct UserForAuth {
     pub id: i64,
