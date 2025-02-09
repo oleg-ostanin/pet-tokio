@@ -52,7 +52,7 @@ pub async fn login(
 
     match check_response.status() {
         StatusCode::OK => {
-            let token_key = std::env::var("SERVICE_TOKEN_KEY").expect("Token must be set.");
+            let token_key = std::env::var(SERVICE_TOKEN_KEY).expect("Token must be set.");
             let token = token(&user.phone, token_key.as_str())?;
             let mut cookie = Cookie::new(AUTH_TOKEN, token);
             cookie.set_http_only(true);

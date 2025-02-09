@@ -31,4 +31,7 @@ sqlx = { version = "0.8.3", features = ["postgres", "runtime-tokio-rustls"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-appender = "0.2.3"
+tower = "0.5.2"
+uuid = { version = "1.12.1", features = ["v4"] }
 
+dotenv = "0.15.0"
