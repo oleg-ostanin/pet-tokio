@@ -35,3 +35,4 @@ tower = "0.5.2"
 uuid = { version = "1.12.1", features = ["v4"] }
 
 dotenv = "0.15.0"
+serde = { version = "1.0.217", features = ["derive"] }

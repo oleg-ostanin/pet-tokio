@@ -1,4 +1,5 @@
 mod requests;
+mod utils;
 
 use std::error::Error;
 use std::sync::Arc;
@@ -17,9 +18,12 @@ use serde_json::{json, Value};
 use tracing::info;
 
 use lib_core::context::app_context::ModelManager;
-use lib_dto::user::{AuthCode, UserForCreate, UserForSignIn};
-use lib_utils::json::value;
+use lib_dto::book::BookList;
+use lib_dto::user::{AuthCode, UserExists, UserForCreate, UserForSignIn};
+use lib_utils::json::{body, value};
+use lib_utils::rpc::request;
 use crate::requests::user_context::UserContext;
+use crate::utils::file::from_file;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -30,91 +34,33 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("info");
     println!("starts");
 
-    let client: Client<HttpConnector, Body> =
-        hyper_util::client::legacy::Client::builder(hyper_util::rt::TokioExecutor::new())
-            .build_http();
-
-    let auth_addr = "localhost:3001";
-
-    let user_to_create = UserForCreate::new("2128506", "pwd", "John", "Doe");
-
     let mut user_ctx = UserContext::new("2128506".to_string()).await;
-
-    let check_response = user_ctx.post("/check-if-exists", json!(user_to_create)).await;
+    let user_to_create = UserForCreate::new("2128506", "pwd", "John", "Doe");
+    let check_response = user_ctx.post("/check-if-exists", json!(&user_to_create)).await;
 
     println!("{:?}", &check_response);
-    let value = value(check_response).await;
+    let value = value(check_response).await.expect("must be ok");
     println!("{:?}", &value);
+    let user_exists: UserExists = body(value).expect("must be ok");
 
-    // let create_response = client
-    //     .request(Request::builder()
-    //         .method(http::Method::POST)
-    //         .uri(format!("http://{auth_addr}/sign-up"))
-    //         .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-    //         .body(Body::from(serde_json::to_string(&json!(user_to_create)).unwrap()))
-    //         .unwrap())
-    //     .await
-    //     .unwrap();
+    if !user_exists.exists {
+        user_ctx.post("/sign-up", json!(user_to_create)).await;
+    }
+    let user_to_sign_in = UserForSignIn::new("2128506", "pwd");
+    let sign_in_response = user_ctx.post("/sign-in", json!(user_to_sign_in)).await;
+    let auth_code = message_from_response(sign_in_response).await;
 
-    // let user_to_sign_in = UserForSignIn::new("2128506", "pwd");
-    //
-    // let sign_in_response = client
-    //     .request(Request::builder()
-    //         .method(http::Method::POST)
-    //         .uri(format!("http://{auth_addr}/sign-in"))
-    //         .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-    //         .body(Body::from(serde_json::to_string(&json!(user_to_sign_in)).unwrap()))
-    //         .unwrap())
-    //     .await
-    //     .unwrap();
-    //
-    // let auth_code = message_from_response(sign_in_response).await;
-    //
-    // println!("{:?}", &auth_code);
-    //
-    // let auth_code = AuthCode::new("2128506".to_string(), auth_code);
-    //
-    // let web_addr = "localhost:3000";
-    //
-    // let login_response = client
-    //     .request(Request::builder()
-    //         .method(http::Method::POST)
-    //         .uri(format!("http://{web_addr}/login"))
-    //         .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-    //         .body(Body::from(serde_json::to_string(&json!(auth_code)).unwrap()))
-    //         .unwrap())
-    //     .await
-    //     .unwrap();
-    //
-    // println!("{:?}", &login_response);
-    //
-    // let token = extract_token(login_response);
-    //
-    // //{"jsonrpc": "2.0", "method": "subtract", "params": {"minuend": 42, "subtrahend": 23}, "id": 4}
-    // let request = Json(json!({
-    //     "jsonrpc": "2.0",
-    //     "method": "get",
-    //     "params": {"minuend": 42, "subtrahend": 23},
-    //     "id": 4})
-    // );
-    // let request_str = request.to_string();
-    // println!("request_str: {:?}", &request_str);
-    //
-    // let rpc_response = client
-    //     .request(Request::builder()
-    //         .method(http::Method::POST)
-    //         .uri(format!("http://{web_addr}/api/rpc"))
-    //         .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-    //         .header("cookie", token)
-    //         .body(Body::from(request_str))
-    //         .unwrap())
-    //     .await
-    //     .unwrap();
-    //
-    // println!("{:?}", &rpc_response);
-    // let value = value(rpc_response).await;
-    // println!("{:?}", &value);
-    //
+    println!("{:?}", &auth_code);
+
+    let auth_code = AuthCode::new("2128506".to_string(), auth_code);
+    user_ctx.post("/login", json!(auth_code)).await;
+
+    assert!(user_ctx.auth_token().is_some());
+
+    let book_list: BookList = from_file("books_refactored.json");
+    let add_books = request("add_books", Some(book_list));
+    //let rpc_response = user_ctx.post("/api/rpc", add_books).await;
+
     Ok(())
 }
 

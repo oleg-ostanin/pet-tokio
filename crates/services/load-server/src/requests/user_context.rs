@@ -55,6 +55,8 @@ impl UserContext {
         }
     }
 
+
+
     pub(crate) fn invalidate_token(&mut self) -> Option<String> {
         self.auth_token.take()
     }
@@ -104,6 +106,22 @@ impl UserContext {
             return std::env::var(WEB_SOCKET_ADDR).expect("Must be set.");
         }
         std::env::var(AUTH_SOCKET_ADDR).expect("Must be set.")
+    }
+
+    pub fn phone(&self) -> &str {
+        &self.phone
+    }
+
+    pub fn client(&self) -> &Client<HttpConnector, Body> {
+        &self.client
+    }
+
+    pub fn auth_token(&self) -> &Option<String> {
+        &self.auth_token
+    }
+
+    pub fn headers(&self) -> &Vec<HeaderWrapper> {
+        &self.headers
     }
 }
 

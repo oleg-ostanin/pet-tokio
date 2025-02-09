@@ -14,7 +14,7 @@ mod tests {
 
     use crate::context::context::{ServiceType, TestContext};
     use crate::dev::web::login;
-    use crate::dev::web::request;
+    use lib_utils::rpc::request;
     use crate::utils::body_utils::message_from_response;
     use crate::utils::file_utils::from_file;
 
@@ -31,7 +31,7 @@ mod tests {
         let v = value(rpc_response).await;
         println!("{:?}", &v);
 
-        let request = crate::dev::web::request("all_books", Some(Value::Null));
+        let request = lib_utils::rpc::request("all_books", Some(Value::Null));
         let rpc_response = ctx.post("/api/rpc", request).await;
         assert_eq!(rpc_response.status(), StatusCode::OK);
         println!("all books response: {:?}", &rpc_response);
