@@ -14,7 +14,6 @@ pub struct Ctx {
     phone: String,
 }
 
-// Constructors.
 impl Ctx {
     pub fn new(phone: String) -> Self {
         Self {

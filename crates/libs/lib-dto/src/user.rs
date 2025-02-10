@@ -94,13 +94,12 @@ pub struct UserForLogin {
     pub pwd_salt: Uuid,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, FromRow, Deserialize, Serialize)]
 pub struct UserStored {
     pub id: i64,
     pub phone: String,
     pub first_name: String,
     pub last_name: String,
-    pub pwd: String, // todo remove
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }

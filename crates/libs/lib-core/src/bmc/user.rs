@@ -1,7 +1,7 @@
 use chrono::prelude::*;
 use uuid::Uuid;
 
-use lib_dto::user::{UserExists, UserForCreate, UserForLogin, UserForSignIn};
+use lib_dto::user::{UserExists, UserForCreate, UserForLogin, UserForSignIn, UserStored};
 
 use crate::bmc::scheme::Scheme;
 use crate::context::app_context::ModelManager;
@@ -58,19 +58,17 @@ impl UserBmc {
         Ok(res)
     }
 
-    // pub async fn get_by_id(
-    //     mm: &ModelManager,
-    //     id: i64,
-    // ) -> Result<UserStored> {
-    //     //let res = db_client.execute(&statement, &[&user.uuid, &user.pass]).await?;
-    //     let res = mm.client().query(SELECT_BY_ID, &[&id]).await?;
-    //
-    //     println!("{:?}", &res);
-    //
-    //     let v = res.get(0).ok_or(Error::StoreError("not_found".to_string()))?;
-    //
-    //     UserStored::try_from(v)
-    // }
+    pub async fn get_by_phone(
+        mm: &ModelManager,
+        phone: &str,
+    ) -> Result<UserStored> {
+        let user: UserStored = sqlx::query_as(SELECT_BY_PHONE)
+            .bind(phone)
+            .fetch_one(mm.pg_pool())
+            .await?;
+
+        Ok(user)
+    }
     //
     // pub async fn get_for_auth(
     //     mm: &ModelManager,

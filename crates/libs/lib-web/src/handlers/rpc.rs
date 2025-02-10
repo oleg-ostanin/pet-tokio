@@ -8,10 +8,13 @@ use axum::response::{IntoResponse, Response};
 use serde_json::{json, Value};
 
 use lib_core::bmc::book_info::BookBmc;
+use lib_core::bmc::order::OrderBmc;
+use lib_core::bmc::user::UserBmc;
 use lib_core::context::app_context::ModelManager;
 use lib_dto::book::BookList;
-
-use crate::ctx::CtxW;
+use lib_dto::order::{OrderContent, OrderForCreate};
+use lib_dto::user::UserStored;
+use crate::ctx::{Ctx, CtxW};
 use crate::error::Result;
 
 /// RPC ID and Method Capture
@@ -29,7 +32,7 @@ pub async fn rpc(
 	ctx: CtxW,
 	Json(rpc_req): Json<Value>,
 ) -> Response {
-	//let ctx = ctx.0;
+	let ctx = ctx.0;
 
 	// // -- Parse and RpcRequest validate the rpc_request
 	let rpc_req = match rpc_router::Request::try_from(rpc_req) {
@@ -54,6 +57,7 @@ pub async fn rpc(
 		"get" => get().await,
 		"add_books" => add_books(app_context.deref(), rpc_req.params.expect("must be")).await,
 		"all_books" => all_books(app_context.deref()).await,
+		"create_order" => create_order(app_context.deref(), rpc_req.params.expect("must be"), ctx).await,
 		_ => unreachable!(),
 	};
 
@@ -105,6 +109,15 @@ async fn add_books(mm: &ModelManager, params: Value) -> Result<Value> {
 
 async fn all_books(mm: &ModelManager) -> Result<Value> {
 	Ok(json!(BookBmc::get_all(mm).await?))
+}
+
+async fn create_order(mm: &ModelManager, params: Value, ctx: Ctx) -> Result<Value> {
+	let order_content: OrderContent = serde_json::from_str(&params.to_string()).unwrap();
+	let user_stored = UserBmc::get_by_phone(mm, ctx.phone()).await?;
+	let order_for_create = OrderForCreate::new(user_stored.id, order_content);
+	let order_id = OrderBmc::create(mm, order_for_create).await.unwrap();
+
+	Ok(json!(order_id))
 }
 
 async fn get() -> Result<Value> {

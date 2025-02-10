@@ -19,6 +19,7 @@ use tracing::info;
 
 use lib_core::context::app_context::ModelManager;
 use lib_dto::book::BookList;
+use lib_dto::order::{OrderContent, OrderItem};
 use lib_dto::user::{AuthCode, UserExists, UserForCreate, UserForSignIn};
 use lib_utils::json::{body, value};
 use lib_utils::rpc::request;
@@ -61,9 +62,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let add_books = request("add_books", Some(book_list));
     //let rpc_response = user_ctx.post("/api/rpc", add_books).await;
 
+    let order_item = OrderItem::new(1, 2);
+    let order_content = OrderContent::new(vec!(order_item));
+    let create_order = request("create_order", Some(order_content));
+    let rpc_response = user_ctx.post("/api/rpc", create_order).await;
+    let value = lib_utils::json::value(rpc_response).await.expect("must be ok");
+    println!("create order{:?}", &value);
+
     Ok(())
 }
-
 
 pub(crate) async fn message_from_response(response: Response<Incoming>) -> String {
     let body = response.collect().await.unwrap().aggregate();

@@ -9,7 +9,7 @@ use crate::error::{Error, Result};
 
 pub struct OrderBmc;
 const INSERT_USER: &str = r#"
-INSERT INTO user
+INSERT INTO order_info
 (user_id, content, status, created_at, updated_at)
 VALUES
 ($1, $2, $3, $4, $5)

@@ -41,18 +41,42 @@ impl OrderForCreate {
     }
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OrderItem {
     book_id: i64,
     quantity: i64,
 }
 
-#[derive(Clone, Debug, Serialize)]
+impl OrderItem {
+    pub fn new(book_id: i64, quantity: i64) -> Self {
+        Self { book_id, quantity }
+    }
+
+    pub fn book_id(&self) -> i64 {
+        self.book_id
+    }
+
+    pub fn quantity(&self) -> i64 {
+        self.quantity
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OrderContent {
     content: Vec<OrderItem>,
 }
 
-#[derive(Clone, Debug, FromRow)]
+impl OrderContent {
+    pub fn new(content: Vec<OrderItem>) -> Self {
+        Self { content }
+    }
+
+    pub fn content(&self) -> &Vec<OrderItem> {
+        &self.content
+    }
+}
+
+#[derive(Clone, Debug, FromRow, Serialize, Deserialize)]
 pub struct OrderId {
     order_id: i64,
 }
