@@ -1,0 +1,7 @@
+DROP TABLE IF EXISTS _sqlx_migrations;
+DROP TABLE IF EXISTS order_info;
+DROP TABLE IF EXISTS book_storage;
+DROP TABLE IF EXISTS book_info;
+DROP TABLE IF EXISTS users;
+
+DROP TYPE IF EXISTS type_name CASCADE;
