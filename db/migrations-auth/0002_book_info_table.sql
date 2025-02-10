@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS "book_info" (
   isbn varchar(128) NOT NULL UNIQUE,
   description TEXT,
 
-    -- Timestamps
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
-    updated_at timestamp with time zone NOT NULL DEFAULT now()
+  -- Timestamps
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now()
 );
