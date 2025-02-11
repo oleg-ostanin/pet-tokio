@@ -25,11 +25,15 @@ impl BookInfo {
 
 #[derive(Debug, Deserialize, Serialize,)]
 pub struct BookList {
-    pub book_list: Vec<BookInfo>,
+    book_list: Vec<BookInfo>,
 }
 
 impl BookList {
     pub fn new(book_list: Vec<BookInfo>) -> Self {
         Self { book_list }
+    }
+
+    pub fn book_list(&self) -> &Vec<BookInfo> {
+        &self.book_list
     }
 }

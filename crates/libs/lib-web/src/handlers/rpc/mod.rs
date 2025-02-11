@@ -12,7 +12,7 @@ use lib_core::context::app_context::ModelManager;
 use order::create_order;
 
 use crate::ctx::CtxW;
-
+use crate::handlers::rpc::order::check_order;
 pub mod book;
 pub mod order;
 pub mod rpc;
@@ -57,6 +57,7 @@ pub async fn rpc(
         "add_books" => add_books(app_context.deref(), rpc_req.params.expect("must be")).await,
         "all_books" => all_books(app_context.deref()).await,
         "create_order" => create_order(app_context.deref(), rpc_req.params.expect("must be"), ctx).await,
+        "check_order" => check_order(app_context.deref(), rpc_req.params.expect("must be"), ctx).await,
         _ => unreachable!(),
     };
 

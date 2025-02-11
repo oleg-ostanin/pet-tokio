@@ -17,11 +17,7 @@ RETURNING order_id;
 "#;
 
 const SELECT_BY_ID: &str = r#"
-SELECT * FROM order WHERE id=$1;
-"#;
-
-const SELECT_BY_PHONE: &str = r#"
-SELECT * FROM users WHERE phone=$1;
+SELECT * FROM order_info WHERE id=$1;
 "#;
 
 impl OrderBmc {

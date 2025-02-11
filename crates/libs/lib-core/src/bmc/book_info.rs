@@ -31,7 +31,7 @@ SELECT * FROM book_info WHERE title=$1;
 impl BookBmc {
     pub async fn create(
         mm: &ModelManager,
-        book: BookInfo,
+        book: &BookInfo,
     ) -> Result<()> {
         sqlx::query_as(INSERT_BOOK)
             .bind(&book.title)

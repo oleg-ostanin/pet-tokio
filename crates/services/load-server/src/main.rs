@@ -39,10 +39,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let user_to_create = UserForCreate::new("2128506", "pwd", "John", "Doe");
     let check_response = user_ctx.post("/check-if-exists", json!(&user_to_create)).await;
 
-    println!("{:?}", &check_response);
-    let value = value(check_response).await.expect("must be ok");
-    println!("{:?}", &value);
-    let user_exists: UserExists = body(value).expect("must be ok");
+    println!("check_response: {:?}", &check_response);
+    let check_user_value = value(check_response).await.expect("must be ok");
+    println!("check_user_value: {:?}", &check_user_value);
+    let user_exists: UserExists = body(check_user_value).expect("must be ok");
 
     if !user_exists.exists {
         user_ctx.post("/sign-up", json!(user_to_create)).await;
@@ -51,7 +51,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let sign_in_response = user_ctx.post("/sign-in", json!(user_to_sign_in)).await;
     let auth_code = message_from_response(sign_in_response).await;
 
-    println!("{:?}", &auth_code);
+    println!("auth_code: {:?}", &auth_code);
 
     let auth_code = AuthCode::new("2128506".to_string(), auth_code);
     user_ctx.post("/login", json!(auth_code)).await;
@@ -60,14 +60,19 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let book_list: BookList = from_file("books_refactored.json");
     let add_books = request("add_books", Some(book_list));
-    //let rpc_response = user_ctx.post("/api/rpc", add_books).await;
+    let rpc_response = user_ctx.post("/api/rpc", add_books).await;
 
     let order_item = OrderItem::new(1, 2);
     let order_content = OrderContent::new(vec!(order_item));
     let create_order = request("create_order", Some(order_content));
-    let rpc_response = user_ctx.post("/api/rpc", create_order).await;
-    let value = lib_utils::json::value(rpc_response).await.expect("must be ok");
-    println!("create order{:?}", &value);
+    let create_order_response = user_ctx.post("/api/rpc", create_order).await;
+    let create_order_value = value(create_order_response).await.expect("must be ok");
+    println!("create order: {:?}", &create_order_value);
+
+    let check_order = request("check_order", Some(create_order_value.get("result")));
+    let check_order_response = user_ctx.post("/api/rpc", check_order).await;
+    let check_order_value = value(check_order_response).await.expect("must be ok");
+    println!("create order: {:?}", &check_order_value);
 
     Ok(())
 }
