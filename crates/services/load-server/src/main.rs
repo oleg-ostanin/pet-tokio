@@ -72,7 +72,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let check_order = request("check_order", Some(create_order_value.get("result")));
     let check_order_response = user_ctx.post("/api/rpc", check_order).await;
     let check_order_value = value(check_order_response).await.expect("must be ok");
-    println!("create order: {:?}", &check_order_value);
+    println!("check order: {:?}", &check_order_value);
 
     Ok(())
 }

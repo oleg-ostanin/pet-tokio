@@ -13,7 +13,7 @@ pub(super) async fn add_books(mm: &ModelManager, params: Value) -> Result<Value>
         return Ok(Value::Null);
     }
 
-    let book_list: BookList = serde_json::from_str(&params.to_string()).unwrap();
+    let book_list: BookList = serde_json::from_value(params).unwrap();
     for book_info in book_list.book_list().into_iter() {
         BookBmc::create(mm, book_info).await.unwrap();
     }
