@@ -33,15 +33,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .with_target(false)
         .init();
     info!("info");
-    println!("starts");
+    info!("starts");
 
     let mut user_ctx = UserContext::new("2128506".to_string()).await;
     let user_to_create = UserForCreate::new("2128506", "pwd", "John", "Doe");
     let check_response = user_ctx.post("/check-if-exists", json!(&user_to_create)).await;
 
-    println!("check_response: {:?}", &check_response);
+    info!("check_response: {:?}", &check_response);
     let check_user_value = value(check_response).await.expect("must be ok");
-    println!("check_user_value: {:?}", &check_user_value);
+    info!("check_user_value: {:?}", &check_user_value);
     let user_exists: UserExists = body(check_user_value).expect("must be ok");
 
     if !user_exists.exists {
@@ -51,7 +51,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let sign_in_response = user_ctx.post("/sign-in", json!(user_to_sign_in)).await;
     let auth_code = message_from_response(sign_in_response).await;
 
-    println!("auth_code: {:?}", &auth_code);
+    info!("auth_code: {:?}", &auth_code);
 
     let auth_code = AuthCode::new("2128506".to_string(), auth_code);
     user_ctx.post("/login", json!(auth_code)).await;
@@ -67,12 +67,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let create_order = request("create_order", Some(order_content));
     let create_order_response = user_ctx.post("/api/rpc", create_order).await;
     let create_order_value = value(create_order_response).await.expect("must be ok");
-    println!("create order: {:?}", &create_order_value);
+    info!("create order: {:?}", &create_order_value);
 
     let check_order = request("check_order", Some(create_order_value.get("result")));
     let check_order_response = user_ctx.post("/api/rpc", check_order).await;
     let check_order_value = value(check_order_response).await.expect("must be ok");
-    println!("check order: {:?}", &check_order_value);
+    info!("check order: {:?}", &check_order_value);
 
     Ok(())
 }
@@ -93,6 +93,6 @@ pub(crate) fn extract_token(response: Response<Incoming>) -> String {
     let value: Option<&HeaderValue> = headers.get("set-cookie");
     let s = value.unwrap().to_str().unwrap();
 
-    println!("auth token: {:?}", &s);
+    info!("auth token: {:?}", &s);
     s.to_string()
 }

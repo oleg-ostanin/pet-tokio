@@ -51,7 +51,7 @@ impl BookBmc {
     //     //let res = db_client.execute(&statement, &[&user.uuid, &user.pass]).await?;
     //     let res = mm.client().query(SELECT_BY_ID, &[&id]).await?;
     //
-    //     println!("{:?}", &res);
+    //     info!("{:?}", &res);
     //
     //     let v = res.get(0).ok_or(Error::StoreError("not_found".to_string()))?;
     //
@@ -65,7 +65,7 @@ impl BookBmc {
     //     //let res = db_client.execute(&statement, &[&user.uuid, &user.pass]).await?;
     //     let res = mm.client().query(SELECT_BY_phone, &[phone]).await?;
     //
-    //     println!("{:?}", &res);
+    //     info!("{:?}", &res);
     //
     //     let v = res.get(0).ok_or(Error::StoreError("not_found".to_string()))?;
     //

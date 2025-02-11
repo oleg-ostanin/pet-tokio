@@ -10,6 +10,7 @@ use lib_dto::user::AuthCode;
 
 #[cfg(test)]
 mod tests {
+    use tracing::info;
     use lib_dto::user::AuthCode;
     use lib_utils::json::value;
 
@@ -26,7 +27,7 @@ mod tests {
 
         let login_response = ctx.post("/login", json!(auth_code)).await;
 
-        println!("{:?}", &login_response);
+        info!("{:?}", &login_response);
 
         //{"jsonrpc": "2.0", "method": "subtract", "params": {"minuend": 42, "subtrahend": 23}, "id": 4}
         let request = json!({
@@ -35,12 +36,12 @@ mod tests {
         "params": {"minuend": 42, "subtrahend": 23},
         "id": 4});
         let request_str = &request.to_string();
-        println!("request_str: {:?}", &request_str);
+        info!("request_str: {:?}", &request_str);
 
         let rpc_response = ctx.post("/api/rpc", request).await;
 
-        println!("{:?}", &rpc_response);
+        info!("{:?}", &rpc_response);
         let value = value(rpc_response).await;
-        println!("{:?}", &value);
+        info!("{:?}", &value);
     }
 }

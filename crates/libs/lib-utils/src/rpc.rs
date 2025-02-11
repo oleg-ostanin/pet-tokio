@@ -1,5 +1,6 @@
 use serde::Serialize;
 use serde_json::{json, Value};
+use tracing::info;
 use uuid::Uuid;
 
 pub fn request(method: impl Into<String>, params: Option<impl Serialize>) -> Value {
@@ -21,6 +22,6 @@ pub fn request(method: impl Into<String>, params: Option<impl Serialize>) -> Val
         }
     };
     let request_str = &request.to_string();
-    println!("request_str: {:?}", &request_str);
+    info!("request_str: {:?}", &request_str);
     request
 }

@@ -19,7 +19,7 @@ pub async fn mw_ctx_check(
     req: Request<Body>,
     next: Next,
 ) -> Result<Response> {
-    info!("{:<12} - mw_ctx_require - {ctx:?}", "MIDDLEWARE");
+    info!("{:<12} - ctx: {ctx:?} req: {req:?}", "MIDDLEWARE");
 
     ctx?;
 

@@ -13,7 +13,7 @@ use sqlx::{Pool, Postgres};
 use sqlx::postgres::PgPoolOptions;
 use tokio_postgres::{Client, NoTls};
 use tower_cookies::{CookieManagerLayer, Cookies};
-use tracing::{debug, info};
+use tracing::{debug, error, info};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use lib_core::context::app_context::{AppConfig, ModelManager};
@@ -56,7 +56,7 @@ async fn get_client(db_url: &String) -> Client {
     // so spawn it off to run on its own.
     tokio::spawn(async move {
         if let Err(e) = connection.await {
-            eprintln!("connection error: {}", e);
+            error!("connection error: {}", e);
         }
     });
 

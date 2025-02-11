@@ -6,7 +6,7 @@ use axum::http::StatusCode;
 use axum::Json;
 use axum::response::{IntoResponse, Response};
 use serde_json::{json, Value};
-
+use tracing::info;
 use book::*;
 use lib_core::context::app_context::ModelManager;
 use order::create_order;
@@ -44,7 +44,7 @@ pub async fn rpc(
         }
     };
 
-    println!("rpc_req: {:?}", &rpc_req.params);
+    info!("rpc_req: {:?}", &rpc_req.params);
 
     // -- Create the RPC Info
     //    (will be set to the response.extensions)

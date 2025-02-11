@@ -13,14 +13,14 @@ use hyper_util::client::legacy::Client;
 use hyper_util::client::legacy::connect::HttpConnector;
 // for `collect`
 use serde_json::{json, Value};
-use sqlx::Pool;
+use sqlx::{PgPool, Pool};
 use sqlx::postgres::PgPoolOptions;
 use testcontainers::{clients, Container, images::postgres::Postgres};
 use tokio::net::TcpListener;
 use tokio_postgres::NoTls;
 use tower::builder;
 use tower_cookies::{Cookie, Cookies};
-use tracing::info;
+use tracing::{error, info};
 use uuid::Uuid;
 use wiremock::{Mock, MockServer, ResponseTemplate};
 use wiremock::matchers::{body_json, method, path};
@@ -40,8 +40,10 @@ struct HeaderWrapper {
 }
 
 pub(crate) struct TestContext<> {
+    app_context: Arc<ModelManager>,
     docker: &'static clients::Cli,
     pg_container: &'static(Container<'static, Postgres>),
+    pool: PgPool,
     pub(crate) client: Client<HttpConnector, Body>,
     pub(crate) mock_server: MockServer,
     pub(crate) socket_addr: SocketAddr,
@@ -93,13 +95,13 @@ impl TestContext {
         // Spawn connection
         tokio::spawn(async move {
             if let Err(error) = connection.await {
-                eprintln!("Connection error: {}", error);
+                error!("Connection error: {}", error);
             }
         });
 
         //init_db(&pg_client).await;
         let mock_auth_url = mock_server.uri();
-        println!("mock_auth_url: {:?}", &mock_auth_url);
+        info!("mock_auth_url: {:?}", &mock_auth_url);
         let app_config: AppConfig = AppConfig { auth_url: Arc::new(mock_auth_url)};
 
         let db_url = format!("postgresql://postgres:root@localhost:{pg_port}/postgres");
@@ -107,7 +109,7 @@ impl TestContext {
         let app_context: Arc<ModelManager> = Arc::new(
             ModelManager::create(
                 app_config,
-                Arc::new(pool),
+                Arc::new(pool.clone()),
             ));
 
 
@@ -115,8 +117,8 @@ impl TestContext {
         let socket_addr = listener.local_addr().unwrap();
 
         let app = match service_type {
-            ServiceType::Auth => auth_app(app_context).await,
-            ServiceType::Web => web_app(app_context).await,
+            ServiceType::Auth => auth_app(app_context.clone()).await,
+            ServiceType::Web => web_app(app_context.clone()).await,
         };
         tokio::spawn(async move {
             axum::serve(listener, app).await.unwrap();
@@ -127,8 +129,10 @@ impl TestContext {
                 .build_http();
 
         Self {
+            app_context,
             docker,
             pg_container,
+            pool,
             client,
             mock_server,
             socket_addr,
@@ -136,6 +140,8 @@ impl TestContext {
             headers: Vec::new(),
         }
     }
+
+
 
     pub(crate) async fn mock_ok(&self, value: Value) {
         Mock::given(method("POST"))
@@ -196,6 +202,14 @@ impl TestContext {
         }
 
         response
+    }
+
+    pub fn app_context(&self) -> &Arc<ModelManager> {
+        &self.app_context
+    }
+
+    pub fn pool(&self) -> &PgPool {
+        &self.pool
     }
 }
 
