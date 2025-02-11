@@ -1,6 +1,6 @@
 use chrono::prelude::*;
 use uuid::Uuid;
-use lib_dto::order::{OrderForCreate, OrderId, OrderStatus};
+use lib_dto::order::{OrderForCreate, OrderId, OrderStatus, OrderStored};
 use lib_dto::user::{UserExists, UserForCreate, UserForLogin, UserForSignIn};
 
 use crate::bmc::scheme::Scheme;
@@ -43,48 +43,16 @@ impl OrderBmc {
         Ok(order_id)
     }
 
-    // pub async fn get_by_id(
-    //     mm: &ModelManager,
-    //     id: i64,
-    // ) -> Result<UserStored> {
-    //     //let res = db_client.execute(&statement, &[&user.uuid, &user.pass]).await?;
-    //     let res = mm.client().query(SELECT_BY_ID, &[&id]).await?;
-    //
-    //     println!("{:?}", &res);
-    //
-    //     let v = res.get(0).ok_or(Error::StoreError("not_found".to_string()))?;
-    //
-    //     UserStored::try_from(v)
-    // }
-    //
-    // pub async fn get_for_auth(
-    //     mm: &ModelManager,
-    //     phone: &String,
-    // ) -> Result<UserForAuth> {
-    //     //let res = db_client.execute(&statement, &[&user.uuid, &user.pass]).await?;
-    //     let res = mm.client().query(SELECT_BY_phone, &[phone]).await?;
-    //
-    //     println!("{:?}", &res);
-    //
-    //     let v = res.get(0).ok_or(Error::StoreError("not_found".to_string()))?;
-    //
-    //     UserForAuth::try_from(v)
-    // }
-    //
-
-
-    pub async fn check_if_exists(
+    pub async fn get_by_id(
         mm: &ModelManager,
-        phone: String,
-    ) -> Result<UserExists> {
-        let users: Vec<UserForLogin> = sqlx::query_as(SELECT_BY_PHONE)
-            .bind(&phone)
-            .fetch_all(mm.pg_pool())
+        order_id: OrderId,
+    ) -> Result<OrderStored> {
+        let order: OrderStored = sqlx::query_as(SELECT_BY_ID)
+            .bind(&order_id.order_id())
+            .fetch_one(mm.pg_pool())
             .await?;
 
-        let user_exists = UserExists::new(!users.is_empty());
-
-        Ok(user_exists)
+        Ok(order)
     }
 }
 

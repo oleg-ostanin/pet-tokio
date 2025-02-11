@@ -21,6 +21,8 @@ pub enum Error {
     WebError,
     Anyhow,
 
+    UnauthorizedAccess,
+
     // -- CtxExtError
     CtxExt(CtxExtError),
 

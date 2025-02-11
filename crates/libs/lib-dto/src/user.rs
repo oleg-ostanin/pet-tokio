@@ -96,10 +96,36 @@ pub struct UserForLogin {
 
 #[derive(Clone, Debug, FromRow, Deserialize, Serialize)]
 pub struct UserStored {
-    pub id: i64,
-    pub phone: String,
-    pub first_name: String,
-    pub last_name: String,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    id: i64,
+    phone: String,
+    first_name: String,
+    last_name: String,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
+}
+
+impl UserStored {
+    pub fn id(&self) -> i64 {
+        self.id
+    }
+
+    pub fn phone(&self) -> &str {
+        &self.phone
+    }
+
+    pub fn first_name(&self) -> &str {
+        &self.first_name
+    }
+
+    pub fn last_name(&self) -> &str {
+        &self.last_name
+    }
+
+    pub fn created_at(&self) -> DateTime<Utc> {
+        self.created_at
+    }
+
+    pub fn updated_at(&self) -> DateTime<Utc> {
+        self.updated_at
+    }
 }

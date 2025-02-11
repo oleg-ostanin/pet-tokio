@@ -69,6 +69,18 @@ impl UserBmc {
 
         Ok(user)
     }
+
+    pub async fn get_by_id(
+        mm: &ModelManager,
+        id: i64,
+    ) -> Result<UserStored> {
+        let user: UserStored = sqlx::query_as(SELECT_BY_ID)
+            .bind(id)
+            .fetch_one(mm.pg_pool())
+            .await?;
+
+        Ok(user)
+    }
     //
     // pub async fn get_for_auth(
     //     mm: &ModelManager,
