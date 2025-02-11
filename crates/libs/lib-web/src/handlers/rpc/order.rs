@@ -21,7 +21,7 @@ pub(super) async fn check_order(mm: &ModelManager, params: Value, ctx: Ctx) -> c
     let order_id: OrderId = serde_json::from_str(&params.to_string()).unwrap();
     let order_stored = OrderBmc::get_by_id(mm, order_id).await?;
     let user_stored = UserBmc::get_by_id(mm, order_stored.user_id()).await?;
-    if ctx.phone().eq(user_stored.phone()) {
+    if !ctx.phone().eq(user_stored.phone()) {
         return Err(crate::error::Error::UnauthorizedAccess)
     }
 

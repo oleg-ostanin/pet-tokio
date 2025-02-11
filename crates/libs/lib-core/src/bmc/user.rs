@@ -1,4 +1,5 @@
 use chrono::prelude::*;
+use tracing::info;
 use uuid::Uuid;
 
 use lib_dto::user::{UserExists, UserForCreate, UserForLogin, UserForSignIn, UserStored};
@@ -74,6 +75,8 @@ impl UserBmc {
         mm: &ModelManager,
         id: i64,
     ) -> Result<UserStored> {
+        info!("Trying to get user by id: {:?}", id);
+
         let user: UserStored = sqlx::query_as(SELECT_BY_ID)
             .bind(id)
             .fetch_one(mm.pg_pool())

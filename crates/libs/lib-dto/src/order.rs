@@ -13,7 +13,7 @@ pub enum OrderStatus {
 
 #[derive(Clone, FromRow, Debug, Serialize, Deserialize)]
 pub struct OrderStored {
-    id: i64,
+    order_id: i64,
     user_id: i64,
     content: sqlx::types::Json<OrderContent>,
     status: OrderStatus,
@@ -21,8 +21,8 @@ pub struct OrderStored {
     updated_at: DateTime<Utc>,
 }
  impl OrderStored {
-     pub fn id(&self) -> i64 {
-         self.id
+     pub fn order_id(&self) -> i64 {
+         self.order_id
      }
 
      pub fn user_id(&self) -> i64 {

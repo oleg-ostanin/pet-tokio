@@ -1,4 +1,5 @@
 use chrono::prelude::*;
+use tracing::log::info;
 use uuid::Uuid;
 use lib_dto::order::{OrderForCreate, OrderId, OrderStatus, OrderStored};
 use lib_dto::user::{UserExists, UserForCreate, UserForLogin, UserForSignIn};
@@ -17,7 +18,7 @@ RETURNING order_id;
 "#;
 
 const SELECT_BY_ID: &str = r#"
-SELECT * FROM order_info WHERE id=$1;
+SELECT * FROM order_info WHERE order_id=$1;
 "#;
 
 impl OrderBmc {
@@ -43,6 +44,7 @@ impl OrderBmc {
         mm: &ModelManager,
         order_id: OrderId,
     ) -> Result<OrderStored> {
+        info!("Trying to get order by id: {:?}", order_id);
         let order: OrderStored = sqlx::query_as(SELECT_BY_ID)
             .bind(&order_id.order_id())
             .fetch_one(mm.pg_pool())
