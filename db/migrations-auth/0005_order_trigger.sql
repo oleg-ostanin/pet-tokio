@@ -3,19 +3,31 @@ CREATE OR REPLACE FUNCTION table_update_notify() RETURNS trigger AS $$
 DECLARE
   order_id int;
   user_id int;
+  content Json;
+  status order_status;
 --  value varchar;
 BEGIN
   IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
     order_id = NEW.order_id;
     user_id = NEW.user_id;
---    value = NEW.val;
+    content = NEW.content;
+    status = NEW.status;
+
   ELSE
     order_id = OLD.order_id;
     user_id = OLD.user_id;
---    value = OLD.val;
+    content = OLD.content;
+    status = OLD.status;
+
   END IF;
-  PERFORM pg_notify('table_update', json_build_object('table', TG_TABLE_NAME, 'order_id', order_id, 'user_id', user_id, 'action_type', TG_OP)::text);
---  PERFORM pg_notify('table_update', json_build_object('table', TG_TABLE_NAME, 'order_id', order_id, 'user_id', user_id, 'value', value, 'action_type', TG_OP)::text);
+  PERFORM pg_notify('table_update', json_build_object(
+  'table', TG_TABLE_NAME,
+  'order_id', order_id,
+  'user_id', user_id,
+  'content', content,
+  'status', status,
+  'action_type', TG_OP
+  )::text);
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
