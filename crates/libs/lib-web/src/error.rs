@@ -9,6 +9,7 @@ use serde_with::{DisplayFromStr, serde_as};
 use strum_macros;
 use tracing::{debug, error, info, warn};
 use crate::ctx::CtxExtError;
+use crate::error::Error::FailedToConvertJson;
 use crate::middleware;
 
 pub type Result<T> = core::result::Result<T, Error>;
@@ -24,7 +25,7 @@ pub enum Error {
 
     RpcRequestParsing,
     RpcNoParams,
-    UnknownRpcMethod,
+    UnknownRpcMethod(String),
 
     // -- CtxExtError
     CtxExt(CtxExtError),
@@ -123,11 +124,21 @@ impl Error {
                 (StatusCode::FORBIDDEN, ClientError::LOGIN_FAIL)
             }
 
+            UnknownRpcMethod(method) => {
+                (StatusCode::BAD_REQUEST, ClientError::RPC_REQUEST_INVALID(format!("Unknown method: {}", method)))
+            }
+
+            RpcNoParams => {
+                (StatusCode::BAD_REQUEST, ClientError::RPC_REQUEST_INVALID("No params".to_string()))
+            }
+
+            FailedToConvertJson => {
+                (StatusCode::BAD_REQUEST, ClientError::RPC_REQUEST_INVALID("Wrong params".to_string()))
+            }
             // -- Auth
             CtxExt(_) => (StatusCode::FORBIDDEN, ClientError::LOGIN_FAIL),
 
-            // -- Auth
-            FailedToConvertJson => (StatusCode::BAD_REQUEST, ClientError::LOGIN_FAIL),
+
             //
             // // -- Model
             // Model(model::Error::EntityNotFound { entity, id }) => (

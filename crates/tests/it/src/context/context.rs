@@ -35,6 +35,7 @@ use lib_web::app::web_app::web_app;
 
 //use lib_core::model::user::{UserForCreate, UserForLogin, UserForSignIn, UserStored};
 use crate::context::sql::{CREATE_PHONE_TYPE, CREATE_USER_TABLE};
+use crate::utils::body_utils::{message_and_detail, message_from_response};
 
 #[derive(Debug, Clone)]
 struct HeaderWrapper {
@@ -218,6 +219,13 @@ impl TestContext {
         let response = self.post("/api/rpc", body).await;
         assert_eq!(response.status(), StatusCode::OK);
         result(response).await.expect("must be ok")
+    }
+
+    pub(crate) async fn post_bad(&mut self, path: impl Into<String>, body: Value) -> (String, String) {
+        let body = request(path, Some(body));
+        let response = self.post("/api/rpc", body).await;
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        message_and_detail(response).await
     }
 
     pub(crate) async fn post_ok<T: for<'a> Deserialize<'a>>(&mut self, path: impl Into<String>, body: Value) -> T {

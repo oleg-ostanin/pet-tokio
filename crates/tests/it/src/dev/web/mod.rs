@@ -9,6 +9,7 @@ use crate::context::context::{ServiceType, TestContext};
 
 mod scenario;
 mod login;
+mod bad_request;
 
 /// performs login for further RPC requests
 async fn login(ctx: &mut TestContext) {

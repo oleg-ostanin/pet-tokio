@@ -101,7 +101,7 @@ async fn call_rpc(app_context: &ModelManager, ctx: Ctx, rpc_req: Request) -> Res
         "all_books" => all_books(app_context).await,
         "create_order" => create_order(app_context, params(rpc_req)?, ctx).await,
         "check_order" => check_order(app_context, params(rpc_req)?, ctx).await,
-        _ => Err(UnknownRpcMethod),
+        method => Err(UnknownRpcMethod(method.to_string())),
     }
 }
 
