@@ -1,6 +1,6 @@
 use core::net::SocketAddr;
 use std::fmt::Debug;
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 
 use axum::{body::Body, Error, http::{self, Request, StatusCode}};
 use axum::http::HeaderValue;
@@ -21,7 +21,7 @@ use tokio::net::TcpListener;
 use tokio_postgres::NoTls;
 use tower::builder;
 use tower_cookies::{Cookie, Cookies};
-use tracing::{error, info};
+use tracing::{error, info, subscriber};
 use uuid::Uuid;
 use wiremock::{Mock, MockServer, ResponseTemplate};
 use wiremock::matchers::{body_json, method, path};
@@ -59,14 +59,20 @@ pub(crate) enum ServiceType {
     Web,
 }
 
+static TRACING: OnceLock<()> = OnceLock::new();
+
 impl TestContext {
     pub(crate) async fn new(service_type: ServiceType) -> Self {
         dotenv().ok();
-        tracing_subscriber::fmt()
-            .without_time() // For early local development.
-            .with_target(false)
-            .init();
-        info!("info");
+        // for setting subscriber only once
+        TRACING.get_or_init(|| {
+            tracing_subscriber::fmt()
+                .without_time() // For early local development.
+                .with_target(false)
+                .init();
+            info!("subscriber initialized");
+            }
+        );
 
         let mock_server = MockServer::start().await;
 

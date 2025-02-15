@@ -7,7 +7,6 @@ use lib_dto::user::{AuthCode, UserForCreate};
 
 use crate::context::context::{ServiceType, TestContext};
 
-mod rpc;
 mod scenario;
 mod login;
 

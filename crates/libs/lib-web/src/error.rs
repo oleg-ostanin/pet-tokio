@@ -24,6 +24,7 @@ pub enum Error {
 
     RpcRequestParsing,
     RpcNoParams,
+    UnknownRpcMethod,
 
     // -- CtxExtError
     CtxExt(CtxExtError),

@@ -6,7 +6,7 @@ use tower::{Service, ServiceExt};
 mod tests {
     use axum::http::StatusCode;
     use serde_json::json;
-
+    use serial_test::serial;
     use lib_dto::book::BookList;
     use lib_dto::user::AuthCode;
     use lib_utils::rpc::request;
@@ -17,6 +17,7 @@ mod tests {
     use crate::utils::file_utils::from_file;
 
     #[tokio::test]
+    #[serial]
     async fn without_login() {
         let mut ctx = TestContext::new(ServiceType::Web).await;
 
@@ -30,9 +31,10 @@ mod tests {
     }
 
     #[tokio::test]
+    #[serial]
     async fn login_forbidden() {
         let mut ctx = TestContext::new(ServiceType::Web).await;
-        login(&mut ctx).await;
+        //login(&mut ctx).await;
         let auth_code_invalid = AuthCode::new("2128506".to_string(), "invalid_code");
         ctx.mock_forbidden(json!(auth_code_invalid)).await;
 

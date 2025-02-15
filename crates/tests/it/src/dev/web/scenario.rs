@@ -6,7 +6,7 @@ use tower::{Service, ServiceExt};
 mod tests {
     use axum::http::StatusCode;
     use serde_json::{json, Value};
-
+    use serial_test::serial;
     use lib_dto::book::BookList;
     use lib_dto::order::{OrderContent, OrderId, OrderItem, OrderStored};
     use lib_utils::rpc::request;
@@ -16,6 +16,7 @@ mod tests {
     use crate::utils::file_utils::from_file;
 
     #[tokio::test]
+    #[serial]
     async fn scenario() {
         let mut ctx = TestContext::new(ServiceType::Web).await;
         login(&mut ctx).await;

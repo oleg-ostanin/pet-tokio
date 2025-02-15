@@ -5,13 +5,14 @@ use tower::{Service, ServiceExt};
 #[cfg(test)]
 mod tests {
     use axum::http::StatusCode;
-
+    use serial_test::serial;
     use lib_dto::user::{AuthCode, UserForCreate, UserForSignIn};
     use lib_utils::json::{body, value};
 
     use crate::context::context::{ServiceType, TestContext};
 
     #[tokio::test]
+    #[serial]
     async fn auth() {
         let mut ctx = TestContext::new(ServiceType::Auth).await;
 
