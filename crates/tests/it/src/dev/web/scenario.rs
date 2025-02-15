@@ -5,7 +5,7 @@ use tower::{Service, ServiceExt};
 #[cfg(test)]
 mod tests {
     use axum::http::StatusCode;
-    use serde_json::Value;
+    use serde_json::{json, Value};
 
     use lib_dto::book::BookList;
     use lib_dto::order::{OrderContent, OrderId, OrderItem, OrderStored};
@@ -33,12 +33,10 @@ mod tests {
 
         let order_item = OrderItem::new(1, 2);
         let order_content = OrderContent::new(vec!(order_item));
-        let create_order = request("create_order", Some(order_content));
-        let order_id: OrderId = ctx.post_ok("/api/rpc", create_order).await;
+        let order_id: OrderId = ctx.post_rpc("create_order", json!(order_content)).await;
         assert_eq!(1, order_id.order_id());
 
-        let check_order_request = request("check_order", Some(order_id));
-        let check_stored: OrderStored = ctx.post_ok("/api/rpc", check_order_request).await;
+        let check_stored: OrderStored = ctx.post_rpc("check_order", json!(order_id)).await;
         assert_eq!(1, check_stored.order_id());
 
         handle.await.expect("ok");

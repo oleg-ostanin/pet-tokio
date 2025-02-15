@@ -29,6 +29,7 @@ use wiremock::matchers::{body_json, method, path};
 use lib_core::context::app_context::{AppConfig, ModelManager};
 use lib_dto::user::{AuthCode, UserForCreate, UserForSignIn};
 use lib_utils::json::result;
+use lib_utils::rpc::request;
 use lib_web::app::auth_app::auth_app;
 use lib_web::app::web_app::web_app;
 
@@ -204,6 +205,13 @@ impl TestContext {
         }
 
         response
+    }
+
+    pub(crate) async fn post_rpc<T: for<'a> Deserialize<'a>>(&mut self, path: impl Into<String>, body: Value) -> T {
+        let body = request(path, Some(body));
+        let response = self.post("/api/rpc", body).await;
+        assert_eq!(response.status(), StatusCode::OK);
+        result(response).await.expect("must be ok")
     }
 
     pub(crate) async fn post_ok<T: for<'a> Deserialize<'a>>(&mut self, path: impl Into<String>, body: Value) -> T {
