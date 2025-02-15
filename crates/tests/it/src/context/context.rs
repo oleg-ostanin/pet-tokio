@@ -11,6 +11,7 @@ use http_body_util::BodyExt;
 use hyper::body::{Buf, Incoming};
 use hyper_util::client::legacy::Client;
 use hyper_util::client::legacy::connect::HttpConnector;
+use serde::Deserialize;
 // for `collect`
 use serde_json::{json, Value};
 use sqlx::{PgPool, Pool};
@@ -27,6 +28,7 @@ use wiremock::matchers::{body_json, method, path};
 
 use lib_core::context::app_context::{AppConfig, ModelManager};
 use lib_dto::user::{AuthCode, UserForCreate, UserForSignIn};
+use lib_utils::json::result;
 use lib_web::app::auth_app::auth_app;
 use lib_web::app::web_app::web_app;
 
@@ -202,6 +204,12 @@ impl TestContext {
         }
 
         response
+    }
+
+    pub(crate) async fn post_ok<T: for<'a> Deserialize<'a>>(&mut self, path: impl Into<String>, body: Value) -> T {
+        let response = self.post(path, body).await;
+        assert_eq!(response.status(), StatusCode::OK);
+        result(response).await.expect("must be ok")
     }
 
     pub fn app_context(&self) -> &Arc<ModelManager> {
