@@ -13,6 +13,7 @@ mod tests {
     use lib_dto::user::{AuthCode, UserForCreate};
     use lib_utils::json::body;
     use lib_utils::json::value;
+    use lib_utils::json::result;
 
     use crate::context::context::{ServiceType, TestContext};
     use crate::dev::web::login;
@@ -41,19 +42,20 @@ mod tests {
         info!("all books response: {:?}", &rpc_response);
         let v = value(rpc_response).await.expect("should be valid");
         info!("all books value: {:?}", &v);
-        let result = v.get("result").expect("should be valid");
-        let body: BookList = body(result.clone()).expect("should ve valid");
-        info!("all books: {:?}", &body);
-        assert_eq!(5, body.book_list().len());
+        let all_books_result = v.get("result").expect("should be valid");
+        let book_list: BookList = body(all_books_result.clone()).expect("should ve valid");
+        info!("all books: {:?}", &book_list);
+        assert_eq!(5, book_list.book_list().len());
 
         let order_item = OrderItem::new(1, 2);
         let order_content = OrderContent::new(vec!(order_item));
         let create_order = request("create_order", Some(order_content));
         let create_order_response = ctx.post("/api/rpc", create_order).await;
-        let create_order_value = value(create_order_response).await.expect("must be ok");
-        info!("create order: {:?}", &create_order_value);
+        // let create_order_value = value(create_order_response).await.expect("must be ok");
+        // info!("create_order_value: {:?}", &create_order_value);
 
-        let order_id = OrderId::new(1);
+        //let order_id = OrderId::new(1);
+        let order_id: OrderId = result(create_order_response).await.expect("must be ok");
         let check_order = request("check_order", Some(order_id));
         let check_order_response = ctx.post("/api/rpc", check_order).await;
         let check_order_value = value(check_order_response).await.expect("must be ok");

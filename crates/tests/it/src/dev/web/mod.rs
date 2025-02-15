@@ -8,7 +8,7 @@ use lib_dto::user::{AuthCode, UserForCreate};
 use crate::context::context::{ServiceType, TestContext};
 
 mod rpc;
-mod book_add;
+mod scenario;
 
 /// performs login for further RPC requests
 async fn login(ctx: &mut TestContext) {

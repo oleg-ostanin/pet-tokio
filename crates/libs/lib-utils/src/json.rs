@@ -5,8 +5,8 @@ use hyper::body::Incoming;
 use serde::Deserialize;
 use serde_json::Value;
 use tower::Service;
-use anyhow::{anyhow, Context, Result};
-use tracing::error;
+use anyhow::{anyhow, bail, Context, Result};
+use tracing::{error, info};
 use tracing_subscriber::fmt::format;
 
 pub async fn value(response: Response<Incoming>) -> Result<Value> {
@@ -24,8 +24,23 @@ pub async fn value(response: Response<Incoming>) -> Result<Value> {
     Ok(json_value)
 }
 
-pub fn body<T: for<'a> Deserialize<'a>>(json: Value) -> Option<T> {
-    serde_json::from_value::<Option<T>>(json)
-        .map_err(|e| error!("Failed to parse value: {}", e.to_string()))
-        .ok()?
+pub fn body<T: for<'a> Deserialize<'a>>(json: Value) -> Result<T> {
+    serde_json::from_value::<T>(json)
+        .map_err(|e| {
+            error!("Failed to parse value: {}", e.to_string());
+            anyhow!(e)
+        })
+}
+
+pub async fn result<T: for<'a> Deserialize<'a>>(response: Response<Incoming>) -> Result<T> {
+    let result = value(response).await
+        .map_err(|e| {
+            error!("Failed to get value from response: {}", e.to_string());
+            anyhow!(e)
+        })?
+        .get("result")
+        .context("no result")?
+        .to_owned();
+
+    body(result)
 }
