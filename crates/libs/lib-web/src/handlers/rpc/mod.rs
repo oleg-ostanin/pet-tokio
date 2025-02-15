@@ -5,13 +5,16 @@ use axum::extract::State;
 use axum::http::StatusCode;
 use axum::Json;
 use axum::response::{IntoResponse, Response};
+use rpc_router::Request;
 use serde_json::{json, Value};
-use tracing::{info, info_span};
+use tracing::{error, info, info_span};
 use book::*;
 use lib_core::context::app_context::ModelManager;
 use order::create_order;
 
-use crate::ctx::CtxW;
+use crate::ctx::{Ctx, CtxW};
+use crate::error::Error::{RpcNoParams, RpcRequestParsing};
+use crate::error::Result;
 use crate::handlers::rpc::order::check_order;
 pub mod book;
 pub mod order;
@@ -40,10 +43,8 @@ pub async fn rpc(
     // // -- Parse and RpcRequest validate the rpc_request
     let rpc_req = match rpc_router::Request::try_from(rpc_req) {
         Ok(rpc_req) => rpc_req,
-        Err(rpc_req_error) => {
-            let res = StatusCode::INTERNAL_SERVER_ERROR.into_response();
-            //crate::error::Error::RpcRequestParsing(rpc_req_error).into_response();
-            return res;
+        Err(_) => {
+            return RpcRequestParsing.into_response();
         }
     };
 
@@ -56,13 +57,7 @@ pub async fn rpc(
         method: rpc_req.method.clone(),
     };
 
-    let call_res = match rpc_req.method.as_str() {
-        "add_books" => add_books(app_context.deref(), rpc_req.params.expect("must be")).await,
-        "all_books" => all_books(app_context.deref()).await,
-        "create_order" => create_order(app_context.deref(), rpc_req.params.expect("must be"), ctx).await,
-        "check_order" => check_order(app_context.deref(), rpc_req.params.expect("must be"), ctx).await,
-        _ => unreachable!(),
-    };
+    let call_res = call_rpc(app_context.deref(), ctx, rpc_req).await;
 
     //
     // // -- Add the request specific resources
@@ -98,6 +93,23 @@ pub async fn rpc(
     res.extensions_mut().insert(Arc::new(rpc_info));
 
     res
+}
 
-    //StatusCode::OK.into_response()
+async fn call_rpc(app_context: &ModelManager, ctx: Ctx, rpc_req: Request) -> Result<Value> {
+    match rpc_req.method.as_str() {
+        "add_books" => add_books(app_context, params(rpc_req)?).await,
+        "all_books" => all_books(app_context).await,
+        "create_order" => create_order(app_context, params(rpc_req)?, ctx).await,
+        "check_order" => check_order(app_context, params(rpc_req)?, ctx).await,
+        _ => unreachable!(),
+    }
+}
+
+fn params(request: Request) -> Result<Value> {
+    return if let Some(params) = request.params {
+        Ok(params)
+    } else {
+        error!("Failed to extract params from request: {:?}", request.params);
+        Err(RpcNoParams)
+    }
 }

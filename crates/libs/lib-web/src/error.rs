@@ -8,7 +8,6 @@ use serde_json::Value;
 use serde_with::{DisplayFromStr, serde_as};
 use strum_macros;
 use tracing::{debug, error, info, warn};
-
 use crate::ctx::CtxExtError;
 use crate::middleware;
 
@@ -22,6 +21,9 @@ pub enum Error {
     Anyhow,
 
     UnauthorizedAccess,
+
+    RpcRequestParsing,
+    RpcNoParams,
 
     // -- CtxExtError
     CtxExt(CtxExtError),
