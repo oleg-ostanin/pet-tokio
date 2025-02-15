@@ -21,14 +21,11 @@ mod tests {
     use crate::utils::file_utils::from_file;
 
     #[tokio::test]
-    async fn add_books() {
+    async fn scenario() {
         let mut ctx = TestContext::new(ServiceType::Web).await;
         login(&mut ctx).await;
 
-        let handle = tokio::spawn(lib_core::notify::notify(ctx.pool().clone()));
-
-        let user_to_create = UserForCreate::new("2128506", "pwd", "John", "Doe");
-        let _ = UserBmc::create(ctx.app_context(), user_to_create).await;
+        let handle = tokio::spawn(lib_core::notify::order::notify(ctx.pool().clone()));
 
         let book_list: BookList = from_file("books_refactored.json");
         let add_books_request = request("add_books", Some(book_list));

@@ -6,7 +6,7 @@ use axum::http::StatusCode;
 use axum::Json;
 use axum::response::{IntoResponse, Response};
 use serde_json::{json, Value};
-use tracing::info;
+use tracing::{info, info_span};
 use book::*;
 use lib_core::context::app_context::ModelManager;
 use order::create_order;
@@ -33,6 +33,9 @@ pub async fn rpc(
     Json(rpc_req): Json<Value>,
 ) -> Response {
     let ctx = ctx.0;
+    let span = info_span!("rpc_handler", " {}", ctx.phone());
+    let _guard = span.enter();
+
 
     // // -- Parse and RpcRequest validate the rpc_request
     let rpc_req = match rpc_router::Request::try_from(rpc_req) {

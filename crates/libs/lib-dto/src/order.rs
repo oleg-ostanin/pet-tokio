@@ -3,7 +3,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, sqlx::Type, Deserialize, Serialize)]
-#[sqlx(type_name = "order_status", rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
+#[sqlx(type_name = "order_status", rename_all = "snake_case")]
 pub enum OrderStatus {
     New,
     InProgress,
