@@ -4,17 +4,13 @@ use tower::{Service, ServiceExt};
 
 #[cfg(test)]
 mod tests {
-    use axum::http::StatusCode;
-    use axum::Json;
     use serde_json::{json, Value};
     use serial_test::serial;
-    use lib_dto::book::BookList;
-    use lib_dto::order::{OrderContent, OrderId, OrderItem, OrderStored};
-    use lib_utils::rpc::request;
+
+    use lib_dto::order::{OrderContent, OrderItem};
 
     use crate::context::context::{ServiceType, TestContext};
     use crate::dev::web::login;
-    use crate::utils::file_utils::from_file;
 
     #[tokio::test]
     #[serial]
