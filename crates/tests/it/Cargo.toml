@@ -68,7 +68,8 @@ uuid = {version = "1", features = ["v4","fast-rng",]}
 
 # -- Feature: with-rpc
 rpc-router = { workspace = true, optional = true }
-num-bigint = "0.4.6"# todo remove temp depend.
+num-bigint = "0.4.6"
+tokio-util = "0.7.13"# todo remove temp depend.
 
 [dev-dependencies]
 serial_test = "3"

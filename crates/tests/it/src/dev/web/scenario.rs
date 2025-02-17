@@ -21,8 +21,6 @@ mod tests {
         let mut ctx = TestContext::new(ServiceType::Web).await;
         login(&mut ctx).await;
 
-        let handle = tokio::spawn(lib_core::notify::order::notify(ctx.pool().clone()));
-
         let book_list: BookList = from_file("books_refactored.json");
         let add_books_request = request("add_books", Some(book_list));
         let add_books_response = ctx.post("/api/rpc", add_books_request).await;
@@ -40,6 +38,6 @@ mod tests {
         let check_stored: OrderStored = ctx.post_rpc("check_order", json!(order_id)).await;
         assert_eq!(1, check_stored.order_id());
 
-        handle.await.expect("ok");
+        ctx.cancel().await;
     }
 }

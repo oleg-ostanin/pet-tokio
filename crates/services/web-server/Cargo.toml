@@ -22,4 +22,5 @@ tracing-appender = "0.2.3"
 
 dotenv = "0.15.0"
 dotenv_codegen = "0.15.0"
+tokio-util = "0.7.13"
 

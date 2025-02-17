@@ -9,6 +9,8 @@ use sqlx::Pool;
 use sqlx::Postgres;
 use tracing::info;
 
+use anyhow::Result;
+
 #[derive(Deserialize, Debug)]
 pub enum ActionType {
     INSERT,
@@ -17,7 +19,7 @@ pub enum ActionType {
 }
 
 #[derive(Deserialize, Debug)]
-pub struct Payload {
+pub struct OrderPayload {
     pub table: String,
     pub action_type: ActionType,
     pub order_id: i64,
@@ -33,9 +35,6 @@ pub async fn start_listening<T: DeserializeOwned + Sized + Debug>(
     channels: Vec<&str>,
     call_back: impl Fn(T),
 ) -> Result<(), Error> {
-    // Initiate the logger.
-    //env_logger::init();
-
     let mut listener = PgListener::connect_with(pool).await.unwrap();
     listener.listen_all(channels).await?;
     loop {
@@ -62,14 +61,14 @@ use std::{
 };
 use lib_dto::order::{OrderContent, OrderStatus};
 
-pub async fn notify(pool: sqlx::PgPool) {
+pub async fn notify(pool: sqlx::PgPool) -> Result<()>{
 
     let channels = vec!["table_update"];
 
     let hm: HashMap<String, String> = HashMap::new();
     let constants = Arc::new(RwLock::new(hm));
 
-    let call_back = |payload: Payload| {
+    let call_back = |payload: OrderPayload| {
         info!("payload: {:?}", &payload);
 
         match payload.action_type {
@@ -86,5 +85,34 @@ pub async fn notify(pool: sqlx::PgPool) {
         info!(" ");
     };
 
-    let _ = start_listening(&pool, channels, call_back).await;
+    let mut listener = PgListener::connect_with(&pool).await.unwrap();
+    listener.listen_all(channels).await?;
+    loop {
+        while let Some(notification) = listener.try_recv().await? {
+            info!(
+                "Getting notification with payload: {:?} from channel {:?}",
+                notification.payload(),
+                notification.channel()
+            );
+
+            let strr = notification.payload().to_owned();
+            let payload: OrderPayload = serde_json::from_str::<OrderPayload>(&strr).unwrap();
+            info!("the payload is {:?}", payload);
+
+            info!("payload: {:?}", &payload);
+
+            match payload.action_type {
+                ActionType::INSERT => {
+
+                }
+                ActionType::UPDATE => {
+
+                }
+                ActionType::DELETE => {
+
+                }
+            };
+            info!(" ");
+        }
+    }
 }

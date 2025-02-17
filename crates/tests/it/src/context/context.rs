@@ -18,6 +18,7 @@ use sqlx::{PgPool, Pool};
 use sqlx::postgres::PgPoolOptions;
 use testcontainers::{clients, Container, images::postgres::Postgres};
 use tokio::net::TcpListener;
+use tokio::select;
 use tokio_postgres::NoTls;
 use tower::builder;
 use tower_cookies::{Cookie, Cookies};
@@ -32,8 +33,9 @@ use lib_utils::json::result;
 use lib_utils::rpc::request;
 use lib_web::app::auth_app::auth_app;
 use lib_web::app::web_app::web_app;
+use tokio_util::sync::CancellationToken;
 
-//use lib_core::model::user::{UserForCreate, UserForLogin, UserForSignIn, UserStored};
+
 use crate::context::sql::{CREATE_PHONE_TYPE, CREATE_USER_TABLE};
 use crate::utils::body_utils::{message_and_detail, message_from_response};
 
@@ -53,6 +55,7 @@ pub(crate) struct TestContext<> {
     pub(crate) socket_addr: SocketAddr,
     auth_token: Option<String>,
     headers: Vec<HeaderWrapper>,
+    cancellation_token: CancellationToken,
 }
 
 pub(crate) enum ServiceType {
@@ -130,13 +133,23 @@ impl TestContext {
             ServiceType::Auth => auth_app(app_context.clone()).await,
             ServiceType::Web => web_app(app_context.clone()).await,
         };
-        tokio::spawn(async move {
-            axum::serve(listener, app).await.unwrap();
-        });
 
         let client: Client<HttpConnector, Body> =
             hyper_util::client::legacy::Client::builder(hyper_util::rt::TokioExecutor::new())
                 .build_http();
+
+        let cancellation_token: CancellationToken = CancellationToken::new();
+        let cancellation_token_cloned: CancellationToken = cancellation_token.clone();
+        let app_context_cloned = app_context.clone();
+        tokio::spawn(async move {
+            select! {
+                _ = lib_core::task::main::main(app_context_cloned) => {}
+                _ = axum::serve(listener, app) => {}
+                _ = cancellation_token_cloned.cancelled() => {
+                    info!("Cancelled by cancellation token.")
+                }
+            };
+        });
 
         Self {
             app_context,
@@ -148,10 +161,13 @@ impl TestContext {
             socket_addr,
             auth_token: None,
             headers: Vec::new(),
+            cancellation_token,
         }
     }
 
-
+    pub(crate) async fn cancel(&self) {
+        self.cancellation_token.cancel()
+    }
 
     pub(crate) async fn mock_ok(&self, value: Value) {
         Mock::given(method("POST"))

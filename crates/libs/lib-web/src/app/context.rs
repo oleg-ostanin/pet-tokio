@@ -24,14 +24,6 @@ use crate::middleware::mw_ctx::{mw_ctx_check, mw_ctx_create};
 use crate::middleware::mw_req_stamp::mw_req_stamp_resolver;
 use crate::middleware::mw_res_map::mw_response_map;
 
-// use lib_core::model::user::UserForCreate;
-// use crate::handlers::handlers_login::api_login_handler;
-// use crate::middleware::mw_auth::{mw_ctx_require, mw_ctx_resolver};
-// use crate::middleware::mw_req_stamp::mw_req_stamp_resolver;
-// use crate::middleware::mw_res_map::mw_response_map;
-// use super::super::handlers::signup::sign_up;
-// use super::super::handlers::admin::get_by_id;
-
 pub async fn create_app_context() -> Arc<ModelManager> {
     let db_url = read_db_url("local.properties");
     let client = get_client(&db_url).await;
