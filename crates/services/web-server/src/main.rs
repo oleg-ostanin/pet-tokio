@@ -24,6 +24,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let app = web_app(app_context.clone()).await;
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await.unwrap();
     let cancellation_token: CancellationToken = app_context.cancellation_token();
+
     select! {
         _ = lib_core::task::main::main(app_context) => {}
         _ = axum::serve(listener, app) => {}
