@@ -2,22 +2,15 @@ mod requests;
 mod utils;
 
 use std::error::Error;
-use std::sync::Arc;
 
-use axum::body::Body;
 use axum::http::HeaderValue;
-use axum::Json;
 use axum::response::Response;
 use http_body_util::BodyExt;
-use hyper::{http, Request};
 use hyper::body::Buf;
 use hyper::body::Incoming;
-use hyper_util::client::legacy::Client;
-use hyper_util::client::legacy::connect::HttpConnector;
 use serde_json::{json, Value};
 use tracing::info;
 
-use lib_core::context::app_context::ModelManager;
 use lib_dto::book::BookList;
 use lib_dto::order::{OrderContent, OrderItem};
 use lib_dto::user::{AuthCode, UserExists, UserForCreate, UserForSignIn};

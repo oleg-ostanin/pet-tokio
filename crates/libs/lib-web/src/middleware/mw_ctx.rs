@@ -12,7 +12,7 @@ use lib_utils::constants::AUTH_TOKEN;
 use lib_utils::jwt::phone_from_token;
 
 use crate::ctx::{Ctx, CtxExtError, CtxExtResult, CtxW};
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 pub async fn mw_ctx_check(
     ctx: Result<CtxW>,

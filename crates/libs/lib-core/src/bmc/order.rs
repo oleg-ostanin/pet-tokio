@@ -1,12 +1,9 @@
 use chrono::prelude::*;
 use tracing::log::info;
-use uuid::Uuid;
 use lib_dto::order::{OrderForCreate, OrderId, OrderStatus, OrderStored};
-use lib_dto::user::{UserExists, UserForCreate, UserForLogin, UserForSignIn};
 
-use crate::bmc::scheme::Scheme;
 use crate::context::app_context::ModelManager;
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 pub struct OrderBmc;
 const INSERT_USER: &str = r#"

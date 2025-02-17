@@ -4,13 +4,9 @@ use std::sync::{Arc, PoisonError, RwLockReadGuard, RwLockWriteGuard};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use serde::Serialize;
-use serde_json::Value;
-use serde_with::{DisplayFromStr, serde_as};
 use strum_macros;
-use tracing::{debug, error, info, warn};
+use tracing::{error, info};
 use crate::ctx::CtxExtError;
-use crate::error::Error::FailedToConvertJson;
-use crate::middleware;
 
 pub type Result<T> = core::result::Result<T, Error>;
 

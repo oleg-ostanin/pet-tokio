@@ -60,7 +60,6 @@ use std::{
     collections::HashMap,
     sync::{Arc, RwLock},
 };
-use chrono::{DateTime, Utc};
 use lib_dto::order::{OrderContent, OrderStatus};
 
 pub async fn notify(pool: sqlx::PgPool) {

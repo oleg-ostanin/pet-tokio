@@ -1,7 +1,6 @@
 use std::env::VarError;
-use serde::Serialize;
 use thiserror::Error;
-use tracing::{error, info};
+use tracing::error;
 
 pub type Result<T> = core::result::Result<T, Error>;
 

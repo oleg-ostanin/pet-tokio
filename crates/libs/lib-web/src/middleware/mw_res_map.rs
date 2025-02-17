@@ -1,10 +1,9 @@
 use std::sync::Arc;
 
-use axum::http::{Method, StatusCode, Uri};
+use axum::http::{Method, Uri};
 use axum::Json;
 use axum::response::{IntoResponse, Response};
 use serde_json::{json, to_value};
-use tower_cookies::Cookies;
 use tracing::{debug, info};
 use uuid::Uuid;
 

@@ -4,10 +4,8 @@ use hyper::body::Buf;
 use hyper::body::Incoming;
 use serde::Deserialize;
 use serde_json::Value;
-use tower::Service;
-use anyhow::{anyhow, bail, Context, Result};
-use tracing::{error, info};
-use tracing_subscriber::fmt::format;
+use anyhow::{anyhow, Context, Result};
+use tracing::error;
 
 pub async fn value(response: Response<Incoming>) -> Result<Value> {
     let body = response.collect().await

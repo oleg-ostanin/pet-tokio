@@ -2,12 +2,11 @@ use std::ops::Deref;
 use std::sync::Arc;
 
 use axum::extract::State;
-use axum::http::StatusCode;
 use axum::Json;
 use axum::response::{IntoResponse, Response};
 use rpc_router::Request;
 use serde_json::{json, Value};
-use tracing::{error, info, info_span};
+use tracing::{info, info_span};
 use book::*;
 use lib_core::context::app_context::ModelManager;
 use order::create_order;

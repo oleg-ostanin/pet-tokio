@@ -2,7 +2,6 @@ use std::ops::Deref;
 use std::sync::Arc;
 
 use axum::extract::State;
-use axum::http::StatusCode;
 use axum::Json;
 use serde_json::{json, Value};
 use tracing::info;
@@ -52,7 +51,7 @@ pub async fn check_code(
 ) -> Result<()> {
     let phone = user.phone;
     info!("Checking user {:<12}", &phone);
-    let mut cache = app_context.cache().read()?;
+    let cache = app_context.cache().read()?;
     if let Some(code) = cache.get(&phone) {
         if code.eq(&user.auth_code) {
             return Ok(());

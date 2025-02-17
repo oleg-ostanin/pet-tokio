@@ -1,12 +1,7 @@
-use std::time::SystemTime;
 
-use chrono::{DateTime, Utc};
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use tokio_postgres::{Error, Row};
-use tokio_postgres::types::ToSql;
-use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize, Builder, FromRow)]
 pub struct BookInfo {

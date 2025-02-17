@@ -1,30 +1,17 @@
-use core::net::SocketAddr;
 use std::fmt::Debug;
-use std::sync::Arc;
 
-use axum::{body::Body, Error, http::{self, Request, StatusCode}};
+use axum::{body::Body, http::{self, Request}};
 use axum::http::HeaderValue;
 use axum::response::Response;
-use axum::routing::get;
 use dotenv::dotenv;
-use http_body_util::BodyExt;
 use hyper::body::{Buf, Incoming};
 use hyper_util::client::legacy::Client;
 use hyper_util::client::legacy::connect::HttpConnector;
 use serde_json::{json, Value};
-use sqlx::Pool;
-use sqlx::postgres::PgPoolOptions;
-use tokio::net::TcpListener;
-use tower::builder;
-use tower_cookies::{Cookie, Cookies};
 use tracing::info;
-use uuid::Uuid;
 
-use lib_core::context::app_context::{AppConfig, ModelManager};
 use lib_dto::user::{AuthCode, UserForCreate, UserForSignIn};
 use lib_utils::constants::{AUTH_SOCKET_ADDR, WEB_SOCKET_ADDR};
-use lib_web::app::auth_app::auth_app;
-use lib_web::app::web_app::web_app;
 
 #[derive(Debug, Clone)]
 struct HeaderWrapper {
