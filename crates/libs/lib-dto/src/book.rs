@@ -1,4 +1,4 @@
-
+use chrono::{DateTime, Utc};
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -31,3 +31,22 @@ impl BookList {
         &self.book_list
     }
 }
+
+#[derive(Debug, Deserialize, Serialize, Builder, FromRow)]
+pub struct BookStorageInfo {
+    id: i64,
+    quantity: Option<i64>,
+}
+
+impl BookStorageInfo {
+    pub fn id(&self) -> i64 {
+        self.id
+    }
+
+    pub fn quantity(&self) -> Option<i64> {
+        self.quantity
+    }
+}
+
+
+

@@ -1,4 +1,4 @@
-use lib_dto::book::{BookInfo, BookList};
+use lib_dto::book::{BookInfo, BookList, BookStorageInfo};
 
 use crate::context::app_context::ModelManager;
 use crate::error::Result;
@@ -28,6 +28,17 @@ const SELECT_BY_TITLE: &str = r#"
 SELECT * FROM book_info WHERE title=$1;
 "#;
 
+const SELECT_JOIN_STORAGE: &str = r#"
+SELECT
+    bi.id,
+    bs.quantity
+FROM
+    book_info as bi
+FULL OUTER JOIN book_storage as bs
+    ON bi.id = bs.book_id
+WHERE bi.id=$1
+"#;
+
 impl BookBmc {
     pub async fn create(
         mm: &ModelManager,
@@ -44,35 +55,6 @@ impl BookBmc {
         Ok(())
     }
 
-    // pub async fn get_by_id(
-    //     mm: &ModelManager,
-    //     id: i64,
-    // ) -> Result<UserStored> {
-    //     //let res = db_client.execute(&statement, &[&user.uuid, &user.pass]).await?;
-    //     let res = mm.client().query(SELECT_BY_ID, &[&id]).await?;
-    //
-    //     info!("{:?}", &res);
-    //
-    //     let v = res.get(0).ok_or(Error::StoreError("not_found".to_string()))?;
-    //
-    //     UserStored::try_from(v)
-    // }
-    //
-    // pub async fn get_for_auth(
-    //     mm: &ModelManager,
-    //     phone: &String,
-    // ) -> Result<UserForAuth> {
-    //     //let res = db_client.execute(&statement, &[&user.uuid, &user.pass]).await?;
-    //     let res = mm.client().query(SELECT_BY_phone, &[phone]).await?;
-    //
-    //     info!("{:?}", &res);
-    //
-    //     let v = res.get(0).ok_or(Error::StoreError("not_found".to_string()))?;
-    //
-    //     UserForAuth::try_from(v)
-    // }
-    //
-    // todo make these two functions generic
     pub async fn get_all(
         mm: &ModelManager,
     ) -> Result<BookList> {
@@ -81,5 +63,17 @@ impl BookBmc {
             .await?;
 
         Ok(BookList::new(books))
+    }
+
+    pub async fn get_quantity(
+        mm: &ModelManager,
+        book_id: i64,
+    ) -> Result<BookStorageInfo> {
+        let book_storage: BookStorageInfo = sqlx::query_as(SELECT_JOIN_STORAGE)
+            .bind(&book_id)
+            .fetch_one(mm.pg_pool())
+            .await?;
+
+        Ok(book_storage)
     }
 }

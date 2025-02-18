@@ -1,4 +1,5 @@
 use std::fmt::Debug;
+use std::sync::Arc;
 use serde::Deserialize;
 
 use serde::de::DeserializeOwned;
@@ -11,6 +12,7 @@ use lib_dto::order::{OrderContent, OrderStatus};
 
 use anyhow::Result;
 use tokio::sync::mpsc::Sender;
+use crate::context::app_context::ModelManager;
 
 #[derive(Deserialize, Debug)]
 pub enum ActionType {
@@ -21,20 +23,26 @@ pub enum ActionType {
 
 #[derive(Deserialize, Debug)]
 pub struct OrderPayload {
-    pub table: String,
-    pub action_type: ActionType,
-    pub order_id: i64,
-    pub user_id: i64,
-    pub content: sqlx::types::Json<OrderContent>,
-    pub status: OrderStatus,
+    table: String,
+    action_type: ActionType,
+    order_id: i64,
+    user_id: i64,
+    content: sqlx::types::Json<OrderContent>,
+    status: OrderStatus,
     // pub created_at: DateTime<Utc>,
     // pub updated_at: DateTime<Utc>,
 }
 
-pub async fn notify_order(order_payload_tx: Sender<OrderPayload>, pool: sqlx::PgPool) -> Result<()>{
+impl OrderPayload {
+    pub fn content(&self) -> &sqlx::types::Json<OrderContent> {
+        &self.content
+    }
+}
+
+pub async fn notify_order(order_payload_tx: Sender<OrderPayload>, app_context: Arc<ModelManager>) -> Result<()>{
     let channels = vec!["table_update"];
 
-    let mut listener = PgListener::connect_with(&pool).await.unwrap();
+    let mut listener = PgListener::connect_with(app_context.pg_pool()).await.unwrap();
     listener.listen_all(channels).await?;
     loop {
         while let Some(notification) = listener.try_recv().await? {
