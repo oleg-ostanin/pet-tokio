@@ -1,3 +1,4 @@
+use std::ops::Deref;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
