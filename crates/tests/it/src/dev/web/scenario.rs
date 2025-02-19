@@ -4,9 +4,11 @@ use tower::{Service, ServiceExt};
 
 #[cfg(test)]
 mod tests {
+    use std::time::Duration;
     use axum::http::StatusCode;
     use serde_json::{json, Value};
     use serial_test::serial;
+    use tokio::time::sleep;
     use lib_dto::book::BookList;
     use lib_dto::order::{OrderContent, OrderId, OrderItem, OrderStored};
     use lib_utils::rpc::request;
@@ -38,6 +40,7 @@ mod tests {
         let check_stored: OrderStored = ctx.post_rpc("check_order", json!(order_id)).await;
         assert_eq!(1, check_stored.order_id());
 
+        sleep(Duration::from_secs(10)).await;
         ctx.cancel().await;
     }
 }

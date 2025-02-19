@@ -37,6 +37,10 @@ impl OrderPayload {
     pub fn content(&self) -> &sqlx::types::Json<OrderContent> {
         &self.content
     }
+
+    pub fn order_id(&self) -> i64 {
+        self.order_id
+    }
 }
 
 pub async fn notify_order(order_payload_tx: Sender<OrderPayload>, app_context: Arc<ModelManager>) -> Result<()>{

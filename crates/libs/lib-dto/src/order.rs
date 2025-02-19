@@ -88,6 +88,31 @@ impl OrderItem {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct OrderItemExt {
+    order_id: i64,
+    book_id: i64,
+    quantity: i64,
+}
+
+impl OrderItemExt {
+    pub fn new(order_id: i64, book_id: i64, quantity: i64) -> Self {
+        Self { order_id, book_id, quantity }
+    }
+
+    pub fn order_id(&self) -> i64 {
+        self.order_id
+    }
+
+    pub fn book_id(&self) -> i64 {
+        self.book_id
+    }
+
+    pub fn quantity(&self) -> i64 {
+        self.quantity
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OrderContent {
     content: Vec<OrderItem>,
 }

@@ -1,5 +1,5 @@
 use lib_dto::book::{BookInfo, BookList, BookStorageInfo};
-
+use lib_dto::order::OrderItem;
 use crate::context::app_context::ModelManager;
 use crate::error::Result;
 
@@ -39,6 +39,11 @@ FULL OUTER JOIN book_storage as bs
 WHERE bi.id=$1
 "#;
 
+const UPDATE_STORAGE: &str = r#"
+INSERT INTO book_storage (book_id, quantity) values ($1, $2)
+ON CONFLICT (book_id) DO UPDATE SET quantity = $2;
+"#;
+
 impl BookBmc {
     pub async fn create(
         mm: &ModelManager,
@@ -75,5 +80,18 @@ impl BookBmc {
             .await?;
 
         Ok(book_storage)
+    }
+
+    pub async fn update_storage(
+        mm: &ModelManager,
+        item: &OrderItem,
+    ) -> Result<()> {
+        sqlx::query(UPDATE_STORAGE)
+            .bind(&item.book_id())
+            .bind(&item.quantity())
+            .fetch_optional(mm.pg_pool())
+            .await?;
+
+        Ok(())
     }
 }

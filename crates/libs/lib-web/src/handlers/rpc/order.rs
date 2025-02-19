@@ -18,7 +18,7 @@ pub(super) async fn create_order(mm: &ModelManager, params: Value, ctx: Ctx) -> 
 pub(super) async fn check_order(mm: &ModelManager, params: Value, ctx: Ctx) -> crate::error::Result<Value> {
     //todo return 404 when order id does not exist
     let order_id: OrderId = serde_json::from_value(params)?;
-    let order_stored = OrderBmc::get_by_id(mm, order_id).await?;
+    let order_stored = OrderBmc::get_by_id(mm, order_id.order_id()).await?;
     let user_stored = UserBmc::get_by_id(mm, order_stored.user_id()).await?;
     if !ctx.phone().eq(user_stored.phone()) {
         return Err(crate::error::Error::UnauthorizedAccess)
