@@ -50,5 +50,5 @@ pub(super) async fn pick_up_order(mm: &ModelManager, params: Value, ctx: Ctx) ->
 pub(super) async fn clean_up(mm: &ModelManager) -> crate::error::Result<Value> {
     OrderBmc::cleanup_orders(mm).await?;
     StorageBmc::cleanup_storage(mm).await?;
-    Ok(json!(None))
+    Ok(json!("Ignored"))
 }
