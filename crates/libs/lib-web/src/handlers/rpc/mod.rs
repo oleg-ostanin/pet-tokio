@@ -14,7 +14,7 @@ use order::create_order;
 use crate::ctx::{Ctx, CtxW};
 use crate::error::Error::{RpcNoParams, RpcRequestParsing, UnknownRpcMethod};
 use crate::error::Result;
-use crate::handlers::rpc::order::{check_order, pick_up_order};
+use crate::handlers::rpc::order::{check_order, clean_up, pick_up_order};
 pub mod book;
 pub mod order;
 pub mod rpc;
@@ -96,6 +96,7 @@ pub async fn rpc(
 
 async fn call_rpc(app_context: &ModelManager, ctx: Ctx, rpc_req: Request) -> Result<Value> {
     match rpc_req.method.as_str() {
+        "clean_up" => clean_up(app_context).await,
         "add_books" => add_books(app_context, params(rpc_req)?).await,
         "all_books" => all_books(app_context).await,
         "create_order" => create_order(app_context, params(rpc_req)?, ctx).await,

@@ -1,6 +1,8 @@
+use redis::ExpireOption::NONE;
 use serde_json::{json, Value};
 use tracing::error;
 use lib_core::bmc::order::OrderBmc;
+use lib_core::bmc::storage::StorageBmc;
 use lib_core::bmc::user::UserBmc;
 use lib_core::context::app_context::ModelManager;
 use lib_dto::order::{OrderContent, OrderForCreate, OrderId, OrderStatus};
@@ -43,4 +45,10 @@ pub(super) async fn pick_up_order(mm: &ModelManager, params: Value, ctx: Ctx) ->
         }
     }
     Ok(json!(order_stored))
+}
+
+pub(super) async fn clean_up(mm: &ModelManager) -> crate::error::Result<Value> {
+    OrderBmc::cleanup_orders(mm).await?;
+    StorageBmc::cleanup_storage(mm).await?;
+    Ok(json!(None))
 }

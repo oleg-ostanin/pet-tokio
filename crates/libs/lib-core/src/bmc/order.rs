@@ -25,6 +25,10 @@ WHERE order_id = $2
 RETURNING order_id;
 "#;
 
+const CLEANUP_ORDERS: &str = r#"
+TRUNCATE order_info CASCADE;
+"#;
+
 impl OrderBmc {
     pub async fn create(
         mm: &ModelManager,
@@ -67,6 +71,16 @@ impl OrderBmc {
             .bind(&order_status)
             .bind(&order_id)
             .fetch_one(mm.pg_pool())
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn cleanup_orders(
+        mm: &ModelManager,
+    ) -> Result<()> {
+        sqlx::query(CLEANUP_ORDERS)
+            .fetch_optional(mm.pg_pool())
             .await?;
 
         Ok(())

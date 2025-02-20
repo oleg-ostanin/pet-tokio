@@ -21,6 +21,10 @@ INSERT INTO book_storage (book_id, quantity) values ($1, $2)
 ON CONFLICT (book_id) DO UPDATE SET quantity = $2;
 "#;
 
+const CLEANUP_STORAGE: &str = r#"
+TRUNCATE book_storage CASCADE;
+"#;
+
 impl StorageBmc {
     pub async fn get_quantity(
         mm: &ModelManager,
@@ -41,6 +45,16 @@ impl StorageBmc {
         sqlx::query(UPDATE_STORAGE)
             .bind(&item.book_id())
             .bind(&item.quantity())
+            .fetch_optional(mm.pg_pool())
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn cleanup_storage(
+        mm: &ModelManager,
+    ) -> Result<()> {
+        sqlx::query(CLEANUP_STORAGE)
             .fetch_optional(mm.pg_pool())
             .await?;
 
