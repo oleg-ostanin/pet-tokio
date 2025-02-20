@@ -28,22 +28,6 @@ const SELECT_BY_TITLE: &str = r#"
 SELECT * FROM book_info WHERE title=$1;
 "#;
 
-const SELECT_JOIN_STORAGE: &str = r#"
-SELECT
-    bi.id,
-    bs.quantity
-FROM
-    book_info as bi
-FULL OUTER JOIN book_storage as bs
-    ON bi.id = bs.book_id
-WHERE bi.id=$1
-"#;
-
-const UPDATE_STORAGE: &str = r#"
-INSERT INTO book_storage (book_id, quantity) values ($1, $2)
-ON CONFLICT (book_id) DO UPDATE SET quantity = $2;
-"#;
-
 impl BookBmc {
     pub async fn create(
         mm: &ModelManager,
@@ -68,30 +52,5 @@ impl BookBmc {
             .await?;
 
         Ok(BookList::new(books))
-    }
-
-    pub async fn get_quantity(
-        mm: &ModelManager,
-        book_id: i64,
-    ) -> Result<BookStorageInfo> {
-        let book_storage: BookStorageInfo = sqlx::query_as(SELECT_JOIN_STORAGE)
-            .bind(&book_id)
-            .fetch_one(mm.pg_pool())
-            .await?;
-
-        Ok(book_storage)
-    }
-
-    pub async fn update_storage(
-        mm: &ModelManager,
-        item: &OrderItem,
-    ) -> Result<()> {
-        sqlx::query(UPDATE_STORAGE)
-            .bind(&item.book_id())
-            .bind(&item.quantity())
-            .fetch_optional(mm.pg_pool())
-            .await?;
-
-        Ok(())
     }
 }

@@ -40,7 +40,7 @@ mod tests {
         let check_stored: OrderStored = ctx.post_rpc("check_order", json!(order_id)).await;
         assert_eq!(1, check_stored.order_id());
 
-        sleep(Duration::from_secs(10)).await;
+        //sleep(Duration::from_secs(10)).await;
         ctx.cancel().await;
     }
 }

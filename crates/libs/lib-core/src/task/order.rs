@@ -1,9 +1,13 @@
 use std::ops::Deref;
 use std::sync::Arc;
+
 use tokio::sync::mpsc::{Receiver, Sender};
 use tracing::info;
+
 use lib_dto::order::{OrderId, OrderItem, OrderItemExt};
+
 use crate::bmc::book_info::BookBmc;
+use crate::bmc::storage::StorageBmc;
 use crate::context::app_context::ModelManager;
 use crate::notify::order::OrderPayload;
 
@@ -21,7 +25,7 @@ pub async fn handle_order(
         let order_content = payload.content().content();
         for order_item in order_content {
             let book_id = order_item.book_id();
-            let book_storage_info = BookBmc::get_quantity(app_context.deref(), book_id).await;
+            let book_storage_info = StorageBmc::get_quantity(app_context.deref(), book_id).await;
             if let Ok(book_storage_info) = book_storage_info {
                 info!("book_storage_info is {:?}", book_storage_info);
                 let quantity = book_storage_info.quantity().unwrap_or(0);

@@ -48,8 +48,6 @@ pub(crate) async fn start_user(phone: String) {
         user_ctx.post("/api/rpc", add_books).await;
     }).await;
 
-
-
     let order_item = OrderItem::new(1, 2);
     let order_content = OrderContent::new(vec!(order_item));
     let create_order = request("create_order", Some(order_content));
