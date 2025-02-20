@@ -1,36 +1,24 @@
-mod requests;
-mod scenario;
-mod utils;
-
-use std::error::Error;
-
-use axum::http::HeaderValue;
-use axum::response::Response;
-use http_body_util::BodyExt;
-use hyper::body::Buf;
-use hyper::body::Incoming;
-use serde_json::{json, Value};
+use tokio::sync::OnceCell;
+use serde_json::json;
 use tracing::info;
-
 use lib_dto::book::BookList;
 use lib_dto::order::{OrderContent, OrderItem};
 use lib_dto::user::{AuthCode, UserExists, UserForCreate, UserForSignIn};
 use lib_utils::json::{body, value};
 use lib_utils::rpc::request;
+use crate::message_from_response;
 use crate::requests::user_context::UserContext;
 use crate::utils::file::from_file;
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
-    tracing_subscriber::fmt()
-        .without_time() // For early local development.
-        .with_target(false)
-        .init();
-    info!("info");
-    info!("starts");
+static BOOKS_INITIALIZED: OnceCell<()> = OnceCell::const_new();
 
-    let mut user_ctx = UserContext::new("2128506".to_string()).await;
-    let user_to_create = UserForCreate::new("2128506", "pwd", "John", "Doe");
+pub(crate) async fn start_load() {
+
+}
+
+pub(crate) async fn start_user(phone: String) {
+    let mut user_ctx = UserContext::new(phone.clone()).await;
+    let user_to_create = UserForCreate::new(phone.clone(), phone.clone(), "John", "Doe");
     let check_response = user_ctx.post("/check-if-exists", json!(&user_to_create)).await;
 
     info!("check_response: {:?}", &check_response);
@@ -47,14 +35,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     info!("auth_code: {:?}", &auth_code);
 
-    let auth_code = AuthCode::new("2128506".to_string(), auth_code);
+    let auth_code = AuthCode::new(phone, auth_code);
     user_ctx.post("/login", json!(auth_code)).await;
 
     assert!(user_ctx.auth_token().is_some());
 
-    let book_list: BookList = from_file("books_refactored.json");
-    let add_books = request("add_books", Some(book_list));
-    let rpc_response = user_ctx.post("/api/rpc", add_books).await;
+    // ensures only one user adds books
+    BOOKS_INITIALIZED.get_or_init(|| async {
+        info!("Initializing books");
+        let book_list: BookList = from_file("books_refactored.json");
+        let add_books = request("add_books", Some(book_list));
+        user_ctx.post("/api/rpc", add_books).await;
+    }).await;
+
+
 
     let order_item = OrderItem::new(1, 2);
     let order_content = OrderContent::new(vec!(order_item));
@@ -67,26 +61,4 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let check_order_response = user_ctx.post("/api/rpc", check_order).await;
     let check_order_value = value(check_order_response).await.expect("must be ok");
     info!("check order: {:?}", &check_order_value);
-
-    Ok(())
-}
-
-pub(crate) async fn message_from_response(response: Response<Incoming>) -> String {
-    let body = response.collect().await.unwrap().aggregate();
-    let json_value: Value = serde_json::from_reader(body.reader()).unwrap();
-    get_auth_code(json_value)
-}
-
-pub(crate) fn get_auth_code(json: Value) -> String {
-    let auth_code: AuthCode = serde_json::from_value(json).unwrap();
-    auth_code.auth_code
-}
-
-pub(crate) fn extract_token(response: Response<Incoming>) -> String {
-    let headers = response.headers();
-    let value: Option<&HeaderValue> = headers.get("set-cookie");
-    let s = value.unwrap().to_str().unwrap();
-
-    info!("auth token: {:?}", &s);
-    s.to_string()
 }

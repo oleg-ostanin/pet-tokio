@@ -39,7 +39,7 @@ pub(super) async fn pick_up_order(mm: &ModelManager, params: Value, ctx: Ctx) ->
     match OrderBmc::update_status(mm, order_id.order_id(), OrderStatus::Delivered).await {
         Ok(_) => {}
         Err(e) => {
-            error!("Failed to update status for order {}, error: {:?}", order_id, e)
+            error!("Failed to update status for order {}, error: {:?}", order_id.order_id(), e)
         }
     }
     Ok(json!(order_stored))

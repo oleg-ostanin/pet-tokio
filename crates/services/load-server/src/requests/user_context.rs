@@ -19,7 +19,7 @@ struct HeaderWrapper {
     value: String,
 }
 
-pub(crate) struct UserContext<> {
+pub(crate) struct UserContext {
     phone: String,
     pub(crate) client: Client<HttpConnector, Body>,
     auth_token: Option<String>,
