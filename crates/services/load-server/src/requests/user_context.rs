@@ -1,17 +1,20 @@
 use std::fmt::Debug;
 
 use axum::{body::Body, http::{self, Request}};
-use axum::http::HeaderValue;
+use axum::http::{HeaderValue, StatusCode};
 use axum::response::Response;
 use dotenv::dotenv;
 use hyper::body::{Buf, Incoming};
 use hyper_util::client::legacy::Client;
 use hyper_util::client::legacy::connect::HttpConnector;
+use serde::Deserialize;
 use serde_json::{json, Value};
 use tracing::info;
 
 use lib_dto::user::{AuthCode, UserForCreate, UserForSignIn};
 use lib_utils::constants::{AUTH_SOCKET_ADDR, WEB_SOCKET_ADDR};
+use lib_utils::json::result;
+use lib_utils::rpc::request;
 
 #[derive(Debug, Clone)]
 struct HeaderWrapper {
@@ -85,6 +88,13 @@ impl UserContext {
         }
 
         response
+    }
+
+    pub(crate) async fn post_rpc<T: for<'a> Deserialize<'a>>(&mut self, path: impl Into<String>, body: Value) -> T {
+        let body = request(path, Some(body));
+        let response = self.post("/api/rpc", body).await;
+        assert_eq!(response.status(), StatusCode::OK);
+        result(response).await.expect("must be ok")
     }
 
     fn socket_addr(&self, path: &str) -> String {

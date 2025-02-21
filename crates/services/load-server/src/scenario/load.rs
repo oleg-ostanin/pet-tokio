@@ -2,7 +2,7 @@ use tokio::sync::OnceCell;
 use serde_json::json;
 use tracing::info;
 use lib_dto::book::BookList;
-use lib_dto::order::{OrderContent, OrderItem};
+use lib_dto::order::{OrderContent, OrderId, OrderItem, OrderStored};
 use lib_dto::user::{AuthCode, UserExists, UserForCreate, UserForSignIn};
 use lib_utils::json::{body, value};
 use lib_utils::rpc::request;
@@ -48,15 +48,12 @@ pub(crate) async fn start_user(phone: String) {
         user_ctx.post("/api/rpc", add_books).await;
     }).await;
 
-    let order_item = OrderItem::new(1, 2);
-    let order_content = OrderContent::new(vec!(order_item));
-    let create_order = request("create_order", Some(order_content));
-    let create_order_response = user_ctx.post("/api/rpc", create_order).await;
-    let create_order_value = value(create_order_response).await.expect("must be ok");
-    info!("create order: {:?}", &create_order_value);
+}
 
-    let check_order = request("check_order", Some(create_order_value.get("result")));
-    let check_order_response = user_ctx.post("/api/rpc", check_order).await;
-    let check_order_value = value(check_order_response).await.expect("must be ok");
-    info!("check order: {:?}", &check_order_value);
+pub(crate) async fn create_order(user_ctx: &mut UserContext, order_content: OrderContent) -> OrderId {
+    user_ctx.post_rpc("create_order", json!(order_content)).await
+}
+
+pub(crate) async fn check_order(user_ctx: &mut UserContext, order_id: OrderId) -> OrderStored {
+    user_ctx.post_rpc("check_order", json!(order_id)).await
 }

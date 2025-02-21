@@ -99,6 +99,7 @@ async fn call_rpc(app_context: &ModelManager, ctx: Ctx, rpc_req: Request) -> Res
         "clean_up" => clean_up(app_context).await,
         "add_books" => add_books(app_context, params(rpc_req)?).await,
         "all_books" => all_books(app_context).await,
+        "books_by_description" => books_by_description(app_context, params(rpc_req)?).await,
         "create_order" => create_order(app_context, params(rpc_req)?, ctx).await,
         "check_order" => check_order(app_context, params(rpc_req)?, ctx).await,
         "pick_up_order" => pick_up_order(app_context, params(rpc_req)?, ctx).await,

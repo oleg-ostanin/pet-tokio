@@ -6,7 +6,7 @@ use crate::context::app_context::ModelManager;
 use crate::error::Result;
 
 pub struct OrderBmc;
-const INSERT_USER: &str = r#"
+const INSERT_ORDER: &str = r#"
 INSERT INTO order_info
 (user_id, content, status, created_at, updated_at)
 VALUES
@@ -36,7 +36,7 @@ impl OrderBmc {
     ) -> Result<OrderId> {
 
         let json = sqlx::types::Json::from(order.content());
-        let order_id = sqlx::query_as(INSERT_USER)
+        let order_id = sqlx::query_as(INSERT_ORDER)
             .bind(&order.user_id())
             .bind(json)
             .bind(OrderStatus::New)

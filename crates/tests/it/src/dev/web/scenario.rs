@@ -9,7 +9,8 @@ mod tests {
     use serde_json::{json, Value};
     use serial_test::serial;
     use tokio::time::sleep;
-    use lib_dto::book::BookList;
+    use tracing::info;
+    use lib_dto::book::{BookDescription, BookList};
     use lib_dto::order::{OrderContent, OrderId, OrderItem, OrderStored};
     use lib_utils::rpc::request;
 
@@ -39,6 +40,10 @@ mod tests {
 
         let check_stored: OrderStored = ctx.post_rpc("check_order", json!(order_id)).await;
         assert_eq!(1, check_stored.order_id());
+
+        let description = BookDescription::new("the");
+        let book_list: BookList = ctx.post_rpc("books_by_description", json!(description)).await;
+        info!("books by description: {:?}", book_list);
 
         //sleep(Duration::from_secs(10)).await;
         ctx.cancel().await;

@@ -28,6 +28,10 @@ const SELECT_BY_TITLE: &str = r#"
 SELECT * FROM book_info WHERE title=$1;
 "#;
 
+const SELECT_BY_DESCRIPTION: &str = r#"
+SELECT * FROM book_info WHERE description ILIKE $1;
+"#;
+
 impl BookBmc {
     pub async fn create(
         mm: &ModelManager,
@@ -48,6 +52,32 @@ impl BookBmc {
         mm: &ModelManager,
     ) -> Result<BookList> {
         let books: Vec<BookInfo> = sqlx::query_as(SELECT_ALL)
+            .fetch_all(mm.pg_pool())
+            .await?;
+
+        Ok(BookList::new(books))
+    }
+
+    pub async fn get_by_title(
+        mm: &ModelManager,
+        title: String,
+    ) -> Result<BookList> {
+        let books: Vec<BookInfo> = sqlx::query_as(SELECT_BY_TITLE)
+            .bind(title)
+            .fetch_all(mm.pg_pool())
+            .await?;
+
+        Ok(BookList::new(books))
+    }
+
+
+    pub async fn get_by_description(
+        mm: &ModelManager,
+        description: impl Into<String>,
+    ) -> Result<BookList> {
+        let param = format!("%{}%", description.into());
+        let books: Vec<BookInfo> = sqlx::query_as(SELECT_BY_DESCRIPTION)
+            .bind(param)
             .fetch_all(mm.pg_pool())
             .await?;
 

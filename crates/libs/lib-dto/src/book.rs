@@ -32,6 +32,21 @@ impl BookList {
     }
 }
 
+#[derive(Debug, Deserialize, Serialize,)]
+pub struct BookDescription {
+    description: String,
+}
+
+impl BookDescription {
+    pub fn new(description: impl Into<String>) -> Self {
+        Self { description: description.into() }
+    }
+
+    pub fn description(&self) -> &str {
+        &self.description
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, Builder, FromRow)]
 pub struct BookStorageInfo {
     id: i64,
