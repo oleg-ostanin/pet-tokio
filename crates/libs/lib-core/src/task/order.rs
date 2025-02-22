@@ -18,15 +18,12 @@ enum CheckResult {
 
 pub async fn handle_order(
     app_context: Arc<ModelManager>,
-    mut order_rx: Receiver<OrderPayload>,
+    mut order_rx: Receiver<(OrderId, OrderContent)>,
     storage_tx: Sender<(OrderId, Vec<OrderItem>)>,
     delivery_tx: Sender<OrderId>,
 ) {
-    while let Some(payload) = order_rx.recv().await {
-        info!("received payload is {:?}", &payload);
-
-        let order_content = payload.content();
-        let order_id = OrderId::new(payload.order_id());
+    while let Some((order_id, order_content)) = order_rx.recv().await {
+        info!("received payload is {:?}", &order_content);
 
         match check_if_enough(app_context.clone(), order_content).await {
             CheckResult::NotEnough(items) => {
@@ -41,7 +38,7 @@ pub async fn handle_order(
 
 async fn check_if_enough(
     app_context: Arc<ModelManager>,
-    order_content: &Json<OrderContent>,
+    order_content: OrderContent,
 ) -> CheckResult {
     let mut not_enough: Vec<OrderItem> = vec![];
 

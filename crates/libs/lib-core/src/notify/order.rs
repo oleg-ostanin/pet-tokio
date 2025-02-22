@@ -8,7 +8,7 @@ use sqlx::postgres::PgListener;
 use sqlx::Pool;
 use sqlx::Postgres;
 use tracing::info;
-use lib_dto::order::{OrderContent, OrderStatus};
+use lib_dto::order::{OrderContent, OrderId, OrderStatus};
 
 use anyhow::Result;
 use tokio::sync::mpsc::Sender;
@@ -27,15 +27,15 @@ pub struct OrderPayload {
     action_type: ActionType,
     order_id: i64,
     user_id: i64,
-    content: sqlx::types::Json<OrderContent>,
+    content: OrderContent,
     status: OrderStatus,
     // pub created_at: DateTime<Utc>,
     // pub updated_at: DateTime<Utc>,
 }
 
 impl OrderPayload {
-    pub fn content(&self) -> &sqlx::types::Json<OrderContent> {
-        &self.content
+    pub fn content(self) -> OrderContent {
+        self.content
     }
 
     pub fn order_id(&self) -> i64 {
@@ -43,7 +43,10 @@ impl OrderPayload {
     }
 }
 
-pub async fn notify_order(order_payload_tx: Sender<OrderPayload>, app_context: Arc<ModelManager>) -> Result<()>{
+pub async fn notify_order(
+    app_context: Arc<ModelManager>,
+    order_payload_tx: Sender<(OrderId, OrderContent)>,
+) -> Result<()>{
     let channels = vec!["table_update"];
 
     let mut listener = PgListener::connect_with(app_context.pg_pool()).await.unwrap();
@@ -62,7 +65,7 @@ pub async fn notify_order(order_payload_tx: Sender<OrderPayload>, app_context: A
 
             match payload.action_type {
                 ActionType::INSERT => {
-                    _ = order_payload_tx.send(payload).await;
+                    _ = order_payload_tx.send((OrderId::new(payload.order_id()), payload.content())).await;
                 }
                 ActionType::UPDATE => {
 

@@ -25,7 +25,7 @@ pub async fn main(app_context: Arc<ModelManager>) -> Result<()> {
         _ = tokio::spawn(handle_order(app_context.clone(), order_rx, storage_tx, delivery_tx.clone())) => {}
         _ = tokio::spawn(handle_storage(app_context.clone(), storage_rx, delivery_tx)) => {}
         _ = tokio::spawn(handle_delivery(app_context.clone(), delivery_rx)) => {}
-        _ = tokio::spawn(notify_order(order_tx, app_context)) => {}
+        _ = tokio::spawn(notify_order(app_context, order_tx)) => {}
     }
     Ok(())
 }
