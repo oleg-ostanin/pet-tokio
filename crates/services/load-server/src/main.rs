@@ -31,9 +31,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("info");
     info!("starts");
 
-    let mut user = start_user(1).await;
-    user.clean_up().await;
-    let users = vec![user];
+    let users_num = 16;
+    let mut users: Vec<UserContext> = Vec::with_capacity(users_num);
+    for i in 1..users_num {
+        users.push(start_user(i).await);
+    }
+    users.get_mut(0).expect("must be some").clean_up().await;
     load(users).await;
 
     Ok(())
