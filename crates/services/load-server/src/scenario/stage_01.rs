@@ -1,4 +1,5 @@
 use lib_dto::order::{OrderContent, OrderItem};
+use crate::ITERATIONS;
 use crate::requests::user_context::UserContext;
 use crate::scenario::common::{BOOKS_SIZE, check_order, create_order};
 
@@ -18,7 +19,7 @@ pub(crate) async fn load(users: Vec<UserContext>) -> Vec<UserContext> {
 
 async fn load_user(mut user: UserContext) -> UserContext {
     let user_idx = user.idx();
-    for i in 1..16 {
+    for i in 1..=ITERATIONS {
         let mut items = Vec::with_capacity(BOOKS_SIZE);
         for j in 0..BOOKS_SIZE {
             let book_id = j as i64 + 1;
