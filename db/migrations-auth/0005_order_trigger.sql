@@ -1,10 +1,12 @@
 -- Add a table update notification function
 CREATE OR REPLACE FUNCTION table_update_notify() RETURNS trigger AS $$
 DECLARE
-  order_id int;
-  user_id int;
+  order_id bigint;
+  user_id bigint;
   content Json;
   status order_status;
+  created_at timestamp with time zone;
+  updated_at timestamp with time zone;
 --  value varchar;
 BEGIN
   IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
@@ -12,12 +14,16 @@ BEGIN
     user_id = NEW.user_id;
     content = NEW.content;
     status = NEW.status;
+    created_at = NEW.created_at;
+    updated_at = NEW.updated_at;
 
   ELSE
     order_id = OLD.order_id;
     user_id = OLD.user_id;
     content = OLD.content;
     status = OLD.status;
+    created_at = OLD.created_at;
+    updated_at = OLD.updated_at;
 
   END IF;
   PERFORM pg_notify('table_update', json_build_object(
@@ -26,6 +32,8 @@ BEGIN
   'user_id', user_id,
   'content', content,
   'status', status,
+  'created_at', created_at,
+  'updated_at', updated_at,
   'action_type', TG_OP
   )::text);
   RETURN NEW;

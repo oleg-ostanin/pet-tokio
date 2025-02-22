@@ -8,9 +8,10 @@ use sqlx::postgres::PgListener;
 use sqlx::Pool;
 use sqlx::Postgres;
 use tracing::info;
-use lib_dto::order::{OrderContent, OrderId, OrderStatus};
+use lib_dto::order::{OrderContent, OrderId, OrderStatus, OrderStored};
 
 use anyhow::Result;
+use chrono::{DateTime, Utc};
 use tokio::sync::mpsc::Sender;
 use crate::context::app_context::ModelManager;
 
@@ -22,30 +23,14 @@ pub enum ActionType {
 }
 
 #[derive(Deserialize, Debug)]
-pub struct OrderPayload {
+struct OrderPayload {
     table: String,
     action_type: ActionType,
-    order_id: i64,
-    user_id: i64,
-    content: OrderContent,
-    status: OrderStatus,
-    // pub created_at: DateTime<Utc>,
-    // pub updated_at: DateTime<Utc>,
-}
-
-impl OrderPayload {
-    pub fn content(self) -> OrderContent {
-        self.content
-    }
-
-    pub fn order_id(&self) -> i64 {
-        self.order_id
-    }
 }
 
 pub async fn notify_order(
     app_context: Arc<ModelManager>,
-    order_payload_tx: Sender<(OrderId, OrderContent)>,
+    order_payload_tx: Sender<OrderStored>,
 ) -> Result<()>{
     let channels = vec!["table_update"];
 
@@ -61,11 +46,13 @@ pub async fn notify_order(
 
             let strr = notification.payload().to_owned();
             let payload: OrderPayload = serde_json::from_str::<OrderPayload>(&strr).unwrap();
+            let order_stored: OrderStored = serde_json::from_str::<OrderStored>(&strr).unwrap();
             info!("the payload is {:?}", &payload);
+            info!("the order stored is {:?}", &order_stored);
 
             match payload.action_type {
                 ActionType::INSERT => {
-                    _ = order_payload_tx.send((OrderId::new(payload.order_id()), payload.content())).await;
+                    _ = order_payload_tx.send(order_stored).await;
                 }
                 ActionType::UPDATE => {
 

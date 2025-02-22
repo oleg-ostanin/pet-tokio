@@ -4,12 +4,11 @@ use sqlx::types::Json;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tracing::info;
 
-use lib_dto::order::{OrderContent, OrderId, OrderItem, OrderItemExt};
+use lib_dto::order::{OrderContent, OrderId, OrderItem, OrderItemExt, OrderStored};
 
 use crate::bmc::book_info::BookBmc;
 use crate::bmc::storage::StorageBmc;
 use crate::context::app_context::ModelManager;
-use crate::notify::order::OrderPayload;
 
 enum CheckResult {
     Enough,
@@ -18,19 +17,19 @@ enum CheckResult {
 
 pub async fn handle_order(
     app_context: Arc<ModelManager>,
-    mut order_rx: Receiver<(OrderId, OrderContent)>,
-    storage_tx: Sender<(OrderId, Vec<OrderItem>)>,
-    delivery_tx: Sender<OrderId>,
+    mut order_rx: Receiver<OrderStored>,
+    storage_tx: Sender<OrderStored>,
+    delivery_tx: Sender<OrderStored>,
 ) {
-    while let Some((order_id, order_content)) = order_rx.recv().await {
-        info!("received payload is {:?}", &order_content);
+    while let Some(order) = order_rx.recv().await {
+        info!("received payload is {:?}", &order);
 
-        match check_if_enough(app_context.clone(), order_content).await {
+        match check_if_enough(app_context.clone(), order.content()).await {
             CheckResult::NotEnough(items) => {
-                storage_tx.send((order_id, items)).await.unwrap();
+                storage_tx.send(order).await.unwrap();
             }
             CheckResult::Enough => {
-                delivery_tx.send(order_id).await.unwrap();
+                delivery_tx.send(order).await.unwrap();
             }
         }
     }
@@ -38,11 +37,10 @@ pub async fn handle_order(
 
 async fn check_if_enough(
     app_context: Arc<ModelManager>,
-    order_content: OrderContent,
+    order_content: &Vec<OrderItem>,
 ) -> CheckResult {
     let mut not_enough: Vec<OrderItem> = vec![];
 
-    let order_content = order_content.content();
     for order_item in order_content {
         let book_id = order_item.book_id();
         let book_storage_info = StorageBmc::get_quantity(app_context.deref(), book_id).await;

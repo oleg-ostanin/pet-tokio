@@ -9,7 +9,7 @@ use tokio::select;
 use tokio::sync::mpsc::Receiver;
 use tracing::info;
 use crate::bmc::book_info::BookBmc;
-use crate::notify::order::{notify_order, OrderPayload};
+use crate::notify::order::{notify_order};
 use crate::task::delivery::handle_delivery;
 use crate::task::order::handle_order;
 use crate::task::storage::handle_storage;

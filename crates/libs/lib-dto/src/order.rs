@@ -1,7 +1,7 @@
 use std::ops::Deref;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
+use sqlx::{Decode, FromRow};
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, sqlx::Type, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -31,8 +31,8 @@ pub struct OrderStored {
          self.user_id
      }
 
-     pub fn content(&self) -> &sqlx::types::Json<OrderContent> {
-         &self.content
+     pub fn content(&self) -> &Vec<OrderItem> {
+         self.content.content()
      }
 
      pub fn status(&self) -> &OrderStatus {
