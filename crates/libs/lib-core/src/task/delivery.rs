@@ -23,8 +23,5 @@ pub async fn handle_delivery(
                 error!("Failed to update status for order {}, error: {:?}", order_id, e)
             }
         }
-        let order_stored = OrderBmc::get_by_id(app_context.deref(), order_id)
-            .await.unwrap();
-        info!("updated order is {:?}", &order_stored);
     }
 }
