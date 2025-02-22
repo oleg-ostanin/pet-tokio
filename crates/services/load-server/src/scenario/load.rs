@@ -16,7 +16,7 @@ pub(crate) async fn start_load() {
 
 }
 
-pub(crate) async fn start_user(idx: usize) {
+pub(crate) async fn start_user(idx: usize) -> UserContext {
     let phone = format!("{}", 2128500 + idx);
     let mut user_ctx = UserContext::new(idx, phone.clone()).await;
     let user_to_create = UserForCreate::new(phone.clone(), phone.clone(), "John", "Doe");
@@ -45,16 +45,8 @@ pub(crate) async fn start_user(idx: usize) {
     BOOKS_INITIALIZED.get_or_init(|| async {
         info!("Initializing books");
         let book_list: BookList = from_file("books_refactored.json");
-        let add_books = request("add_books", Some(book_list));
-        user_ctx.post("/api/rpc", add_books).await;
+        user_ctx.post_rpc("add_books", json!(Some(book_list))).await;
     }).await;
 
-}
-
-pub(crate) async fn create_order(user_ctx: &mut UserContext, order_content: OrderContent) -> OrderId {
-    user_ctx.post_rpc("create_order", json!(order_content)).await
-}
-
-pub(crate) async fn check_order(user_ctx: &mut UserContext, order_id: OrderId) -> OrderStored {
-    user_ctx.post_rpc("check_order", json!(order_id)).await
+    user_ctx
 }

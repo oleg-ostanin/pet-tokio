@@ -24,6 +24,7 @@ struct HeaderWrapper {
 
 pub(crate) struct UserContext {
     idx: usize,
+    // todo make Arc
     phone: String,
     pub(crate) client: Client<HttpConnector, Body>,
     auth_token: Option<String>,
@@ -51,6 +52,11 @@ impl UserContext {
 
     pub(crate) fn invalidate_token(&mut self) -> Option<String> {
         self.auth_token.take()
+    }
+
+    pub(crate) async fn clean_up(&mut self) {
+        info!("Cleaning up tables");
+        self.post_rpc("clean_up", json!(None)).await;
     }
 
     pub(crate) async fn create_user(&mut self, user_body: &UserForCreate) -> Response<Incoming> {
@@ -121,6 +127,10 @@ impl UserContext {
 
     pub fn headers(&self) -> &Vec<HeaderWrapper> {
         &self.headers
+    }
+
+    pub fn idx(&self) -> usize {
+        self.idx
     }
 }
 
