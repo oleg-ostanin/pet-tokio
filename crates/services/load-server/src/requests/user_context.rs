@@ -56,7 +56,8 @@ impl UserContext {
 
     pub(crate) async fn clean_up(&mut self) {
         info!("Cleaning up tables");
-        self.post_rpc("clean_up", json!(None)).await;
+        let request = request("clean_up", Some("ignored"));
+        self.post("/api/rpc", request).await;
     }
 
     pub(crate) async fn create_user(&mut self, user_body: &UserForCreate) -> Response<Incoming> {

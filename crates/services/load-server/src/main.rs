@@ -18,10 +18,29 @@ use lib_dto::user::{AuthCode, UserExists, UserForCreate, UserForSignIn};
 use lib_utils::json::{body, value};
 use lib_utils::rpc::request;
 use crate::requests::user_context::UserContext;
+use crate::scenario::load::start_user;
+use crate::scenario::stage_01::load;
 use crate::utils::file::from_file;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    tracing_subscriber::fmt()
+        .without_time() // For early local development.
+        .with_target(false)
+        .init();
+    info!("info");
+    info!("starts");
+
+    let mut user = start_user(1).await;
+    user.clean_up().await;
+    let users = vec![user];
+    load(users).await;
+
+    Ok(())
+}
+
+//#[tokio::main]
+async fn main_old() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
         .without_time() // For early local development.
         .with_target(false)
@@ -80,13 +99,4 @@ pub(crate) async fn message_from_response(response: Response<Incoming>) -> Strin
 pub(crate) fn get_auth_code(json: Value) -> String {
     let auth_code: AuthCode = serde_json::from_value(json).unwrap();
     auth_code.auth_code
-}
-
-pub(crate) fn extract_token(response: Response<Incoming>) -> String {
-    let headers = response.headers();
-    let value: Option<&HeaderValue> = headers.get("set-cookie");
-    let s = value.unwrap().to_str().unwrap();
-
-    info!("auth token: {:?}", &s);
-    s.to_string()
 }

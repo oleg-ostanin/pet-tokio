@@ -30,7 +30,7 @@ pub(crate) async fn start_user(idx: usize) -> UserContext {
     if !user_exists.exists {
         user_ctx.post("/sign-up", json!(user_to_create)).await;
     }
-    let user_to_sign_in = UserForSignIn::new("2128506", "pwd");
+    let user_to_sign_in = UserForSignIn::new(phone.clone(), phone.clone());
     let sign_in_response = user_ctx.post("/sign-in", json!(user_to_sign_in)).await;
     let auth_code = message_from_response(sign_in_response).await;
 
@@ -45,7 +45,8 @@ pub(crate) async fn start_user(idx: usize) -> UserContext {
     BOOKS_INITIALIZED.get_or_init(|| async {
         info!("Initializing books");
         let book_list: BookList = from_file("books_refactored.json");
-        user_ctx.post_rpc("add_books", json!(Some(book_list))).await;
+        let request = request("add_books", Some(book_list));
+        user_ctx.post("/api/rpc", request).await;
     }).await;
 
     user_ctx
