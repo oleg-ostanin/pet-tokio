@@ -16,8 +16,9 @@ pub(crate) async fn start_load() {
 
 }
 
-pub(crate) async fn start_user(phone: String) {
-    let mut user_ctx = UserContext::new(phone.clone()).await;
+pub(crate) async fn start_user(idx: usize) {
+    let phone = format!("{}", 2128500 + idx);
+    let mut user_ctx = UserContext::new(idx, phone.clone()).await;
     let user_to_create = UserForCreate::new(phone.clone(), phone.clone(), "John", "Doe");
     let check_response = user_ctx.post("/check-if-exists", json!(&user_to_create)).await;
 

@@ -29,7 +29,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("info");
     info!("starts");
 
-    let mut user_ctx = UserContext::new("2128506".to_string()).await;
+    let mut user_ctx = UserContext::new(0, "2128506".to_string()).await;
     let user_to_create = UserForCreate::new("2128506", "pwd", "John", "Doe");
     let check_response = user_ctx.post("/check-if-exists", json!(&user_to_create)).await;
 

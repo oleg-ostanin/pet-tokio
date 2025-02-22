@@ -23,6 +23,7 @@ struct HeaderWrapper {
 }
 
 pub(crate) struct UserContext {
+    idx: usize,
     phone: String,
     pub(crate) client: Client<HttpConnector, Body>,
     auth_token: Option<String>,
@@ -30,7 +31,7 @@ pub(crate) struct UserContext {
 }
 
 impl UserContext {
-    pub(crate) async fn new(phone: String) -> Self {
+    pub(crate) async fn new(idx: usize, phone: String) -> Self {
         dotenv().ok();
 
         let client: Client<HttpConnector, Body> =
@@ -38,6 +39,7 @@ impl UserContext {
                 .build_http();
 
         Self {
+            idx,
             phone,
             client,
             auth_token: None,
@@ -90,8 +92,8 @@ impl UserContext {
         response
     }
 
-    pub(crate) async fn post_rpc<T: for<'a> Deserialize<'a>>(&mut self, path: impl Into<String>, body: Value) -> T {
-        let body = request(path, Some(body));
+    pub(crate) async fn post_rpc<T: for<'a> Deserialize<'a>>(&mut self, rpc_path: impl Into<String>, body: Value) -> T {
+        let body = request(rpc_path, Some(body));
         let response = self.post("/api/rpc", body).await;
         assert_eq!(response.status(), StatusCode::OK);
         result(response).await.expect("must be ok")
