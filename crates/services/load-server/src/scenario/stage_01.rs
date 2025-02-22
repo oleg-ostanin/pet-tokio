@@ -18,7 +18,7 @@ pub(crate) async fn load(users: Vec<UserContext>) -> Vec<UserContext> {
 
 async fn load_user(mut user: UserContext) -> UserContext {
     let user_idx = user.idx();
-    for i in 1..2 {
+    for i in 1..16 {
         let mut items = Vec::with_capacity(BOOKS_SIZE);
         for j in 0..BOOKS_SIZE {
             let book_id = j as i64 + 1;
