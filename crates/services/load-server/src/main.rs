@@ -23,8 +23,8 @@ use crate::scenario::load::start_user;
 use crate::scenario::stage_01::load;
 use crate::utils::file::from_file;
 
-const USERS_NUM: usize = 2;
-pub(crate) const ITERATIONS: i64 = 2;
+const USERS_NUM: usize = 8;
+pub(crate) const ITERATIONS: i64 = 4;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
