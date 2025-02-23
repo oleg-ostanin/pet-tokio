@@ -18,8 +18,7 @@ use http_body_util::BodyExt;
 use hyper::body::Buf;
 
 use tokio::time::sleep;
-
-
+use crate::scenario::books::BOOK_LIST;
 
 static BOOKS_INITIALIZED: OnceCell<()> = OnceCell::const_new();
 
@@ -55,7 +54,7 @@ pub async fn start_user(idx: usize) -> UserContext {
     // ensures only one user adds books
     BOOKS_INITIALIZED.get_or_init(|| async {
         info!("Initializing books");
-        let book_list: BookList = from_file("books_refactored.json");
+        let book_list: BookList = serde_json::from_str(BOOK_LIST).expect("must be ok");
         let request = request("add_books", Some(book_list));
         user_ctx.post("/api/rpc", request).await;
     }).await;
