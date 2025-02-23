@@ -34,10 +34,9 @@ use lib_utils::rpc::request;
 use lib_web::app::auth_app::auth_app;
 use lib_web::app::web_app::web_app;
 use tokio_util::sync::CancellationToken;
-
-
+use lib_load::requests::user_context::UserContext;
+use lib_load::utils::body_utils::message_and_detail;
 use crate::context::sql::{CREATE_PHONE_TYPE, CREATE_USER_TABLE};
-use crate::utils::body_utils::{message_and_detail, message_from_response};
 
 #[derive(Debug, Clone)]
 struct HeaderWrapper {
@@ -165,8 +164,9 @@ impl TestContext {
         }
     }
 
-    pub(crate) async fn user(idx: i64) -> UserC {
+    pub(crate) fn user(&self, idx: usize) -> UserContext {
 
+        UserContext::with_socket_address(idx, Some(self.socket_addr.to_string()))
     }
 
     pub(crate) async fn cancel(&self) {

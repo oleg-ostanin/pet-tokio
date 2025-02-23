@@ -15,6 +15,7 @@ use lib_dto::user::{AuthCode, UserForCreate, UserForSignIn};
 use lib_utils::constants::{AUTH_SOCKET_ADDR, WEB_SOCKET_ADDR};
 use lib_utils::json::result;
 use lib_utils::rpc::request;
+use crate::utils::body_utils::message_and_detail;
 
 #[derive(Debug, Clone)]
 struct HeaderWrapper {
@@ -27,13 +28,16 @@ pub struct UserContext {
     // todo make Arc
     phone: String,
     pub client: Client<HttpConnector, Body>,
+    test_socket_addr: Option<String>,
     auth_token: Option<String>,
     headers: Vec<HeaderWrapper>,
 }
 
 impl UserContext {
-    pub async fn new(idx: usize, phone: String) -> Self {
+    pub fn new(idx: usize) -> Self {
         dotenv().ok();
+
+        let phone = format!("{}", 2128500 + idx);
 
         let client: Client<HttpConnector, Body> =
             hyper_util::client::legacy::Client::builder(hyper_util::rt::TokioExecutor::new())
@@ -43,6 +47,26 @@ impl UserContext {
             idx,
             phone,
             client,
+            test_socket_addr: None,
+            auth_token: None,
+            headers: Vec::new(),
+        }
+    }
+
+    pub fn with_socket_address(idx: usize, test_socket_addr: Option<String>) -> Self {
+        dotenv().ok();
+
+        let phone = format!("{}", 2128500 + idx);
+
+        let client: Client<HttpConnector, Body> =
+            hyper_util::client::legacy::Client::builder(hyper_util::rt::TokioExecutor::new())
+                .build_http();
+
+        Self {
+            idx,
+            phone,
+            client,
+            test_socket_addr,
             auth_token: None,
             headers: Vec::new(),
         }
@@ -74,6 +98,7 @@ impl UserContext {
         let path: String = path.into();
         let addr = &self.socket_addr(&path);
 
+        info!("socket_addr_in_post: {:?}", &addr);
         let mut builder = Request::builder()
             .method(http::Method::POST)
             .uri(format!("http://{addr}{path}"))
@@ -104,7 +129,25 @@ impl UserContext {
         result(response).await.expect("must be ok")
     }
 
+    pub async fn post_ok<T: for<'a> Deserialize<'a>>(&mut self, path: impl Into<String>, body: Value) -> T {
+        let response = self.post(path, body).await;
+        assert_eq!(response.status(), StatusCode::OK);
+        result(response).await.expect("must be ok")
+    }
+
+    pub(crate) async fn post_bad(&mut self, path: impl Into<String>, body: Value) -> (String, String) {
+        let body = request(path, Some(body));
+        let response = self.post("/api/rpc", body).await;
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        message_and_detail(response).await
+    }
+
+
     fn socket_addr(&self, path: &str) -> String {
+        if let Some(addr) = &self.test_socket_addr {
+            return addr.to_string();
+        }
+
         if path.starts_with("/login") || path.starts_with("/api") {
             info!("returning web socket address");
             return std::env::var(WEB_SOCKET_ADDR).expect("Must be set.");

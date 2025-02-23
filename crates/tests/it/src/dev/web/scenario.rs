@@ -12,19 +12,20 @@ mod tests {
     use tracing::info;
     use lib_dto::book::{BookDescription, BookList};
     use lib_dto::order::{OrderContent, OrderId, OrderItem, OrderStored};
+    use lib_load::scenario::books::BOOK_LIST;
     use lib_utils::rpc::request;
 
     use crate::context::context::{ServiceType, TestContext};
     use crate::dev::web::login;
-    use crate::utils::file_utils::from_file;
 
     #[tokio::test]
     #[serial]
     async fn scenario() {
-        let mut user = TestContext::new(ServiceType::Web).await;
-        login(&mut user).await;
+        let mut ctx = TestContext::new(ServiceType::Web).await;
+        let mut user = ctx.user(6);
+        login(&mut ctx, &mut user).await;
 
-        let book_list: BookList = from_file("books_refactored.json");
+        let book_list: BookList = serde_json::from_str(BOOK_LIST).expect("must be ok");
         let add_books_request = request("add_books", Some(book_list));
         let add_books_response = user.post("/api/rpc", add_books_request).await;
         assert_eq!(add_books_response.status(), StatusCode::OK);
@@ -47,6 +48,6 @@ mod tests {
         info!("books by description: {:?}", book_list);
 
         //sleep(Duration::from_secs(10)).await;
-        user.cancel().await;
+        ctx.cancel().await;
     }
 }

@@ -9,7 +9,6 @@ use lib_dto::user::{AuthCode, UserExists, UserForCreate, UserForSignIn};
 use lib_utils::json::{body, value};
 use lib_utils::rpc::request;
 use crate::requests::user_context::UserContext;
-use crate::utils::file::from_file;
 
 use std::error::Error;
 use std::time::Duration;
@@ -28,7 +27,7 @@ pub async fn start_load() {
 
 pub async fn start_user(idx: usize) -> UserContext {
     let phone = format!("{}", 2128500 + idx);
-    let mut user_ctx = UserContext::new(idx, phone.clone()).await;
+    let mut user_ctx = UserContext::new(idx);
     let user_to_create = UserForCreate::new(phone.clone(), phone.clone(), "John", "Doe");
     let check_response = user_ctx.post("/check-if-exists", json!(&user_to_create)).await;
 

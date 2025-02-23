@@ -16,7 +16,8 @@ mod tests {
     #[serial]
     async fn unknown_method() {
         let mut ctx = TestContext::new(ServiceType::Web).await;
-        login(&mut ctx).await;
+        let mut user = ctx.user(6);
+        login(&mut ctx, &mut user).await;
 
         let (message, detail) = ctx.post_bad("wrong_method", json!(Some(Value::Null))).await;
         assert_eq!("RPC_REQUEST_INVALID", message);
@@ -27,7 +28,8 @@ mod tests {
     #[serial]
     async fn no_params() {
         let mut ctx = TestContext::new(ServiceType::Web).await;
-        login(&mut ctx).await;
+        let mut user = ctx.user(6);
+        login(&mut ctx, &mut user).await;
 
         let (message, detail) = ctx.post_bad("create_order", json!(Some(Value::Null))).await;
         assert_eq!("RPC_REQUEST_INVALID", message);
@@ -38,7 +40,8 @@ mod tests {
     #[serial]
     async fn wrong_params() {
         let mut ctx = TestContext::new(ServiceType::Web).await;
-        login(&mut ctx).await;
+        let mut user = ctx.user(6);
+        login(&mut ctx, &mut user).await;
 
         let order_item = OrderItem::new(1, 2);
         let order_content = OrderContent::new(vec!(order_item));

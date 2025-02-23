@@ -16,6 +16,7 @@ with-rpc = ["rpc-router"]
 # -- App Libs
 lib-core = { path = "../../libs/lib-core"}
 lib-dto = { path = "../../libs/lib-dto"}
+lib-load = { path = "../../libs/lib-load"}
 lib-utils = { path = "../../libs/lib-utils"}
 lib-web = { path = "../../libs/lib-web"}
 
