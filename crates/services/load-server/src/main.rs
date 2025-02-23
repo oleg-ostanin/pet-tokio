@@ -35,7 +35,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     info!("info");
     info!("starts");
 
-
     let mut users: Vec<UserContext> = Vec::with_capacity(USERS_NUM);
     for i in 1..=USERS_NUM {
         users.push(start_user(i).await);

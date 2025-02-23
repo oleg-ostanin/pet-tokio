@@ -6,7 +6,7 @@ use axum::body::Body;
 use hyper_util::client::legacy::Client;
 use hyper_util::client::legacy::connect::HttpConnector;
 use sqlx::postgres::PgPool;
-
+use tokio::sync::Mutex;
 use tokio_util::sync::CancellationToken;
 
 #[derive(Clone)]
@@ -16,6 +16,7 @@ pub struct ModelManager {
     web_client: Client<HttpConnector, Body>,
     app_config: AppConfig,
     cancellation_token: CancellationToken,
+    db_mutex: Arc<Mutex<()>>,
 }
 
 impl ModelManager {
@@ -28,12 +29,15 @@ impl ModelManager {
 
         let cancellation_token: CancellationToken = CancellationToken::new();
 
+        let db_mutex = Arc::new(Mutex::new(()));
+
         ModelManager {
             pg_pool,
             cache,
             web_client,
             app_config,
             cancellation_token,
+            db_mutex,
         }
     }
 
@@ -55,6 +59,10 @@ impl ModelManager {
 
     pub fn cancellation_token(&self) -> CancellationToken {
         self.cancellation_token.clone()
+    }
+
+    pub fn db_mutex(&self) -> &Arc<Mutex<()>> {
+        &self.db_mutex
     }
 }
 
