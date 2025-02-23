@@ -19,7 +19,7 @@ pub async fn handle_storage(
     delivery_tx: Sender<OrderStored>,
 ) {
     while let Some(order) = order_item_rx.recv().await {
-        info!("received order is: {:?}", &order);
+        info!("updating storage for order is: {:?}", &order);
         StorageBmc::update_storage_and_order(app_context.clone(), &order, Add, ReadyToDeliver).await;
         delivery_tx.send(order).await.expect("ok")
     }

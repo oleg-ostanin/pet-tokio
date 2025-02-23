@@ -92,7 +92,7 @@ impl StorageBmc {
         order: &OrderStored,
         update_type: UpdateType,
         new_status: OrderStatus,
-    ) {
+    ) -> Result<()> {
         let mut book_ids = Vec::with_capacity(order.content().len());
         for order_item in order.content() {
             let book_id = order_item.book_id();
@@ -101,7 +101,7 @@ impl StorageBmc {
 
         let mut tx = app_context.pg_pool().begin().await.unwrap();
 
-        let book_storage_infos = StorageBmc::get_quantity_tx(&mut tx, book_ids).await.unwrap();
+        let book_storage_infos = StorageBmc::get_quantity_tx(&mut tx, book_ids).await?;
         info!("book_storage_info: {:?}", book_storage_infos);
         let map: HashMap<i64, i64> = book_storage_infos
             .into_iter()
@@ -112,15 +112,17 @@ impl StorageBmc {
             let old_quantity = map.get(&order_item.book_id()).unwrap_or(&0i64);
             let new_quantity = match update_type {
                 UpdateType::Add => {old_quantity + order_item.quantity()}
-                UpdateType::Remove => {old_quantity + order_item.quantity()}
+                UpdateType::Remove => {old_quantity - order_item.quantity()}
             } ;
             let new_order_item = OrderItem::new(order_item.book_id(), new_quantity);
-            StorageBmc::update_storage_tx(&mut tx, &new_order_item).await.unwrap();
+            StorageBmc::update_storage_tx(&mut tx, &new_order_item).await?;
         }
 
-        OrderBmc::update_status_tx(&mut tx, order.order_id(), new_status).await.unwrap();
+        OrderBmc::update_status_tx(&mut tx, order.order_id(), new_status).await?;
 
-        tx.commit().await.unwrap();
+        tx.commit().await?;
+
+        Ok(())
     }
 
     pub async fn cleanup_storage(
