@@ -19,7 +19,7 @@ mod tests {
         let mut user = ctx.user(6);
         login(&mut ctx, &mut user).await;
 
-        let (message, detail) = ctx.post_bad("wrong_method", json!(Some(Value::Null))).await;
+        let (message, detail) = user.post_bad("wrong_method", json!(Some(Value::Null))).await;
         assert_eq!("RPC_REQUEST_INVALID", message);
         assert_eq!("Unknown method: wrong_method", detail);
     }
@@ -31,7 +31,7 @@ mod tests {
         let mut user = ctx.user(6);
         login(&mut ctx, &mut user).await;
 
-        let (message, detail) = ctx.post_bad("create_order", json!(Some(Value::Null))).await;
+        let (message, detail) = user.post_bad("create_order", json!(Some(Value::Null))).await;
         assert_eq!("RPC_REQUEST_INVALID", message);
         assert_eq!("No params", detail);
     }
@@ -46,7 +46,7 @@ mod tests {
         let order_item = OrderItem::new(1, 2);
         let order_content = OrderContent::new(vec!(order_item));
 
-        let (message, detail) = ctx.post_bad("check_order", json!(order_content)).await;
+        let (message, detail) = user.post_bad("check_order", json!(order_content)).await;
         assert_eq!("RPC_REQUEST_INVALID", message);
         assert_eq!("Wrong params", detail);
     }

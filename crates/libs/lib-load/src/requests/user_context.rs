@@ -135,7 +135,7 @@ impl UserContext {
         result(response).await.expect("must be ok")
     }
 
-    pub(crate) async fn post_bad(&mut self, path: impl Into<String>, body: Value) -> (String, String) {
+    pub async fn post_bad(&mut self, path: impl Into<String>, body: Value) -> (String, String) {
         let body = request(path, Some(body));
         let response = self.post("/api/rpc", body).await;
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
