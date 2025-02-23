@@ -1,4 +1,5 @@
 use chrono::prelude::*;
+use sqlx::{Postgres, Transaction};
 use tracing::log::info;
 use lib_dto::order::{OrderForCreate, OrderId, OrderStatus, OrderStored};
 
@@ -71,6 +72,21 @@ impl OrderBmc {
             .bind(&order_status)
             .bind(&order_id)
             .fetch_one(mm.pg_pool())
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn update_status_tx(
+        tx: &mut Transaction<'_, Postgres>,
+        order_id: i64,
+        order_status: OrderStatus,
+    ) -> Result<()> {
+        info!("Trying to update order with id: {:?}, new status: {:?}", &order_id, &order_status);
+        sqlx::query_as(UPDATE_STATUS)
+            .bind(&order_status)
+            .bind(&order_id)
+            .fetch_one(&mut **tx)
             .await?;
 
         Ok(())

@@ -33,8 +33,9 @@ mod tests {
         let book_list: BookList = ctx.post_ok("/api/rpc", all_books_request).await;
         assert_eq!(5, book_list.book_list().len());
 
-        let order_item = OrderItem::new(1, 2);
-        let order_content = OrderContent::new(vec!(order_item));
+        let order_item_1 = OrderItem::new(1, 2);
+        let order_item_2 = OrderItem::new(2, 4);
+        let order_content = OrderContent::new(vec!(order_item_1, order_item_2));
         let order_id: OrderId = ctx.post_rpc("create_order", json!(order_content)).await;
         assert_eq!(1, order_id.order_id());
 
