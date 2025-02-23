@@ -165,6 +165,10 @@ impl TestContext {
         }
     }
 
+    pub(crate) async fn user(idx: i64) -> UserC {
+
+    }
+
     pub(crate) async fn cancel(&self) {
         self.cancellation_token.cancel()
     }

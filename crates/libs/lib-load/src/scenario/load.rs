@@ -1,22 +1,33 @@
+use axum::response::Response;
+use hyper::body::Incoming;
 use tokio::sync::OnceCell;
-use serde_json::json;
+use serde_json::{json, Value};
 use tracing::info;
 use lib_dto::book::BookList;
 use lib_dto::order::{OrderContent, OrderId, OrderItem, OrderStored};
 use lib_dto::user::{AuthCode, UserExists, UserForCreate, UserForSignIn};
 use lib_utils::json::{body, value};
 use lib_utils::rpc::request;
-use crate::message_from_response;
 use crate::requests::user_context::UserContext;
 use crate::utils::file::from_file;
 
+use std::error::Error;
+use std::time::Duration;
+use axum::http::HeaderValue;
+use http_body_util::BodyExt;
+use hyper::body::Buf;
+
+use tokio::time::sleep;
+
+
+
 static BOOKS_INITIALIZED: OnceCell<()> = OnceCell::const_new();
 
-pub(crate) async fn start_load() {
+pub async fn start_load() {
 
 }
 
-pub(crate) async fn start_user(idx: usize) -> UserContext {
+pub async fn start_user(idx: usize) -> UserContext {
     let phone = format!("{}", 2128500 + idx);
     let mut user_ctx = UserContext::new(idx, phone.clone()).await;
     let user_to_create = UserForCreate::new(phone.clone(), phone.clone(), "John", "Doe");
@@ -32,7 +43,7 @@ pub(crate) async fn start_user(idx: usize) -> UserContext {
     }
     let user_to_sign_in = UserForSignIn::new(phone.clone(), phone.clone());
     let sign_in_response = user_ctx.post("/sign-in", json!(user_to_sign_in)).await;
-    let auth_code = message_from_response(sign_in_response).await;
+    let auth_code = auth_code_from_response(sign_in_response).await;
 
     info!("auth_code: {:?}", &auth_code);
 
@@ -50,4 +61,15 @@ pub(crate) async fn start_user(idx: usize) -> UserContext {
     }).await;
 
     user_ctx
+}
+
+pub(crate) async fn auth_code_from_response(response: Response<Incoming>) -> String {
+    let body = response.collect().await.unwrap().aggregate();
+    let json_value: Value = serde_json::from_reader(body.reader()).unwrap();
+    get_auth_code(json_value)
+}
+
+pub(crate) fn get_auth_code(json: Value) -> String {
+    let auth_code: AuthCode = serde_json::from_value(json).unwrap();
+    auth_code.auth_code
 }

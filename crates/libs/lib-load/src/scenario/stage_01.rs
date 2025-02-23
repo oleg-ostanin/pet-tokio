@@ -4,7 +4,7 @@ use crate::requests::user_context::UserContext;
 use crate::scenario::common::{BOOKS_SIZE, check_order, create_order};
 
 // todo move to common
-pub(crate) async fn load(users: Vec<UserContext>) -> Vec<UserContext> {
+pub async fn load(users: Vec<UserContext>) -> Vec<UserContext> {
     let mut users_res = Vec::with_capacity(users.len());
     let mut jhs = Vec::with_capacity(users.len());
     for user in users.into_iter() {

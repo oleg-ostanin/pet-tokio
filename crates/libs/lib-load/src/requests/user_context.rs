@@ -22,17 +22,17 @@ struct HeaderWrapper {
     value: String,
 }
 
-pub(crate) struct UserContext {
+pub struct UserContext {
     idx: usize,
     // todo make Arc
     phone: String,
-    pub(crate) client: Client<HttpConnector, Body>,
+    pub client: Client<HttpConnector, Body>,
     auth_token: Option<String>,
     headers: Vec<HeaderWrapper>,
 }
 
 impl UserContext {
-    pub(crate) async fn new(idx: usize, phone: String) -> Self {
+    pub async fn new(idx: usize, phone: String) -> Self {
         dotenv().ok();
 
         let client: Client<HttpConnector, Body> =
@@ -48,31 +48,29 @@ impl UserContext {
         }
     }
 
-
-
-    pub(crate) fn invalidate_token(&mut self) -> Option<String> {
+    pub fn invalidate_token(&mut self) -> Option<String> {
         self.auth_token.take()
     }
 
-    pub(crate) async fn clean_up(&mut self) {
+    pub async fn clean_up(&mut self) {
         info!("Cleaning up tables");
         let request = request("clean_up", Some("ignored"));
         self.post("/api/rpc", request).await;
     }
 
-    pub(crate) async fn create_user(&mut self, user_body: &UserForCreate) -> Response<Incoming> {
+    pub async fn create_user(&mut self, user_body: &UserForCreate) -> Response<Incoming> {
         self.post("/sign-up", json!(user_body)).await
     }
 
-    pub(crate) async fn sign_in_user(&mut self, user_body: UserForSignIn) -> Response<Incoming> {
+    pub async fn sign_in_user(&mut self, user_body: UserForSignIn) -> Response<Incoming> {
         self.post("/sign-in", json!(user_body)).await
     }
 
-    pub(crate) async fn check_code(&mut self, user_body: AuthCode) -> Response<Incoming> {
+    pub async fn check_code(&mut self, user_body: AuthCode) -> Response<Incoming> {
         self.post("/check-code", json!(user_body)).await
     }
 
-    pub(crate) async fn post(&mut self, path: impl Into<String>, body: Value) -> Response<Incoming> {
+    pub async fn post(&mut self, path: impl Into<String>, body: Value) -> Response<Incoming> {
         let path: String = path.into();
         let addr = &self.socket_addr(&path);
 
@@ -99,7 +97,7 @@ impl UserContext {
         response
     }
 
-    pub(crate) async fn post_rpc<T: for<'a> Deserialize<'a>>(&mut self, rpc_path: impl Into<String>, body: Value) -> T {
+    pub async fn post_rpc<T: for<'a> Deserialize<'a>>(&mut self, rpc_path: impl Into<String>, body: Value) -> T {
         let body = request(rpc_path, Some(body));
         let response = self.post("/api/rpc", body).await;
         assert_eq!(response.status(), StatusCode::OK);
@@ -135,7 +133,7 @@ impl UserContext {
     }
 }
 
-pub(crate) fn extract_token(response: &Response<Incoming>) -> Option<String> {
+pub fn extract_token(response: &Response<Incoming>) -> Option<String> {
     let headers = response.headers();
     let value: Option<&HeaderValue> = headers.get("set-cookie");
     if let Some(value) = value {

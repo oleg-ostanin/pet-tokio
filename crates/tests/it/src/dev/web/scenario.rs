@@ -21,32 +21,32 @@ mod tests {
     #[tokio::test]
     #[serial]
     async fn scenario() {
-        let mut ctx = TestContext::new(ServiceType::Web).await;
-        login(&mut ctx).await;
+        let mut user = TestContext::new(ServiceType::Web).await;
+        login(&mut user).await;
 
         let book_list: BookList = from_file("books_refactored.json");
         let add_books_request = request("add_books", Some(book_list));
-        let add_books_response = ctx.post("/api/rpc", add_books_request).await;
+        let add_books_response = user.post("/api/rpc", add_books_request).await;
         assert_eq!(add_books_response.status(), StatusCode::OK);
 
         let all_books_request = request("all_books", Some(Value::Null));
-        let book_list: BookList = ctx.post_ok("/api/rpc", all_books_request).await;
+        let book_list: BookList = user.post_ok("/api/rpc", all_books_request).await;
         assert_eq!(5, book_list.book_list().len());
 
         let order_item_1 = OrderItem::new(1, 2);
         let order_item_2 = OrderItem::new(2, 4);
         let order_content = OrderContent::new(vec!(order_item_1, order_item_2));
-        let order_id: OrderId = ctx.post_rpc("create_order", json!(order_content)).await;
+        let order_id: OrderId = user.post_rpc("create_order", json!(order_content)).await;
         assert_eq!(1, order_id.order_id());
 
-        let check_stored: OrderStored = ctx.post_rpc("check_order", json!(order_id)).await;
+        let check_stored: OrderStored = user.post_rpc("check_order", json!(order_id)).await;
         assert_eq!(1, check_stored.order_id());
 
         let description = BookDescription::new("the");
-        let book_list: BookList = ctx.post_rpc("books_by_description", json!(description)).await;
+        let book_list: BookList = user.post_rpc("books_by_description", json!(description)).await;
         info!("books by description: {:?}", book_list);
 
         //sleep(Duration::from_secs(10)).await;
-        ctx.cancel().await;
+        user.cancel().await;
     }
 }
