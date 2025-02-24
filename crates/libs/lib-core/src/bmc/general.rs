@@ -1,16 +1,17 @@
 use std::collections::HashMap;
+use std::ops::Add;
 use std::sync::Arc;
 use sqlx::{Postgres, Transaction};
 use tokio_postgres::IsolationLevel;
-use tracing::{info, instrument};
+use tracing::{debug, info, instrument};
 use lib_dto::order::{OrderItem, OrderStatus, OrderStored};
 use crate::bmc::order::OrderBmc;
 use crate::bmc::storage::{StorageBmc, UpdateType};
 use crate::context::app_context::ModelManager;
 use crate::error::Result;
 
-const TX_ISOLATION_LEVEL: &str = r#"
-SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+const SET_TX_ISOLATION_LEVEL: &str = r#"
+SET TRANSACTION ISOLATION LEVEL
 "#;
 
 
@@ -27,8 +28,6 @@ pub(crate) async fn update_storage_and_order(
         book_ids.push(book_id);
     }
 
-    //let _guard = app_context.db_mutex().lock().await;
-
     let mut tx = app_context.pg_pool()
         .begin()
         .await?;
@@ -36,7 +35,8 @@ pub(crate) async fn update_storage_and_order(
     tx_isolation_level(&mut tx, "REPEATABLE READ").await?;
 
     let book_storage_infos = StorageBmc::get_quantity_tx(&mut tx, book_ids).await?;
-    info!("book_storage_info: {:?}", book_storage_infos);
+    debug!("book_storage_info: {:?}", book_storage_infos);
+
     let map: HashMap<i64, i64> = book_storage_infos
         .into_iter()
         .map(|info| (info.id(), info.quantity().unwrap_or(0)))
@@ -63,8 +63,8 @@ pub async fn tx_isolation_level(
     tx: &mut Transaction<'_, Postgres>,
     isolation_level: &str,
 ) -> Result<()> {
-    sqlx::query(TX_ISOLATION_LEVEL)
-        //.bind(isolation_level)
+    let query = SET_TX_ISOLATION_LEVEL.to_string().add(isolation_level);
+    sqlx::query(&query)
         .fetch_optional(& mut **tx)
         .await?;
 

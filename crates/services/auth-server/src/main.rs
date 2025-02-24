@@ -15,7 +15,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .without_time() // For early local development.
         .with_target(false)
         .init();
-    info!("starting auth server");
+    info!("Starting auth server");
     let app_context: Arc<ModelManager> = create_app_context().await;
     let app = auth_app(app_context).await;
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3001").await.unwrap();

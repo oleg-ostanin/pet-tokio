@@ -9,7 +9,7 @@ use hyper_util::client::legacy::Client;
 use hyper_util::client::legacy::connect::HttpConnector;
 use serde_json::{json, Value};
 use tower_cookies::{Cookie, Cookies};
-use tracing::info;
+use tracing::{debug, info};
 
 use lib_core::context::app_context::ModelManager;
 use lib_dto::user::AuthCode;
@@ -26,15 +26,16 @@ pub async fn login(
 ) -> Result<()> {
     let user: AuthCode = serde_json::from_value(user)?;
 
-    info!("{:<12} - login phone", &user.phone);
-    info!("{:<12} - login code", &user.auth_code);
+    debug!("{:<12} - login phone", &user.phone);
+    debug!("{:<12} - login code", &user.auth_code);
 
     let client: Client<HttpConnector, Body> =
         hyper_util::client::legacy::Client::builder(hyper_util::rt::TokioExecutor::new())
             .build_http();
 
+    //axum-insights
     let addr = mm.app_config().auth_url.as_str();
-    info!("{:<12} - auth url", &addr);
+    debug!("{:<12} - auth url", &addr);
     let body_str = serde_json::to_string(&json!(user)).expect("User should be valid");
     let request = Request::builder()
         .method(http::Method::POST)
@@ -55,11 +56,11 @@ pub async fn login(
             cookie.set_path("/");
             cookies.add(cookie);
 
-            info!("{:<12} - login code", &user.auth_code);
+            debug!("{:<12} - login code", &user.auth_code);
             return Ok(());
         }
         StatusCode::FORBIDDEN => {
-            info!("{:<12} - status code: FORBIDDEN", &user.phone);
+            debug!("{:<12} - status code: FORBIDDEN", &user.phone);
             Err(Error::WebError)
         }
         _ => Err(Error::WebError)

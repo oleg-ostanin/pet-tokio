@@ -165,7 +165,6 @@ impl TestContext {
     }
 
     pub(crate) fn user(&self, idx: usize) -> UserContext {
-
         UserContext::with_socket_address(idx, Some(self.socket_addr.to_string()))
     }
 
@@ -232,26 +231,6 @@ impl TestContext {
         }
 
         response
-    }
-
-    pub(crate) async fn post_rpc<T: for<'a> Deserialize<'a>>(&mut self, path: impl Into<String>, body: Value) -> T {
-        let body = request(path, Some(body));
-        let response = self.post("/api/rpc", body).await;
-        assert_eq!(response.status(), StatusCode::OK);
-        result(response).await.expect("must be ok")
-    }
-
-    pub(crate) async fn post_bad(&mut self, path: impl Into<String>, body: Value) -> (String, String) {
-        let body = request(path, Some(body));
-        let response = self.post("/api/rpc", body).await;
-        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-        message_and_detail(response).await
-    }
-
-    pub(crate) async fn post_ok<T: for<'a> Deserialize<'a>>(&mut self, path: impl Into<String>, body: Value) -> T {
-        let response = self.post(path, body).await;
-        assert_eq!(response.status(), StatusCode::OK);
-        result(response).await.expect("must be ok")
     }
 
     pub fn app_context(&self) -> &Arc<ModelManager> {
