@@ -11,7 +11,7 @@ mod tests {
     use tokio::time::sleep;
     use tracing::info;
     use lib_dto::book::{BookDescription, BookList};
-    use lib_dto::order::{OrderContent, OrderId, OrderItem, OrderStored};
+    use lib_dto::order::{OrderContent, OrderId, OrderItem, OrderStatus, OrderStored};
     use lib_load::scenario::books::BOOK_LIST;
     use lib_utils::rpc::request;
 
@@ -40,14 +40,29 @@ mod tests {
         let order_id: OrderId = user.post_rpc("create_order", json!(order_content)).await;
         assert_eq!(1, order_id.order_id());
 
-        let check_stored: OrderStored = user.post_rpc("check_order", json!(order_id)).await;
-        assert_eq!(1, check_stored.order_id());
-
         let description = BookDescription::new("the");
         let book_list: BookList = user.post_rpc("books_by_description", json!(description)).await;
         info!("books by description: {:?}", book_list);
+        sleep(Duration::from_secs(1)).await;
+        let check_stored: OrderStored = user.post_rpc("check_order", json!(order_id)).await;
+        assert_eq!(1, check_stored.order_id());
+        assert_eq!(&OrderStatus::Delivered, check_stored.status());
 
-        //sleep(Duration::from_secs(10)).await;
         ctx.cancel().await;
+    }
+
+    #[test]
+    fn b() {
+        let mut b = Box::new(5);
+        let shared_b = &b;
+        println!("{:?}", shared_b);
+
+        let mut mut_b = &mut b;
+        *mut_b.as_mut() = 6;
+        println!("{:?}", mut_b);
+        *mut_b.as_mut() = 7;
+        println!("{:?}", mut_b);
+
+        println!("{:?}", b);
     }
 }
