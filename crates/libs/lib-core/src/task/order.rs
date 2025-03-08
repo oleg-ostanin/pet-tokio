@@ -10,8 +10,9 @@ use lib_dto::order::{OrderContent, OrderId, OrderItem, OrderItemExt, OrderStored
 use crate::bmc::book_info::BookBmc;
 use crate::bmc::storage::StorageBmc;
 use crate::context::app_context::ModelManager;
+use crate::task::delivery::DeliveryRequest;
 use crate::task::main::MainTaskRequest;
-use crate::task::storage::handle_requests;
+use crate::task::storage::{handle_requests, StorageRequest};
 
 #[derive(Debug)]
 pub(crate) enum OrderRequest {
@@ -42,12 +43,44 @@ pub async fn handle_order_new(
     main_tx: Sender<MainTaskRequest>,
     mut order_rx: Receiver<OrderRequest>,
 ) {
-    while let Some(order) = order_rx.recv().await {
-        info!("received order is {:?}", &order);
+    let (storage_tx, storage_rx) = oneshot::channel();
+    main_tx.send(MainTaskRequest::StorageSender(storage_tx)).await.expect("TODO: panic message");
+    let mut storage_tx = storage_rx.await.unwrap();
+
+    let (delivery_tx,delivery_rx) = oneshot::channel();
+    main_tx.send(MainTaskRequest::DeliverySender(delivery_tx)).await.expect("TODO: panic message");
+    let mut delivery_tx = delivery_rx.await.unwrap();
+
+    while let Some(order_request) = order_rx.recv().await {
+        info!("received order is {:?}", &order_request);
+
+        match order_request {
+            OrderRequest::Health(tx) => {
+                tx.send(OrderResponse::HealthOk).expect("TODO: panic message");
+            }
+            OrderRequest::ProcessOrder(order, tx) => {
+                let (storage_resp_tx, storage_resp_rx) = oneshot::channel();
+                //todo deal with clone()
+                storage_tx.send(StorageRequest::UpdateStorage(order.clone(), storage_resp_tx)).await.unwrap();
+                let storage_resp = storage_resp_rx.await.unwrap();
+
+                let (delivery_resp_tx, delivery_resp_rx) = oneshot::channel();
+                delivery_tx.send(DeliveryRequest::Deliver(order, delivery_resp_tx)).await.unwrap();
+                let delivery_resp = delivery_resp_rx.await.unwrap();
+            }
+        }
 
         //storage_tx.send(order).await.unwrap();
     }
 }
+
+pub async fn process_order(
+    order: OrderStored,
+    tx: Sender<OrderResponse>,
+) {
+
+}
+
 
 pub async fn handle_order(
     app_context: Arc<ModelManager>,

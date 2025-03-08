@@ -140,9 +140,11 @@ impl TestContext {
         let cancellation_token: CancellationToken = CancellationToken::new();
         let cancellation_token_cloned: CancellationToken = cancellation_token.clone();
         let app_context_cloned = app_context.clone();
+        let app_context_cloned_cloned = app_context.clone();
         tokio::spawn(async move {
             select! {
-                _ = lib_core::task::main::main(app_context_cloned) => {}
+                // _ = lib_core::task::main::main(app_context_cloned) => {}
+                _ = lib_core::task::main::MainTask::start(app_context_cloned_cloned) => {}
                 _ = axum::serve(listener, app) => {}
                 _ = cancellation_token_cloned.cancelled() => {
                     info!("Cancelled by cancellation token.")

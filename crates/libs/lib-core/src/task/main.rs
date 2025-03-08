@@ -39,7 +39,7 @@ pub struct MainTask {
 }
 
 impl MainTask {
-    pub(crate) async fn start(app_context: Arc<ModelManager>) -> Result<()> {
+    pub async fn start(app_context: Arc<ModelManager>) -> Result<()> {
         let (tx, rx) = tokio::sync::mpsc::channel(64);
 
         NotifyTask::start(tx.clone());
@@ -55,7 +55,8 @@ impl MainTask {
             delivery_tx,
         };
 
-        tokio::spawn(main_task.handle_requests(rx));
+        let jh = tokio::spawn(main_task.handle_requests(rx));
+        jh.await.expect("TODO: panic message").expect("TODO: panic message");
 
         Ok(())
     }
@@ -77,13 +78,13 @@ impl MainTask {
                 tx.send(self.app_context.clone()); // todo handle result and below
             }
             MainTaskRequest::OrderSender(tx) => {
-                tx.send(self.order_tx.clone());
+                tx.send(self.order_tx.clone()).expect("TODO: panic message");
             }
             MainTaskRequest::StorageSender(tx) => {
-                tx.send(self.storage_tx.clone());
+                tx.send(self.storage_tx.clone()).expect("TODO: panic message");
             }
             MainTaskRequest::DeliverySender(tx) => {
-                tx.send(self.delivery_tx.clone());
+                tx.send(self.delivery_tx.clone()).expect("TODO: panic message");
             }
         }
     }

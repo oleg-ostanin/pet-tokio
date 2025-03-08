@@ -50,9 +50,9 @@ pub async fn handle_requests(
     main_tx: Sender<MainTaskRequest>,
     mut storage_rx: Receiver<StorageRequest>,
 ) {
-    let (o_tx, o_rx) = tokio::sync::oneshot::channel();
+    let (o_tx, o_rx) = oneshot::channel();
     main_tx.send(MainTaskRequest::AppContext(o_tx)).await.unwrap();
-    let app_context = o_rx.blocking_recv().unwrap();
+    let app_context = o_rx.await.unwrap();
 
     while let Some(request) = storage_rx.recv().await {
         match request {

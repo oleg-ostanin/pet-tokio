@@ -50,17 +50,17 @@ pub async fn handle_requests(
     main_tx: Sender<MainTaskRequest>,
     mut delivery_rx: Receiver<DeliveryRequest>,
 ) {
-    let (o_tx, o_rx) = tokio::sync::oneshot::channel();
-    main_tx.send(MainTaskRequest::AppContext(o_tx)).await.unwrap();
-    let app_context = o_rx.blocking_recv().unwrap();
+    let (o_tx, o_rx) = oneshot::channel();
+    main_tx.send(MainTaskRequest::AppContext(o_tx)).await.expect("TODO: panic message");
+    let app_context = o_rx.await.expect("TODO: panic message");
 
     while let Some(request) = delivery_rx.recv().await {
         match request {
             DeliveryRequest::Health(tx) => {
-                tx.send(HealthOk).unwrap()
+                tx.send(HealthOk).expect("TODO: panic message")
             }
             DeliveryRequest::Deliver(order, tx) => {
-                tokio::spawn(handle_order(app_context.clone(), order, tx)).await.unwrap()
+                tokio::spawn(handle_order(app_context.clone(), order, tx)).await.expect("TODO: panic message")
             }
         }
     }
@@ -75,10 +75,10 @@ pub async fn handle_order(
     info!("delivering order: {:?}", &order_id);
     select! {
         _ = update_with_retry(app_context, order.clone()) => {
-            response_tx.send(DeliveryResponse::Delivered).unwrap();
+            response_tx.send(DeliveryResponse::Delivered).expect("TODO: panic message");
         }
         _ = tokio::time::sleep(Duration::from_secs(3)) => {
-            response_tx.send(DeliveryResponse::FailedToDeliver(order)).unwrap();
+            response_tx.send(DeliveryResponse::FailedToDeliver(order)).expect("TODO: panic message");
         }
     }
 

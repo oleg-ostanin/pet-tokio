@@ -48,18 +48,18 @@ pub async fn handle_notify(
     main_tx: Sender<MainTaskRequest>
 ) -> Result<()> {
     info!("Starting handle_notify");
-    let (o_tx, o_rx) = tokio::sync::oneshot::channel();
-    main_tx.send(MainTaskRequest::AppContext(o_tx)).await.unwrap();
-    let app_context = o_rx.blocking_recv().unwrap();
+    let (app_context_tx, app_context_rx) = oneshot::channel();
+    main_tx.send(MainTaskRequest::AppContext(app_context_tx)).await.unwrap();
+    let app_context = app_context_rx.await.unwrap();
 
     let channels = vec!["table_update"];
 
     let mut listener = PgListener::connect_with(app_context.pg_pool()).await.unwrap();
     listener.listen_all(channels).await?;
 
-    let (tx, rx) = oneshot::channel();
-    main_tx.send(MainTaskRequest::OrderSender(tx)).await;
-    let mut order_tx = rx.blocking_recv().unwrap();
+    let (order_tx, order_rx) = oneshot::channel();
+    main_tx.send(MainTaskRequest::OrderSender(order_tx)).await.expect("TODO: panic message");
+    let mut order_tx = order_rx.await.unwrap();
 
     loop {
         while let Some(notification) = listener.try_recv().await? {
@@ -78,7 +78,8 @@ pub async fn handle_notify(
             match payload.action_type {
                 ActionType::INSERT => {
                     let (result_tx, result_rx) = oneshot::channel();
-                    order_tx.send(OrderRequest::ProcessOrder(order_stored, result_tx)).await;
+                    order_tx.send(OrderRequest::ProcessOrder(order_stored, result_tx)).await
+                        .expect("TODO: panic message");
                     let res = result_rx.await.expect("failed to receive result");
                     info!("Received order response: {:?}", res);
                 }
