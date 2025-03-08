@@ -4,7 +4,7 @@ use std::sync::Arc;
 use axum::extract::State;
 use axum::Json;
 use serde_json::{json, Value};
-use tracing::info;
+use tracing::{debug, info};
 use uuid::Uuid;
 
 use lib_core::bmc::user::UserBmc;
@@ -18,7 +18,7 @@ pub async fn sign_up(
     Json(user): Json<UserForCreate>,
 ) -> Result<Json<Value>> {
     let phone = user.phone.clone();
-    info!("Creating user {:<12}", &phone);
+    debug!("Creating user {:<12}", &phone);
     UserBmc::create(app_context.deref(), user).await?;
     let auth_code = auth_code(app_context.deref(), phone).await?;
     Ok(auth_code)
@@ -29,7 +29,7 @@ pub async fn check_if_exists(
     Json(user): Json<UserForCreate>,
 ) -> Result<Json<Value>> {
     let phone = user.phone;
-    info!("Checking user {:<12}", &phone);
+    debug!("Checking user {:<12}", &phone);
     let user_exists = UserBmc::check_if_exists(app_context.deref(), phone).await?;
     Ok(Json(json!(user_exists)))
 }
@@ -50,7 +50,7 @@ pub async fn check_code(
     Json(user): Json<AuthCode>,
 ) -> Result<()> {
     let phone = user.phone;
-    info!("Checking user {:<12}", &phone);
+    debug!("Checking user {:<12}", &phone);
     let cache = app_context.cache().read()?;
     if let Some(code) = cache.get(&phone) {
         if code.eq(&user.auth_code) {

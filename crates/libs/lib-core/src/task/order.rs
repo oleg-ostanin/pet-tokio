@@ -4,14 +4,14 @@ use sqlx::types::Json;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::oneshot;
 use tracing::info;
-
+use anyhow::Result;
 use lib_dto::order::{OrderContent, OrderId, OrderItem, OrderItemExt, OrderStored};
 
 use crate::bmc::book_info::BookBmc;
 use crate::bmc::storage::StorageBmc;
 use crate::context::app_context::ModelManager;
 use crate::task::delivery::DeliveryRequest;
-use crate::task::main::MainTaskRequest;
+use crate::task::main::{MainTaskRequest, TaskManager};
 use crate::task::storage::{handle_requests, StorageRequest};
 
 #[derive(Debug)]
@@ -42,14 +42,9 @@ impl OrderTask {
 pub async fn handle_order_new(
     main_tx: Sender<MainTaskRequest>,
     mut order_rx: Receiver<OrderRequest>,
-) {
-    let (storage_tx, storage_rx) = oneshot::channel();
-    main_tx.send(MainTaskRequest::StorageSender(storage_tx)).await.expect("TODO: panic message");
-    let mut storage_tx = storage_rx.await.unwrap();
-
-    let (delivery_tx,delivery_rx) = oneshot::channel();
-    main_tx.send(MainTaskRequest::DeliverySender(delivery_tx)).await.expect("TODO: panic message");
-    let mut delivery_tx = delivery_rx.await.unwrap();
+) -> Result<()> {
+    let mut storage_tx = TaskManager::storage_sender(main_tx.clone()).await?;
+    let mut delivery_tx = TaskManager::delivery_sender(main_tx.clone()).await?;
 
     while let Some(order_request) = order_rx.recv().await {
         info!("received order is {:?}", &order_request);
@@ -74,6 +69,8 @@ pub async fn handle_order_new(
 
         //storage_tx.send(order).await.unwrap();
     }
+
+    Ok(())
 }
 
 pub async fn process_order(

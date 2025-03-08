@@ -52,9 +52,12 @@ pub async fn handle_requests(
     main_tx: Sender<MainTaskRequest>,
     mut storage_rx: Receiver<StorageRequest>,
 ) -> Result<()> {
+    info!("Starting handle storage task");
     let app_context = TaskManager::app_context(main_tx.clone()).await?;
 
     while let Some(request) = storage_rx.recv().await {
+        info!("Got storage request: {:?}", &request);
+
         match request {
             StorageRequest::Health(tx) => {
                 tx.send(HealthOk).unwrap()

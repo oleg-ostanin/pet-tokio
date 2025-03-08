@@ -3,7 +3,7 @@ use axum::async_trait;
 use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
 use serde::Serialize;
-use tracing::info;
+use tracing::{debug, info};
 
 use crate::error::{Error, Result};
 
@@ -34,7 +34,7 @@ impl<S: Send + Sync> FromRequestParts<S> for CtxW {
     type Rejection = Error;
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self> {
-        info!("{:<12} - Ctx", "EXTRACTOR");
+        debug!("{:<12} - Ctx", "EXTRACTOR");
 
         parts
             .extensions

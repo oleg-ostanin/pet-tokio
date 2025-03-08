@@ -5,7 +5,7 @@ use axum::extract::{Request, State};
 use axum::middleware::Next;
 use axum::response::Response;
 use tower_cookies::Cookies;
-use tracing::info;
+use tracing::{debug, info};
 
 use lib_core::context::app_context::ModelManager;
 use lib_utils::constants::AUTH_TOKEN;
@@ -19,7 +19,7 @@ pub async fn mw_ctx_check(
     req: Request<Body>,
     next: Next,
 ) -> Result<Response> {
-    info!("{:<12} - ctx: {ctx:?} req: {req:?}", "MIDDLEWARE");
+    debug!("{:<12} - ctx: {ctx:?} req: {req:?}", "MIDDLEWARE");
 
     ctx?;
 
@@ -37,7 +37,7 @@ pub async fn mw_ctx_create(
     mut req: Request<Body>,
     next: Next,
 ) -> Response {
-    info!("{:<12} - mw_ctx_resolve", "MIDDLEWARE");
+    debug!("{:<12} - mw_ctx_resolve", "MIDDLEWARE");
 
     let ctx_ext_result = ctx_resolve(mm, &cookies).await;
 
@@ -54,14 +54,14 @@ async fn ctx_resolve(mm: Arc<ModelManager>, cookies: &Cookies) -> CtxExtResult {
         .get(AUTH_TOKEN)
         .map(|c| c.value().to_string())
         .ok_or(CtxExtError::TokenNotInCookie)?;
-    info!("Token in ctx resolve: {:?}", token);
+    debug!("Token in ctx resolve: {:?}", token);
 
     // -- Parse Token
     let token_key = std::env::var("SERVICE_TOKEN_KEY").expect("TOKEN must be set.");
-    info!("Token_key in ctx resolve: {:?}", token_key);
+    debug!("Token_key in ctx resolve: {:?}", token_key);
 
     let phone = phone_from_token(token, &token_key);
-    info!("phone in ctx resolve: {:?}", phone);
+    debug!("phone in ctx resolve: {:?}", phone);
 
 
     if let Some(phone) = phone {

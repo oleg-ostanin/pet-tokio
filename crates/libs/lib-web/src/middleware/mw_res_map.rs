@@ -24,7 +24,7 @@ pub async fn mw_response_map(
 ) -> Response {
 	let ctx = ctx.map(|ctx| ctx.0);
 
-	info!("{:<12} - mw_response_map", "RES_MAPPER");
+	debug!("{:<12} - mw_response_map", "RES_MAPPER");
 	let uuid = Uuid::new_v4();
 
 	let rpc_info = res.extensions().get::<Arc<RpcInfo>>().map(Arc::as_ref);
@@ -39,11 +39,11 @@ pub async fn mw_response_map(
 			.as_ref()
 			.map(|(status_code, client_error)| {
 				let client_error = to_value(client_error).ok();
-				info!("client_error: {:?}", &client_error);
+				debug!("client_error: {:?}", &client_error);
 				let message = client_error.as_ref().and_then(|v| v.get("message"));
-				info!("message: {:?}", &message);
+				debug!("message: {:?}", &message);
 				let detail = client_error.as_ref().and_then(|v| v.get("detail"));
-				info!("detail: {:?}", &detail);
+				debug!("detail: {:?}", &detail);
 
 
 				let client_error_body = json!({

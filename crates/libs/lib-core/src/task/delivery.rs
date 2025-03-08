@@ -51,9 +51,11 @@ pub async fn handle_requests(
     main_tx: Sender<MainTaskRequest>,
     mut delivery_rx: Receiver<DeliveryRequest>,
 ) -> Result<()> {
+    info!("Starting handle delivery task");
     let app_context = TaskManager::app_context(main_tx.clone()).await?;
 
     while let Some(request) = delivery_rx.recv().await {
+        info!("Got delivery request: {:?}", &request);
         match request {
             DeliveryRequest::Health(tx) => {
                 tx.send(HealthOk).expect("TODO: panic message")

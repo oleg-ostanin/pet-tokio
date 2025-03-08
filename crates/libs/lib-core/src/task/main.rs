@@ -8,12 +8,12 @@ use chrono::Duration;
 use tokio::select;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::oneshot;
-use tracing::info;
+use tracing::{error, info};
 use lib_dto::order::OrderStored;
 use crate::bmc::book_info::BookBmc;
 use crate::notify::order::{notify_order, NotifyTask};
 use crate::task::delivery::{DeliveryRequest, DeliveryTask, handle_delivery};
-use crate::task::order::{handle_order, OrderRequest, OrderTask};
+use crate::task::order::{handle_order, OrderRequest, OrderResponse, OrderTask};
 use crate::task::storage::{handle_storage, StorageRequest, StorageTask};
 
 pub(crate) enum MainTaskRequest {
@@ -47,7 +47,7 @@ impl TaskManager {
         let storage_tx = StorageTask::start(tx.clone());
         let delivery_tx = DeliveryTask::start(tx.clone());
 
-        let main_task = TaskManager {
+        let mut main_task = TaskManager {
             app_context,
             tx: tx.clone(),
             order_tx,
@@ -62,7 +62,7 @@ impl TaskManager {
     }
 
     async fn handle_requests(
-        self,
+        mut self,
         mut rx: Receiver<MainTaskRequest>,
     ) -> Result<()> {
         while let Some(request) = rx.recv().await {
@@ -71,22 +71,55 @@ impl TaskManager {
         Ok(())
     }
 
-    async fn match_requests(&self, request: MainTaskRequest) {
+    async fn match_requests(&mut self, request: MainTaskRequest) {
         match request {
             MainTaskRequest::Health(_) => {}
             MainTaskRequest::AppContext(tx) => {
                 tx.send(self.app_context.clone()); // todo handle result and below
             }
             MainTaskRequest::OrderSender(tx) => {
-                tx.send(self.order_tx.clone()).expect("TODO: panic message");
+                if let Err(e) = self.check_order_task().await {
+                    error!("Failed to check task: {:?}", e);
+                    self.order_tx = OrderTask::start(self.tx.clone());
+                }
+                tx.send(self.order_tx.clone()).expect("should be ok");
             }
             MainTaskRequest::StorageSender(tx) => {
+                if let Err(e) = self.check_storage_task().await {
+                    error!("Failed to check task: {:?}", e);
+                    self.storage_tx = StorageTask::start(self.tx.clone());
+                }
                 tx.send(self.storage_tx.clone()).expect("TODO: panic message");
             }
             MainTaskRequest::DeliverySender(tx) => {
+                if let Err(e) = self.check_delivery_task().await {
+                    error!("Failed to check task: {:?}", e);
+                    self.delivery_tx = DeliveryTask::start(self.tx.clone());
+                }
                 tx.send(self.delivery_tx.clone()).expect("TODO: panic message");
             }
         }
+    }
+
+    async fn check_order_task(&mut self, ) -> Result<()> {
+        let (health_tx, health_rx) = oneshot::channel();
+        self.order_tx.send(OrderRequest::Health(health_tx)).await?;
+        health_rx.await?;
+        Ok(())
+    }
+
+    async fn check_storage_task(&mut self, ) -> Result<()> {
+        let (health_tx, health_rx) = oneshot::channel();
+        self.storage_tx.send(StorageRequest::Health(health_tx)).await?;
+        health_rx.await?;
+        Ok(())
+    }
+
+    async fn check_delivery_task(&mut self, ) -> Result<()> {
+        let (health_tx, health_rx) = oneshot::channel();
+        self.delivery_tx.send(DeliveryRequest::Health(health_tx)).await?;
+        health_rx.await?;
+        Ok(())
     }
 
     pub(crate) async fn app_context(main_tx: Sender<MainTaskRequest>) -> Result<Arc<ModelManager>> {
@@ -98,6 +131,18 @@ impl TaskManager {
     pub(crate) async fn order_sender(main_tx: Sender<MainTaskRequest>) -> Result<Sender<OrderRequest>> {
         let (tx, rx) = oneshot::channel();
         main_tx.send(MainTaskRequest::OrderSender(tx)).await?;
+        Ok(rx.await?)
+    }
+
+    pub(crate) async fn storage_sender(main_tx: Sender<MainTaskRequest>) -> Result<Sender<StorageRequest>> {
+        let (tx, rx) = oneshot::channel();
+        main_tx.send(MainTaskRequest::StorageSender(tx)).await?;
+        Ok(rx.await?)
+    }
+
+    pub(crate) async fn delivery_sender(main_tx: Sender<MainTaskRequest>) -> Result<Sender<DeliveryRequest>> {
+        let (tx, rx) = oneshot::channel();
+        main_tx.send(MainTaskRequest::DeliverySender(tx)).await?;
         Ok(rx.await?)
     }
 }
