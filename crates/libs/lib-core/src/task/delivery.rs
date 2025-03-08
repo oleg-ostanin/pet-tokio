@@ -15,6 +15,7 @@ use crate::bmc::storage::StorageBmc;
 use crate::bmc::storage::UpdateType::{Add, Remove};
 use crate::context::app_context::ModelManager;
 use crate::task::delivery::DeliveryResponse::HealthOk;
+use crate::task::main::MainTaskRequest;
 
 #[derive(Debug)]
 pub(crate) enum DeliveryRequest {
@@ -37,18 +38,22 @@ pub(crate) struct DeliveryTask {
 
 impl DeliveryTask {
     pub(crate) fn start(
-        app_context: Arc<ModelManager>,
+        main_tx: Sender<MainTaskRequest>,
     ) -> Sender<DeliveryRequest> {
         let (tx, rx) = tokio::sync::mpsc::channel(64);
-        tokio::spawn(handle_requests(app_context, rx));
+        tokio::spawn(handle_requests(main_tx, rx));
         tx.clone()
     }
 }
 
 pub async fn handle_requests(
-    app_context: Arc<ModelManager>,
+    main_tx: Sender<MainTaskRequest>,
     mut delivery_rx: Receiver<DeliveryRequest>,
 ) {
+    let (o_tx, o_rx) = tokio::sync::oneshot::channel();
+    main_tx.send(MainTaskRequest::AppContext(o_tx)).await.unwrap();
+    let app_context = o_rx.blocking_recv().unwrap();
+
     while let Some(request) = delivery_rx.recv().await {
         match request {
             DeliveryRequest::Health(tx) => {
