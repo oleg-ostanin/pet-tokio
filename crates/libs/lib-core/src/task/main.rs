@@ -30,7 +30,7 @@ pub(crate) enum MainTaskResponse {
 }
 
 #[derive(Clone)]
-pub struct MainTask {
+pub struct TaskManager {
     app_context: Arc<ModelManager>,
     tx: Sender<MainTaskRequest>,
     order_tx: Sender<OrderRequest>,
@@ -38,7 +38,7 @@ pub struct MainTask {
     delivery_tx: Sender<DeliveryRequest>,
 }
 
-impl MainTask {
+impl TaskManager {
     pub async fn start(app_context: Arc<ModelManager>) -> Result<()> {
         let (tx, rx) = tokio::sync::mpsc::channel(64);
 
@@ -47,7 +47,7 @@ impl MainTask {
         let storage_tx = StorageTask::start(tx.clone());
         let delivery_tx = DeliveryTask::start(tx.clone());
 
-        let main_task = MainTask {
+        let main_task = TaskManager {
             app_context,
             tx: tx.clone(),
             order_tx,
@@ -87,6 +87,18 @@ impl MainTask {
                 tx.send(self.delivery_tx.clone()).expect("TODO: panic message");
             }
         }
+    }
+
+    pub(crate) async fn app_context(main_tx: Sender<MainTaskRequest>) -> Result<Arc<ModelManager>> {
+        let (tx, rx) = oneshot::channel();
+        main_tx.send(MainTaskRequest::AppContext(tx)).await?;
+        Ok(rx.await?)
+    }
+
+    pub(crate) async fn order_sender(main_tx: Sender<MainTaskRequest>) -> Result<Sender<OrderRequest>> {
+        let (tx, rx) = oneshot::channel();
+        main_tx.send(MainTaskRequest::OrderSender(tx)).await?;
+        Ok(rx.await?)
     }
 }
 

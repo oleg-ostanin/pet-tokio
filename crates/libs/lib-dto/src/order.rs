@@ -22,31 +22,32 @@ pub struct OrderStored {
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
 }
- impl OrderStored {
-     pub fn order_id(&self) -> i64 {
-         self.order_id
-     }
 
-     pub fn user_id(&self) -> i64 {
-         self.user_id
-     }
+impl OrderStored {
+    pub fn order_id(&self) -> i64 {
+        self.order_id
+    }
 
-     pub fn content(&self) -> &Vec<OrderItem> {
-         self.content.content()
-     }
+    pub fn user_id(&self) -> i64 {
+        self.user_id
+    }
 
-     pub fn status(&self) -> &OrderStatus {
-         &self.status
-     }
+    pub fn content(&self) -> &Vec<OrderItem> {
+        self.content.content()
+    }
 
-     pub fn created_at(&self) -> DateTime<Utc> {
-         self.created_at
-     }
+    pub fn status(&self) -> &OrderStatus {
+        &self.status
+    }
 
-     pub fn updated_at(&self) -> DateTime<Utc> {
-         self.updated_at
-     }
- }
+    pub fn created_at(&self) -> DateTime<Utc> {
+        self.created_at
+    }
+
+    pub fn updated_at(&self) -> DateTime<Utc> {
+        self.updated_at
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct OrderForCreate {

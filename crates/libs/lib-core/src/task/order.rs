@@ -67,6 +67,8 @@ pub async fn handle_order_new(
                 let (delivery_resp_tx, delivery_resp_rx) = oneshot::channel();
                 delivery_tx.send(DeliveryRequest::Deliver(order, delivery_resp_tx)).await.unwrap();
                 let delivery_resp = delivery_resp_rx.await.unwrap();
+
+                tx.send(OrderResponse::Processed).unwrap();
             }
         }
 

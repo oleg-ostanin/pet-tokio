@@ -15,7 +15,8 @@ use crate::bmc::storage::StorageBmc;
 use crate::bmc::storage::UpdateType::{Add, Remove};
 use crate::context::app_context::ModelManager;
 use crate::task::delivery::DeliveryResponse::HealthOk;
-use crate::task::main::MainTaskRequest;
+use crate::task::main::{MainTaskRequest, TaskManager};
+use anyhow::Result;
 
 #[derive(Debug)]
 pub(crate) enum DeliveryRequest {
@@ -49,10 +50,8 @@ impl DeliveryTask {
 pub async fn handle_requests(
     main_tx: Sender<MainTaskRequest>,
     mut delivery_rx: Receiver<DeliveryRequest>,
-) {
-    let (o_tx, o_rx) = oneshot::channel();
-    main_tx.send(MainTaskRequest::AppContext(o_tx)).await.expect("TODO: panic message");
-    let app_context = o_rx.await.expect("TODO: panic message");
+) -> Result<()> {
+    let app_context = TaskManager::app_context(main_tx.clone()).await?;
 
     while let Some(request) = delivery_rx.recv().await {
         match request {
@@ -64,6 +63,8 @@ pub async fn handle_requests(
             }
         }
     }
+
+    Ok(())
 }
 
 pub async fn handle_order(
@@ -90,7 +91,6 @@ async fn update_with_retry(
 )  {
     while let Err(e) = update_storage_and_order(app_context.clone(), &order, Remove, Delivered).await {
         info!("delivery retrying update storage for order is: {:?}", &order);
-        //sleep(Duration::from_millis(700)).await;
     }
 }
 

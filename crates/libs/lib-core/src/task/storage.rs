@@ -9,6 +9,8 @@ use tokio::sync::oneshot;
 use tokio::time::sleep;
 use tracing::{info, instrument};
 
+use anyhow::Result;
+
 use lib_dto::order::{OrderId, OrderItem, OrderItemExt, OrderStatus, OrderStored};
 use lib_dto::order::OrderStatus::{Delivered, ReadyToDeliver};
 use crate::bmc::book_info::BookBmc;
@@ -18,7 +20,7 @@ use crate::bmc::storage::{StorageBmc, UpdateType};
 use crate::bmc::storage::UpdateType::{Add, Remove};
 use crate::context::app_context::ModelManager;
 use crate::task::delivery::{DeliveryRequest, DeliveryResponse, DeliveryTask, handle_order};
-use crate::task::main::MainTaskRequest;
+use crate::task::main::{MainTaskRequest, TaskManager};
 use crate::task::storage::StorageResponse::HealthOk;
 
 #[derive(Debug)]
@@ -49,10 +51,8 @@ impl StorageTask {
 pub async fn handle_requests(
     main_tx: Sender<MainTaskRequest>,
     mut storage_rx: Receiver<StorageRequest>,
-) {
-    let (o_tx, o_rx) = oneshot::channel();
-    main_tx.send(MainTaskRequest::AppContext(o_tx)).await.unwrap();
-    let app_context = o_rx.await.unwrap();
+) -> Result<()> {
+    let app_context = TaskManager::app_context(main_tx.clone()).await?;
 
     while let Some(request) = storage_rx.recv().await {
         match request {
@@ -64,6 +64,8 @@ pub async fn handle_requests(
             }
         }
     }
+
+    Ok(())
 }
 
 pub async fn handle_storage_new(

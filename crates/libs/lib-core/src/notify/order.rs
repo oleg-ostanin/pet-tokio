@@ -15,12 +15,10 @@ use chrono::{DateTime, Utc};
 use tokio::sync::mpsc::Sender;
 use tokio::sync::oneshot;
 use crate::context::app_context::ModelManager;
-use crate::task::main::MainTaskRequest;
+use crate::task::main::{MainTaskRequest, TaskManager};
 use crate::task::order::OrderRequest;
 
-pub(crate) struct NotifyTask {
-
-}
+pub(crate) struct NotifyTask {}
 
 impl NotifyTask {
     pub(crate) fn start(main_tx: Sender<MainTaskRequest>) {
@@ -48,18 +46,14 @@ pub async fn handle_notify(
     main_tx: Sender<MainTaskRequest>
 ) -> Result<()> {
     info!("Starting handle_notify");
-    let (app_context_tx, app_context_rx) = oneshot::channel();
-    main_tx.send(MainTaskRequest::AppContext(app_context_tx)).await.unwrap();
-    let app_context = app_context_rx.await.unwrap();
+    let app_context = TaskManager::app_context(main_tx.clone()).await?;
 
     let channels = vec!["table_update"];
 
     let mut listener = PgListener::connect_with(app_context.pg_pool()).await.unwrap();
     listener.listen_all(channels).await?;
 
-    let (order_tx, order_rx) = oneshot::channel();
-    main_tx.send(MainTaskRequest::OrderSender(order_tx)).await.expect("TODO: panic message");
-    let mut order_tx = order_rx.await.unwrap();
+    let mut order_tx = TaskManager::order_sender(main_tx.clone()).await?;
 
     loop {
         while let Some(notification) = listener.try_recv().await? {
