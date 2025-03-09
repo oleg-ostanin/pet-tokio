@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::thread::sleep;
 use crate::context::app_context::ModelManager;
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 use chrono::Duration;
 use tokio::select;
 use tokio::sync::mpsc::{Receiver, Sender};
@@ -33,31 +33,39 @@ pub(crate) enum MainTaskResponse {
 pub struct TaskManager {
     app_context: Arc<ModelManager>,
     tx: Sender<MainTaskRequest>,
-    order_tx: Sender<OrderRequest>,
-    storage_tx: Sender<StorageRequest>,
-    delivery_tx: Sender<DeliveryRequest>,
+    order_tx: Option<Sender<OrderRequest>>,
+    storage_tx: Option<Sender<StorageRequest>>,
+    delivery_tx: Option<Sender<DeliveryRequest>>,
 }
 
 impl TaskManager {
     pub async fn start(app_context: Arc<ModelManager>) -> Result<()> {
         let (tx, rx) = tokio::sync::mpsc::channel(64);
 
+        info!("creating NotifyTask");
         NotifyTask::start(tx.clone()).await;
+        info!("creating OrderTask");
+
         let order_tx = OrderTask::start(tx.clone());
         let storage_tx = StorageTask::start(tx.clone());
         let delivery_tx = DeliveryTask::start(tx.clone());
 
+        info!("creating MainTaskRequest");
+
         let mut main_task = TaskManager {
             app_context,
             tx: tx.clone(),
-            order_tx,
-            storage_tx,
-            delivery_tx,
+            order_tx: None,
+            storage_tx: None,
+            delivery_tx: None,
         };
 
-        let jh = tokio::spawn(main_task.handle_requests(rx));
-        jh.await.expect("TODO: panic message").expect("TODO: panic message");
+        info!("spawning MainTaskRequest");
 
+        tokio::spawn(main_task.handle_requests(rx));
+        //jh.await.expect("TODO: panic message").expect("TODO: panic message");
+
+        tokio::time::sleep(core::time::Duration::from_secs(20)).await;
         Ok(())
     }
 
@@ -65,14 +73,10 @@ impl TaskManager {
         mut self,
         mut rx: Receiver<MainTaskRequest>,
     ) -> Result<()> {
-        loop {
-            if let Some(request) = rx.recv().await {
-                info!("got MainTaskRequest");
-                self.match_requests(request).await;
-            } else {
-                info!("got None");
-
-            }
+        info!("starting MainTaskRequest");
+        while let Some(request) = rx.recv().await {
+            info!("got MainTaskRequest");
+            self.match_requests(request).await;
         }
         Ok(())
     }
@@ -87,48 +91,57 @@ impl TaskManager {
                 info!("answered context request");
             }
             MainTaskRequest::OrderSender(tx) => {
-                // if let Err(e) = self.check_order_task().await {
-                //     error!("Failed to check task: {:?}", e);
-                //     self.order_tx = OrderTask::start(self.tx.clone());
-                // }
-                tx.send(self.order_tx.clone()).expect("should be ok");
+                if let Err(e) = self.check_order_task().await {
+                    error!("Failed to check task: {:?}", e);
+                    self.order_tx = Some(OrderTask::start(self.tx.clone()));
+                }
+                tx.send(self.order_tx.as_ref().expect("must be some").clone()).expect("should be ok");
             }
             MainTaskRequest::StorageSender(tx) => {
-                // if let Err(e) = self.check_storage_task().await {
-                //     error!("Failed to check task: {:?}", e);
-                //     self.storage_tx = StorageTask::start(self.tx.clone());
-                // }
-                tx.send(self.storage_tx.clone()).expect("TODO: panic message");
+                if let Err(e) = self.check_storage_task().await {
+                    error!("Failed to check task: {:?}", e);
+                    self.storage_tx = Some(StorageTask::start(self.tx.clone()));
+                }
+                tx.send(self.storage_tx.as_ref().expect("must be some").clone()).expect("TODO: panic message");
             }
             MainTaskRequest::DeliverySender(tx) => {
-                // if let Err(e) = self.check_delivery_task().await {
-                //     error!("Failed to check task: {:?}", e);
-                //     self.delivery_tx = DeliveryTask::start(self.tx.clone());
-                // }
-                tx.send(self.delivery_tx.clone()).expect("TODO: panic message");
+                if let Err(e) = self.check_delivery_task().await {
+                    error!("Failed to check task: {:?}", e);
+                    self.delivery_tx = Some(DeliveryTask::start(self.tx.clone()));
+                }
+                tx.send(self.delivery_tx.as_ref().expect("must be some").clone()).expect("TODO: panic message");
             }
         }
     }
 
     async fn check_order_task(&mut self, ) -> Result<()> {
         let (health_tx, health_rx) = oneshot::channel();
-        self.order_tx.send(OrderRequest::Health(health_tx)).await?;
-        health_rx.await?;
-        Ok(())
+        if let Some(tx) = self.order_tx.as_ref() {
+            tx.send(OrderRequest::Health(health_tx)).await?;
+            health_rx.await?;
+            return Ok(());
+        }
+        bail!("")
     }
 
     async fn check_storage_task(&mut self, ) -> Result<()> {
         let (health_tx, health_rx) = oneshot::channel();
-        self.storage_tx.send(StorageRequest::Health(health_tx)).await?;
-        health_rx.await?;
-        Ok(())
+        if let Some(tx) = self.storage_tx.as_ref() {
+            tx.send(StorageRequest::Health(health_tx)).await?;
+            health_rx.await?;
+            return Ok(());
+        }
+        bail!("")
     }
 
     async fn check_delivery_task(&mut self, ) -> Result<()> {
         let (health_tx, health_rx) = oneshot::channel();
-        self.delivery_tx.send(DeliveryRequest::Health(health_tx)).await?;
-        health_rx.await?;
-        Ok(())
+        if let Some(tx) = self.delivery_tx.as_ref() {
+            tx.send(DeliveryRequest::Health(health_tx)).await?;
+            health_rx.await?;
+            return Ok(());
+        }
+        bail!("")
     }
 
     pub(crate) async fn app_context(main_tx: Sender<MainTaskRequest>) -> Result<Arc<ModelManager>> {

@@ -25,15 +25,15 @@ impl NotifyTask {
     pub(crate) async fn start(main_tx: Sender<MainTaskRequest>) {
         info!("Starting notify task");
 
-        let jh = tokio::spawn(handle_notify(main_tx));
-        match jh.await {
-            Ok(_) => {
-                info!("Task completed.")
-            }
-            Err(e) => {
-                error!("Error during task: {:?}", e)
-            }
-        }
+        tokio::spawn(handle_notify(main_tx));
+        // match jh.await {
+        //     Ok(_) => {
+        //         info!("Task completed.")
+        //     }
+        //     Err(e) => {
+        //         error!("Error during task: {:?}", e)
+        //     }
+        // }
     }
 }
 
