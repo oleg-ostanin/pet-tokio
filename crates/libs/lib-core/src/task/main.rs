@@ -42,7 +42,7 @@ impl TaskManager {
     pub async fn start(app_context: Arc<ModelManager>) -> Result<()> {
         let (tx, rx) = tokio::sync::mpsc::channel(64);
 
-        NotifyTask::start(tx.clone());
+        NotifyTask::start(tx.clone()).await;
         let order_tx = OrderTask::start(tx.clone());
         let storage_tx = StorageTask::start(tx.clone());
         let delivery_tx = DeliveryTask::start(tx.clone());
@@ -65,37 +65,46 @@ impl TaskManager {
         mut self,
         mut rx: Receiver<MainTaskRequest>,
     ) -> Result<()> {
-        while let Some(request) = rx.recv().await {
-            self.match_requests(request).await;
+        loop {
+            if let Some(request) = rx.recv().await {
+                info!("got MainTaskRequest");
+                self.match_requests(request).await;
+            } else {
+                info!("got None");
+
+            }
         }
         Ok(())
     }
 
     async fn match_requests(&mut self, request: MainTaskRequest) {
+        info!("matching MainTaskRequest");
         match request {
             MainTaskRequest::Health(_) => {}
             MainTaskRequest::AppContext(tx) => {
+                info!("got context request");
                 tx.send(self.app_context.clone()); // todo handle result and below
+                info!("answered context request");
             }
             MainTaskRequest::OrderSender(tx) => {
-                if let Err(e) = self.check_order_task().await {
-                    error!("Failed to check task: {:?}", e);
-                    self.order_tx = OrderTask::start(self.tx.clone());
-                }
+                // if let Err(e) = self.check_order_task().await {
+                //     error!("Failed to check task: {:?}", e);
+                //     self.order_tx = OrderTask::start(self.tx.clone());
+                // }
                 tx.send(self.order_tx.clone()).expect("should be ok");
             }
             MainTaskRequest::StorageSender(tx) => {
-                if let Err(e) = self.check_storage_task().await {
-                    error!("Failed to check task: {:?}", e);
-                    self.storage_tx = StorageTask::start(self.tx.clone());
-                }
+                // if let Err(e) = self.check_storage_task().await {
+                //     error!("Failed to check task: {:?}", e);
+                //     self.storage_tx = StorageTask::start(self.tx.clone());
+                // }
                 tx.send(self.storage_tx.clone()).expect("TODO: panic message");
             }
             MainTaskRequest::DeliverySender(tx) => {
-                if let Err(e) = self.check_delivery_task().await {
-                    error!("Failed to check task: {:?}", e);
-                    self.delivery_tx = DeliveryTask::start(self.tx.clone());
-                }
+                // if let Err(e) = self.check_delivery_task().await {
+                //     error!("Failed to check task: {:?}", e);
+                //     self.delivery_tx = DeliveryTask::start(self.tx.clone());
+                // }
                 tx.send(self.delivery_tx.clone()).expect("TODO: panic message");
             }
         }
@@ -124,7 +133,9 @@ impl TaskManager {
 
     pub(crate) async fn app_context(main_tx: Sender<MainTaskRequest>) -> Result<Arc<ModelManager>> {
         let (tx, rx) = oneshot::channel();
+        info!("sending context request");
         main_tx.send(MainTaskRequest::AppContext(tx)).await?;
+        info!("send context request");
         Ok(rx.await?)
     }
 

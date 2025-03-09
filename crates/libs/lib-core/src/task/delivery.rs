@@ -5,7 +5,7 @@ use tokio::select;
 use tokio::sync::oneshot;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::time::sleep;
-use tracing::{error, info};
+use tracing::{error, info, instrument};
 use lib_dto::order::{OrderId, OrderItem, OrderItemExt, OrderStatus, OrderStored};
 use lib_dto::order::OrderStatus::{Delivered, ReadyToDeliver};
 use crate::bmc::book_info::BookBmc;
@@ -47,6 +47,7 @@ impl DeliveryTask {
     }
 }
 
+#[instrument(skip_all)]
 pub async fn handle_requests(
     main_tx: Sender<MainTaskRequest>,
     mut delivery_rx: Receiver<DeliveryRequest>,

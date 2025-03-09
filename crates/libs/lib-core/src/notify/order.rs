@@ -7,7 +7,7 @@ use sqlx::error::Error;
 use sqlx::postgres::PgListener;
 use sqlx::Pool;
 use sqlx::Postgres;
-use tracing::info;
+use tracing::{error, info, instrument};
 use lib_dto::order::{OrderContent, OrderId, OrderStatus, OrderStored};
 
 use anyhow::Result;
@@ -21,10 +21,19 @@ use crate::task::order::OrderRequest;
 pub(crate) struct NotifyTask {}
 
 impl NotifyTask {
-    pub(crate) fn start(main_tx: Sender<MainTaskRequest>) {
+    #[instrument(skip_all)]
+    pub(crate) async fn start(main_tx: Sender<MainTaskRequest>) {
         info!("Starting notify task");
 
-        tokio::spawn(handle_notify(main_tx));
+        let jh = tokio::spawn(handle_notify(main_tx));
+        match jh.await {
+            Ok(_) => {
+                info!("Task completed.")
+            }
+            Err(e) => {
+                error!("Error during task: {:?}", e)
+            }
+        }
     }
 }
 
@@ -42,21 +51,26 @@ struct OrderPayload {
     action_type: ActionType,
 }
 
+#[instrument(skip_all)]
 pub async fn handle_notify(
     main_tx: Sender<MainTaskRequest>
 ) -> Result<()> {
     info!("Starting handle_notify");
+    info!("before getting context");
     let app_context = TaskManager::app_context(main_tx.clone()).await?;
+    info!("after getting context");
 
     let channels = vec!["table_update"];
 
     let mut listener = PgListener::connect_with(app_context.pg_pool()).await.unwrap();
-    listener.listen_all(channels).await?;
+    listener.listen_all(channels).await.expect("error");
 
+    info!("before getting sender");
     let mut order_tx = TaskManager::order_sender(main_tx.clone()).await?;
+    info!("after getting sender");
 
     loop {
-        while let Some(notification) = listener.try_recv().await? {
+        while let Some(notification) = listener.try_recv().await.expect("error") {
             info!(
                 "Getting notification with payload: {:?} from channel {:?}",
                 notification.payload(),
