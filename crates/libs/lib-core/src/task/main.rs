@@ -121,7 +121,7 @@ impl TaskManager {
             health_rx.await?;
             return Ok(());
         }
-        bail!("")
+        bail!("order tx none")
     }
 
     async fn check_storage_task(&mut self, ) -> Result<()> {
@@ -131,7 +131,7 @@ impl TaskManager {
             health_rx.await?;
             return Ok(());
         }
-        bail!("")
+        bail!("storage tx none")
     }
 
     async fn check_delivery_task(&mut self, ) -> Result<()> {
@@ -141,7 +141,7 @@ impl TaskManager {
             health_rx.await?;
             return Ok(());
         }
-        bail!("")
+        bail!("delivery tx none")
     }
 
     pub(crate) async fn app_context(main_tx: Sender<MainTaskRequest>) -> Result<Arc<ModelManager>> {

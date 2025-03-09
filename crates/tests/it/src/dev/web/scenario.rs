@@ -34,19 +34,28 @@ mod tests {
         let book_list: BookList = user.post_ok("/api/rpc", all_books_request).await;
         assert_eq!(5, book_list.book_list().len());
 
-        let order_item_1 = OrderItem::new(1, 2);
-        let order_item_2 = OrderItem::new(2, 4);
-        let order_content = OrderContent::new(vec!(order_item_1, order_item_2));
-        let order_id: OrderId = user.post_rpc("create_order", json!(order_content)).await;
-        assert_eq!(1, order_id.order_id());
-
         let description = BookDescription::new("the");
         let book_list: BookList = user.post_rpc("books_by_description", json!(description)).await;
         info!("books by description: {:?}", book_list);
+
+        let iterations = 16;
+
+        for i in (1..iterations) {
+            let order_item_1 = OrderItem::new(1, 2);
+            let order_item_2 = OrderItem::new(2, 4);
+            let order_content = OrderContent::new(vec!(order_item_1, order_item_2));
+            let order_id: OrderId = user.post_rpc("create_order", json!(order_content)).await;
+            assert_eq!(i, order_id.order_id());
+        }
+
         sleep(Duration::from_secs(1)).await;
-        let check_stored: OrderStored = user.post_rpc("check_order", json!(order_id)).await;
-        assert_eq!(1, check_stored.order_id());
-        assert_eq!(&OrderStatus::Delivered, check_stored.status());
+
+        for i in (1..iterations) {
+            let check_order_id = OrderId::new(i);
+            let check_stored: OrderStored = user.post_rpc("check_order", json!(check_order_id)).await;
+            assert_eq!(i, check_stored.order_id());
+            assert_eq!(&OrderStatus::Delivered, check_stored.status());
+        }
 
         ctx.cancel().await;
     }
