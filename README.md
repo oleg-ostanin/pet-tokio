@@ -1,4 +1,6 @@
-Pet project under development.
+Pet project under active development.
+
+Emulates online bookstore with axum, tokio, sqlx.
 
 Crates:
     libs:
