@@ -20,6 +20,11 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-appender = "0.2.3"
 
+opentelemetry = { version = "0.19.0", features = ["rt-tokio", "trace"] }
+opentelemetry-otlp = { version="0.12.0",  features = ["tonic", "metrics"] }
+opentelemetry-semantic-conventions = { version="0.11.0" }
+tracing-opentelemetry = "0.29.0" # Integration between tracing and OpenTelemetry
+
 dotenv = "0.15.0"
 dotenv_codegen = "0.15.0"
 tokio-util = "0.7.13"

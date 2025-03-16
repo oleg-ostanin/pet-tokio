@@ -1,11 +1,17 @@
 use std::error::Error;
 use std::sync::Arc;
-
+use axum::routing::trace;
 use dotenv::dotenv;
-use tokio::select;
+use opentelemetry::{global, KeyValue, runtime};
+use opentelemetry::sdk::{Resource, trace as sdktrace, trace};
+use opentelemetry::trace::TraceError;
+use opentelemetry_otlp::WithExportConfig;
+use sqlx::__rt::JoinHandle::Tokio;
+use tokio::{select};
 use tokio_util::sync::CancellationToken;
-
 use tracing::info;
+use tracing_subscriber::prelude::*;
+use tracing_subscriber::Registry;
 
 use lib_core::context::app_context::ModelManager;
 use lib_web::app::context::create_app_context;
@@ -18,6 +24,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
         //.without_time() // For early local development.
         .with_target(false)
         .init();
+
+
+
     info!("starting web server");
     let app_context: Arc<ModelManager> = create_app_context().await;
 
@@ -34,4 +43,22 @@ async fn main() -> Result<(), Box<dyn Error>> {
     };
 
     Ok(())
+}
+
+fn init_tracer() -> Result<sdktrace::Tracer, TraceError> {
+    // Configure the Jaeger exporter
+    opentelemetry_otlp::new_pipeline()
+        .tracing()
+        .with_exporter(
+            opentelemetry_otlp::new_exporter()
+                .tonic()
+                .with_endpoint("http://localhost:4317")
+        )
+        .with_trace_config(
+            trace::config().with_resource(Resource::new(vec![KeyValue::new(
+                opentelemetry_semantic_conventions::resource::SERVICE_NAME,
+                "pet-tokio-web-server",
+            )]))
+        )
+        .install_batch(runtime::Tokio)
 }
