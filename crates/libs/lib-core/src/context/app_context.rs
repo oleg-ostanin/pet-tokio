@@ -6,11 +6,14 @@ use axum::body::Body;
 use hyper_util::client::legacy::Client;
 use hyper_util::client::legacy::connect::HttpConnector;
 use sqlx::postgres::PgPool;
+use tokio::sync::mpsc::Sender;
 use tokio::sync::Mutex;
 use tokio_util::sync::CancellationToken;
+use crate::task::main::MainTaskRequest;
 
 #[derive(Clone)]
 pub struct ModelManager {
+    main_tx: Sender<MainTaskRequest>,
     pg_pool: Arc<PgPool>,
     cache: Arc<RwLock<HashMap<String, String>>>,
     web_client: Client<HttpConnector, Body>,
@@ -20,7 +23,11 @@ pub struct ModelManager {
 }
 
 impl ModelManager {
-    pub fn create(app_config: AppConfig, pg_pool: Arc<PgPool>) -> ModelManager {
+    pub fn create(
+        main_tx: Sender<MainTaskRequest>,
+        app_config: AppConfig,
+        pg_pool: Arc<PgPool>
+    ) -> ModelManager {
         let cache = Arc::new(RwLock::new(HashMap::new()));
 
         let web_client: Client<HttpConnector, Body> =
@@ -32,6 +39,7 @@ impl ModelManager {
         let db_mutex = Arc::new(Mutex::new(()));
 
         ModelManager {
+            main_tx,
             pg_pool,
             cache,
             web_client,

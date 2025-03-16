@@ -16,7 +16,7 @@ use crate::task::delivery::{DeliveryRequest, DeliveryTask, handle_delivery};
 use crate::task::order::{handle_order, OrderRequest, OrderResponse, OrderTask};
 use crate::task::storage::{handle_storage, StorageRequest, StorageTask};
 
-pub(crate) enum MainTaskRequest {
+pub enum MainTaskRequest {
     Health(oneshot::Sender<MainTaskResponse>),
     AppContext(oneshot::Sender<Arc<ModelManager>>),
     OrderSender(oneshot::Sender<Sender<OrderRequest>>),
@@ -25,7 +25,7 @@ pub(crate) enum MainTaskRequest {
 }
 
 #[derive(Debug)]
-pub(crate) enum MainTaskResponse {
+pub enum MainTaskResponse {
     HealthOk,
 }
 
@@ -39,7 +39,10 @@ pub struct TaskManager {
 }
 
 impl TaskManager {
-    pub async fn start(app_context: Arc<ModelManager>) -> Result<()> {
+    pub async fn start(
+        main_task_channel: (Sender<MainTaskRequest>, Receiver<MainTaskRequest>),
+        app_context: Arc<ModelManager>
+    ) -> Result<()> {
         let (tx, rx) = tokio::sync::mpsc::channel(64);
 
         info!("creating NotifyTask");
@@ -62,8 +65,8 @@ impl TaskManager {
 
         info!("spawning MainTaskRequest");
 
-        tokio::spawn(main_task.handle_requests(rx));
-        //jh.await.expect("TODO: panic message").expect("TODO: panic message");
+        let jh = tokio::spawn(main_task.handle_requests(rx));
+        jh.await.expect("TODO: panic message").expect("TODO: panic message");
 
         tokio::time::sleep(core::time::Duration::from_secs(20)).await;
         Ok(())

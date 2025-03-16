@@ -118,8 +118,10 @@ impl TestContext {
 
         let db_url = format!("postgresql://postgres:root@localhost:{pg_port}/postgres");
         let pool = get_pool(&db_url).await;
+        let main_task_channel = tokio::sync::mpsc::channel(64);
         let app_context: Arc<ModelManager> = Arc::new(
             ModelManager::create(
+                main_task_channel.0.clone(),
                 app_config,
                 Arc::new(pool.clone()),
             ));
@@ -140,11 +142,9 @@ impl TestContext {
         let cancellation_token: CancellationToken = CancellationToken::new();
         let cancellation_token_cloned: CancellationToken = cancellation_token.clone();
         let app_context_cloned = app_context.clone();
-        let app_context_cloned_cloned = app_context.clone();
         tokio::spawn(async move {
             select! {
-                // _ = lib_core::task::main::main(app_context_cloned) => {}
-                _ = lib_core::task::main::TaskManager::start(app_context_cloned_cloned) => {}
+                _ = lib_core::task::main::TaskManager::start(main_task_channel, app_context_cloned) => {}
                 _ = axum::serve(listener, app) => {}
                 _ = cancellation_token_cloned.cancelled() => {
                     info!("Cancelled by cancellation token.")

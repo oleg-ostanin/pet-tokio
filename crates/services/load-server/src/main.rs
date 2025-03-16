@@ -22,7 +22,7 @@ use lib_utils::rpc::request;
 // use crate::scenario::stage_01::load;
 // use crate::utils::file::from_file;
 
-const USERS_NUM: usize = 2;
+const USERS_NUM: usize = 8;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {

@@ -38,16 +38,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let subscriber = tracing_subscriber::Registry::default().with(telemetry);
     tracing::subscriber::set_global_default(subscriber).unwrap();
 
-
     info!("starting web server");
-    let app_context: Arc<ModelManager> = create_app_context().await;
+    let main_task_channel = tokio::sync::mpsc::channel(64);
+
+    let app_context: Arc<ModelManager> = create_app_context(main_task_channel.0.clone()).await;
 
     let app = web_app(app_context.clone()).await;
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await.unwrap();
     let cancellation_token: CancellationToken = app_context.cancellation_token();
 
     select! {
-        _ = lib_core::task::main::main(app_context) => {}
+        _ = lib_core::task::main::TaskManager::start(main_task_channel, app_context) => {}
         _ = axum::serve(listener, app) => {}
         _ = cancellation_token.cancelled() => {
                 info!("Cancelled by cancellation token.")
