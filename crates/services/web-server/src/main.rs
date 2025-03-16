@@ -4,6 +4,7 @@ use axum::routing::trace;
 use dotenv::dotenv;
 use opentelemetry::{global, KeyValue, runtime};
 use opentelemetry::sdk::{Resource, trace as sdktrace, trace};
+use opentelemetry::sdk::propagation::TraceContextPropagator;
 use opentelemetry::trace::TraceError;
 use opentelemetry_otlp::WithExportConfig;
 use sqlx::__rt::JoinHandle::Tokio;
@@ -12,19 +13,30 @@ use tokio_util::sync::CancellationToken;
 use tracing::info;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::Registry;
+use tracing_subscriber::layer::SubscriberExt;
 
 use lib_core::context::app_context::ModelManager;
 use lib_web::app::context::create_app_context;
 use lib_web::app::web_app::web_app;
 
+use axum::http::StatusCode;
+use axum::Router;
+use axum::routing::get;
+use tracing::{error, event, Level, warn};
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().ok();
-    tracing_subscriber::fmt()
-        //.without_time() // For early local development.
-        .with_target(false)
-        .init();
+    // tracing_subscriber::fmt()
+    //     //.without_time() // For early local development.
+    //     .with_target(false)
+    //     .init();
 
+    global::set_text_map_propagator(TraceContextPropagator::new());
+    let tracer = init_trace().unwrap();
+    let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
+    let subscriber = tracing_subscriber::Registry::default().with(telemetry);
+    tracing::subscriber::set_global_default(subscriber).unwrap();
 
 
     info!("starting web server");
@@ -45,7 +57,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn init_tracer() -> Result<sdktrace::Tracer, TraceError> {
+fn init_trace() -> Result<sdktrace::Tracer, TraceError> {
     // Configure the Jaeger exporter
     opentelemetry_otlp::new_pipeline()
         .tracing()
