@@ -34,7 +34,7 @@ async fn load_user(mut user: UserContext) -> UserContext {
         orders.push(order_id);
     }
 
-    tokio::time::sleep(Duration::from_secs(5)).await;
+    tokio::time::sleep(Duration::from_secs(15)).await;
 
     for order_id in orders.into_iter() {
         let order_stored = check_order(&mut user, order_id).await;
