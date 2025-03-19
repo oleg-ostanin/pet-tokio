@@ -171,6 +171,7 @@ impl TestContext {
     }
 
     pub(crate) async fn cancel(&self) {
+        self.pg_container.stop();
         self.cancellation_token.cancel()
     }
 
