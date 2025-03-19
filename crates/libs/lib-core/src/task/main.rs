@@ -92,9 +92,7 @@ impl TaskManager {
         match request {
             MainTaskRequest::Health(_) => {}
             MainTaskRequest::AppContext(tx) => {
-                info!("got context request");
-                tx.send(self.app_context.clone()); // todo handle result and below
-                info!("answered context request");
+                let _ = tx.send(self.app_context.clone());
             }
             MainTaskRequest::OrderSender(tx) => {
                 if let Err(e) = self.check_order_task().await {
@@ -156,9 +154,7 @@ impl TaskManager {
     #[instrument(skip_all)]
     pub(crate) async fn app_context(main_tx: Sender<MainTaskRequest>) -> Result<Arc<ModelManager>> {
         let (tx, rx) = oneshot::channel();
-        info!("sending context request");
         main_tx.send(MainTaskRequest::AppContext(tx)).await?;
-        info!("send context request");
         Ok(rx.await?)
     }
 

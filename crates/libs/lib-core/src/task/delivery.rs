@@ -79,6 +79,7 @@ pub async fn handle_order(
     let order_id = order.order_id();
     info!("delivering order: {:#?}", &order_id);
     select! {
+        // todo think about cancellation safety here
         _ = update_with_retry(app_context, order.clone()) => {
             response_tx.send(DeliveryResponse::Delivered).expect("TODO: panic message");
         }

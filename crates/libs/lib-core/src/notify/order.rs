@@ -56,18 +56,13 @@ pub async fn handle_notify(
     main_tx: Sender<MainTaskRequest>
 ) -> Result<()> {
     info!("Starting handle_notify");
-    info!("before getting context");
     let app_context = TaskManager::app_context(main_tx.clone()).await?;
-    info!("after getting context");
 
     let channels = vec!["table_update"];
 
     let mut listener = PgListener::connect_with(app_context.pg_pool()).await.unwrap();
     listener.listen_all(channels).await.expect("error");
-
-    info!("before getting sender");
     let mut order_tx = TaskManager::order_sender(main_tx.clone()).await?;
-    info!("after getting sender");
 
     loop {
         while let Some(notification) = listener.try_recv().await.expect("error") {
