@@ -22,6 +22,6 @@ pub fn request(method: impl Into<String>, params: Option<impl Serialize>) -> Val
         }
     };
     let request_str = &request.to_string();
-    info!("request_str: {:?}", &request_str);
+    info!("request_str: {:#?}", &request_str);
     request
 }

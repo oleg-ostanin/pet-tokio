@@ -53,7 +53,7 @@ impl OrderBmc {
         mm: &ModelManager,
         order_id: i64,
     ) -> Result<OrderStored> {
-        info!("Trying to get order by id: {:?}", order_id);
+        info!("Trying to get order by id: {:#?}", order_id);
         let order: OrderStored = sqlx::query_as(SELECT_BY_ID)
             .bind(&order_id)
             .fetch_one(mm.pg_pool())
@@ -67,7 +67,7 @@ impl OrderBmc {
         order_id: i64,
         order_status: OrderStatus,
     ) -> Result<()> {
-        info!("Trying to update order with id: {:?}, new status: {:?}", &order_id, &order_status);
+        info!("Trying to update order with id: {:#?}, new status: {:#?}", &order_id, &order_status);
         sqlx::query_as(UPDATE_STATUS)
             .bind(&order_status)
             .bind(&order_id)
@@ -82,7 +82,7 @@ impl OrderBmc {
         order_id: i64,
         order_status: OrderStatus,
     ) -> Result<()> {
-        info!("Trying to update order with id: {:?}, new status: {:?}", &order_id, &order_status);
+        info!("Trying to update order with id: {:#?}, new status: {:#?}", &order_id, &order_status);
         sqlx::query_as(UPDATE_STATUS)
             .bind(&order_status)
             .bind(&order_id)

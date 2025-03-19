@@ -48,7 +48,7 @@ pub async fn handle_order(
     let mut delivery_tx = TaskManager::delivery_sender(main_tx.clone()).await?;
 
     while let Some(order_request) = order_rx.recv().await {
-        info!("received order is {:?}", &order_request);
+        info!("received order is {:#?}", &order_request);
 
         match order_request {
             OrderRequest::Health(tx) => {

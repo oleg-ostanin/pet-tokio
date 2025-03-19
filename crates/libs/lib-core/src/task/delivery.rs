@@ -56,7 +56,7 @@ pub async fn handle_requests(
     let app_context = TaskManager::app_context(main_tx.clone()).await?;
 
     while let Some(request) = delivery_rx.recv().await {
-        info!("Got delivery request: {:?}", &request);
+        info!("Got delivery request: {:#?}", &request);
         match request {
             DeliveryRequest::Health(tx) => {
                 tx.send(HealthOk).expect("TODO: panic message")
@@ -77,7 +77,7 @@ pub async fn handle_order(
     response_tx: oneshot::Sender<DeliveryResponse>
 ) {
     let order_id = order.order_id();
-    info!("delivering order: {:?}", &order_id);
+    info!("delivering order: {:#?}", &order_id);
     select! {
         _ = update_with_retry(app_context, order.clone()) => {
             response_tx.send(DeliveryResponse::Delivered).expect("TODO: panic message");
@@ -94,6 +94,6 @@ async fn update_with_retry(
     order: OrderStored,
 )  {
     while let Err(e) = update_storage_and_order(app_context.clone(), &order, Remove, Delivered).await {
-        info!("delivery retrying update storage for order is: {:?}", &order);
+        info!("delivery retrying update storage for order is: {:#?}", &order);
     }
 }

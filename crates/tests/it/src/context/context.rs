@@ -113,7 +113,7 @@ impl TestContext {
 
         //init_db(&pg_client).await;
         let mock_auth_url = mock_server.uri();
-        info!("mock_auth_url: {:?}", &mock_auth_url);
+        info!("mock_auth_url: {:#?}", &mock_auth_url);
         let app_config: AppConfig = AppConfig { auth_url: Arc::new(mock_auth_url)};
 
         let db_url = format!("postgresql://postgres:root@localhost:{pg_port}/postgres");

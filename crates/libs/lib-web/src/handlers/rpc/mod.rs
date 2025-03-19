@@ -48,7 +48,7 @@ pub async fn rpc(
         }
     };
 
-    info!("rpc_req: {:?}", &rpc_req.params);
+    info!("rpc_req: {:#?}", &rpc_req.params);
 
     // -- Create the RPC Info
     //    (will be set to the response.extensions)

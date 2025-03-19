@@ -31,9 +31,9 @@ pub async fn start_user(idx: usize) -> UserContext {
     let user_to_create = UserForCreate::new(phone.clone(), phone.clone(), "John", "Doe");
     let check_response = user_ctx.post("/check-if-exists", json!(&user_to_create)).await;
 
-    info!("check_response: {:?}", &check_response);
+    info!("check_response: {:#?}", &check_response);
     let check_user_value = value(check_response).await.expect("must be ok");
-    info!("check_user_value: {:?}", &check_user_value);
+    info!("check_user_value: {:#?}", &check_user_value);
     let user_exists: UserExists = body(check_user_value).expect("must be ok");
 
     if !user_exists.exists {
@@ -43,7 +43,7 @@ pub async fn start_user(idx: usize) -> UserContext {
     let sign_in_response = user_ctx.post("/sign-in", json!(user_to_sign_in)).await;
     let auth_code = auth_code_from_response(sign_in_response).await;
 
-    info!("auth_code: {:?}", &auth_code);
+    info!("auth_code: {:#?}", &auth_code);
 
     let auth_code = AuthCode::new(phone, auth_code);
     user_ctx.post("/login", json!(auth_code)).await;

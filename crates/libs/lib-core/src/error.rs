@@ -18,8 +18,8 @@ pub enum Error {
 
 impl From<sqlx::Error> for Error {
     fn from(value: sqlx::Error) -> Self {
-        error!("Sqlx error: {:?}", &value);
-        error!("Sqlx error: {:?}", &value.as_database_error());
+        error!("Sqlx error: {:#?}", &value);
+        error!("Sqlx error: {:#?}", &value.as_database_error());
         Error::Sqlx(value)
     }
 }

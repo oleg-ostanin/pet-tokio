@@ -36,7 +36,7 @@ mod tests {
 
         let description = BookDescription::new("the");
         let book_list: BookList = user.post_rpc("books_by_description", json!(description)).await;
-        info!("books by description: {:?}", book_list);
+        info!("books by description: {:#?}", book_list);
 
         let iterations = 16;
 
@@ -64,14 +64,14 @@ mod tests {
     fn b() {
         let mut b = Box::new(5);
         let shared_b = &b;
-        println!("{:?}", shared_b);
+        println!("{:#?}", shared_b);
 
         let mut mut_b = &mut b;
         *mut_b.as_mut() = 6;
-        println!("{:?}", mut_b);
+        println!("{:#?}", mut_b);
         *mut_b.as_mut() = 7;
-        println!("{:?}", mut_b);
+        println!("{:#?}", mut_b);
 
-        println!("{:?}", b);
+        println!("{:#?}", b);
     }
 }

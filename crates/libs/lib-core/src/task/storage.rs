@@ -57,7 +57,7 @@ pub async fn handle_requests(
     let app_context = TaskManager::app_context(main_tx.clone()).await?;
 
     while let Some(request) = storage_rx.recv().await {
-        info!("Got storage request: {:?}", &request);
+        info!("Got storage request: {:#?}", &request);
 
         match request {
             StorageRequest::Health(tx) => {
@@ -78,7 +78,7 @@ pub async fn handle_storage(
     order: OrderStored,
     response_tx: oneshot::Sender<StorageResponse>
 ) {
-    info!("updating storage for order: {:?}", &order);
+    info!("updating storage for order: {:#?}", &order);
     select! {
         _ = update_with_retry(app_context, order.clone()) => {
             response_tx.send(StorageResponse::Updated).unwrap();
@@ -95,7 +95,7 @@ async fn update_with_retry(
     order: OrderStored,
 )  {
     while let Err(e) = update_storage_and_order(app_context.clone(), &order, Add, ReadyToDeliver).await {
-        info!("delivery retrying update storage for order is: {:?}", &order);
+        info!("delivery retrying update storage for order is: {:#?}", &order);
         //sleep(Duration::from_millis(700)).await;
     }
 }

@@ -31,7 +31,7 @@ impl NotifyTask {
         //         info!("Task completed.")
         //     }
         //     Err(e) => {
-        //         error!("Error during task: {:?}", e)
+        //         error!("Error during task: {:#?}", e)
         //     }
         // }
     }
@@ -83,7 +83,7 @@ pub async fn handle_notify(
                     order_tx.send(OrderRequest::ProcessOrder(order_stored, result_tx)).await
                         .expect("TODO: panic message");
                     let res = result_rx.await.expect("failed to receive result");
-                    info!("Received order response: {:?}", res);
+                    info!("Received order response: {:#?}", res);
                 }
                 ActionType::UPDATE => {
 

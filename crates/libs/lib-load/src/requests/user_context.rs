@@ -98,7 +98,7 @@ impl UserContext {
         let path: String = path.into();
         let addr = &self.socket_addr(&path);
 
-        info!("socket_addr_in_post: {:?}", &addr);
+        info!("socket_addr_in_post: {:#?}", &addr);
         let mut builder = Request::builder()
             .method(http::Method::POST)
             .uri(format!("http://{addr}{path}"))

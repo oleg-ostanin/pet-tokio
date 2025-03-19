@@ -98,21 +98,21 @@ impl TaskManager {
             }
             MainTaskRequest::OrderSender(tx) => {
                 if let Err(e) = self.check_order_task().await {
-                    error!("Failed to check task: {:?}", e);
+                    error!("Failed to check task: {:#?}", e);
                     self.order_tx = Some(OrderTask::start(self.tx.clone()));
                 }
                 tx.send(self.order_tx.as_ref().expect("must be some").clone()).expect("should be ok");
             }
             MainTaskRequest::StorageSender(tx) => {
                 if let Err(e) = self.check_storage_task().await {
-                    error!("Failed to check task: {:?}", e);
+                    error!("Failed to check task: {:#?}", e);
                     self.storage_tx = Some(StorageTask::start(self.tx.clone()));
                 }
                 tx.send(self.storage_tx.as_ref().expect("must be some").clone()).expect("TODO: panic message");
             }
             MainTaskRequest::DeliverySender(tx) => {
                 if let Err(e) = self.check_delivery_task().await {
-                    error!("Failed to check task: {:?}", e);
+                    error!("Failed to check task: {:#?}", e);
                     self.delivery_tx = Some(DeliveryTask::start(self.tx.clone()));
                 }
                 tx.send(self.delivery_tx.as_ref().expect("must be some").clone()).expect("TODO: panic message");

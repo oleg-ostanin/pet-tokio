@@ -36,7 +36,7 @@ pub enum Error {
 // region:    --- Axum IntoResponse
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        info!("{:<12} - model::Error {self:?}", "INTO_RES");
+        info!("{:<12} - model::Error {self:#?}", "INTO_RES");
 
         // Create a placeholder Axum response.
         let mut response = StatusCode::INTERNAL_SERVER_ERROR.into_response();
@@ -56,7 +56,7 @@ impl core::fmt::Display for Error {
         &self,
         fmt: &mut core::fmt::Formatter,
     ) -> core::result::Result<(), core::fmt::Error> {
-        write!(fmt, "{self:?}")
+        write!(fmt, "{self:#?}")
     }
 }
 
@@ -72,21 +72,21 @@ impl From<lib_core::error::Error> for Error {
 
 impl From<serde_json::Error> for Error {
     fn from(value: serde_json::Error) -> Self {
-        error!("{:?}", value);
+        error!("{:#?}", value);
         Error::FailedToConvertJson
     }
 }
 
 impl From<hyper_util::client::legacy::Error> for Error {
     fn from(value: hyper_util::client::legacy::Error) -> Self {
-        error!("{:?}", value);
+        error!("{:#?}", value);
         Error::FailedToSendRequest
     }
 }
 
 impl From<anyhow::Error> for Error {
     fn from(value: anyhow::Error) -> Self {
-        error!("{:?}", &value);
+        error!("{:#?}", &value);
         Error::Anyhow
     }
 }

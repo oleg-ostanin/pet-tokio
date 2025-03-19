@@ -35,7 +35,7 @@ pub(crate) async fn update_storage_and_order(
     tx_isolation_level(&mut tx, "REPEATABLE READ").await?;
 
     let book_storage_infos = StorageBmc::get_quantity_tx(&mut tx, book_ids).await?;
-    debug!("book_storage_info: {:?}", book_storage_infos);
+    debug!("book_storage_info: {:#?}", book_storage_infos);
 
     let map: HashMap<i64, i64> = book_storage_infos
         .into_iter()

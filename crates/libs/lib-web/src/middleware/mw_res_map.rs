@@ -39,11 +39,11 @@ pub async fn mw_response_map(
 			.as_ref()
 			.map(|(status_code, client_error)| {
 				let client_error = to_value(client_error).ok();
-				debug!("client_error: {:?}", &client_error);
+				debug!("client_error: {:#?}", &client_error);
 				let message = client_error.as_ref().and_then(|v| v.get("message"));
-				debug!("message: {:?}", &message);
+				debug!("message: {:#?}", &message);
 				let detail = client_error.as_ref().and_then(|v| v.get("detail"));
-				debug!("detail: {:?}", &detail);
+				debug!("detail: {:#?}", &detail);
 
 
 				let client_error_body = json!({

@@ -19,7 +19,7 @@ pub async fn mw_ctx_check(
     req: Request<Body>,
     next: Next,
 ) -> Result<Response> {
-    debug!("{:<12} - ctx: {ctx:?} req: {req:?}", "MIDDLEWARE");
+    debug!("{:<12} - ctx: {ctx:#?} req: {req:#?}", "MIDDLEWARE");
 
     ctx?;
 
@@ -54,14 +54,14 @@ async fn ctx_resolve(mm: Arc<ModelManager>, cookies: &Cookies) -> CtxExtResult {
         .get(AUTH_TOKEN)
         .map(|c| c.value().to_string())
         .ok_or(CtxExtError::TokenNotInCookie)?;
-    debug!("Token in ctx resolve: {:?}", token);
+    debug!("Token in ctx resolve: {:#?}", token);
 
     // -- Parse Token
     let token_key = std::env::var("SERVICE_TOKEN_KEY").expect("TOKEN must be set.");
-    debug!("Token_key in ctx resolve: {:?}", token_key);
+    debug!("Token_key in ctx resolve: {:#?}", token_key);
 
     let phone = phone_from_token(token, &token_key);
-    debug!("phone in ctx resolve: {:?}", phone);
+    debug!("phone in ctx resolve: {:#?}", phone);
 
 
     if let Some(phone) = phone {

@@ -34,7 +34,7 @@ impl core::fmt::Display for Error {
 		&self,
 		fmt: &mut core::fmt::Formatter,
 	) -> core::result::Result<(), core::fmt::Error> {
-		write!(fmt, "{self:?}")
+		write!(fmt, "{self:#?}")
 	}
 }
 
