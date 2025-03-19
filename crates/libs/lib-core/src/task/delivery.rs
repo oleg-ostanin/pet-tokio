@@ -70,6 +70,7 @@ pub async fn handle_requests(
     Ok(())
 }
 
+#[instrument(skip_all)]
 pub async fn handle_order(
     app_context: Arc<ModelManager>,
     order: OrderStored,
@@ -85,29 +86,14 @@ pub async fn handle_order(
             response_tx.send(DeliveryResponse::FailedToDeliver(order)).expect("TODO: panic message");
         }
     }
-
 }
 
+#[instrument(skip_all)]
 async fn update_with_retry(
     app_context: Arc<ModelManager>,
     order: OrderStored,
 )  {
     while let Err(e) = update_storage_and_order(app_context.clone(), &order, Remove, Delivered).await {
         info!("delivery retrying update storage for order is: {:?}", &order);
-    }
-}
-
-pub async fn handle_delivery(
-    app_context: Arc<ModelManager>,
-    mut delivery_rx: Receiver<OrderStored>,
-) {
-    while let Some(order) = delivery_rx.recv().await {
-        let order_id = order.order_id();
-        info!("delivering order: {:?}", &order_id);
-
-        while let Err(e) = update_storage_and_order(app_context.clone(), &order, Remove, Delivered).await {
-            info!("delivery retrying update storage for order is: {:?}", &order);
-            //sleep(Duration::from_millis(700)).await;
-        }
     }
 }

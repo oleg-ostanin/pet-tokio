@@ -3,7 +3,7 @@ use std::sync::Arc;
 use sqlx::types::Json;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::oneshot;
-use tracing::info;
+use tracing::{info, instrument};
 use anyhow::Result;
 use lib_dto::order::{OrderContent, OrderId, OrderItem, OrderItemExt, OrderStored};
 
@@ -34,12 +34,13 @@ impl OrderTask {
         main_tx: Sender<MainTaskRequest>,
     ) -> Sender<OrderRequest> {
         let (tx, rx) = tokio::sync::mpsc::channel(64);
-        tokio::spawn(handle_order_new(main_tx, rx));
+        tokio::spawn(handle_order(main_tx, rx));
         tx.clone()
     }
 }
 
-pub async fn handle_order_new(
+#[instrument(skip_all)]
+pub async fn handle_order(
     main_tx: Sender<MainTaskRequest>,
     mut order_rx: Receiver<OrderRequest>,
 ) -> Result<()> {
@@ -71,25 +72,4 @@ pub async fn handle_order_new(
     }
 
     Ok(())
-}
-
-pub async fn process_order(
-    order: OrderStored,
-    tx: Sender<OrderResponse>,
-) {
-
-}
-
-
-pub async fn handle_order(
-    app_context: Arc<ModelManager>,
-    mut order_rx: Receiver<OrderStored>,
-    storage_tx: Sender<OrderStored>,
-    delivery_tx: Sender<OrderStored>,
-) {
-    while let Some(order) = order_rx.recv().await {
-        info!("received order is {:?}", &order);
-
-        storage_tx.send(order).await.unwrap();
-    }
 }

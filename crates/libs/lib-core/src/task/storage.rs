@@ -48,6 +48,7 @@ impl StorageTask {
     }
 }
 
+#[instrument(skip_all)]
 pub async fn handle_requests(
     main_tx: Sender<MainTaskRequest>,
     mut storage_rx: Receiver<StorageRequest>,
@@ -63,7 +64,7 @@ pub async fn handle_requests(
                 tx.send(HealthOk).unwrap()
             }
             StorageRequest::UpdateStorage(order, tx) => {
-                tokio::spawn(handle_storage_new(app_context.clone(), order, tx)).await.unwrap()
+                tokio::spawn(handle_storage(app_context.clone(), order, tx)).await.unwrap()
             }
         }
     }
@@ -71,7 +72,8 @@ pub async fn handle_requests(
     Ok(())
 }
 
-pub async fn handle_storage_new(
+#[instrument(skip_all)]
+pub async fn handle_storage(
     app_context: Arc<ModelManager>,
     order: OrderStored,
     response_tx: oneshot::Sender<StorageResponse>
@@ -87,6 +89,7 @@ pub async fn handle_storage_new(
     }
 }
 
+#[instrument(skip_all)]
 async fn update_with_retry(
     app_context: Arc<ModelManager>,
     order: OrderStored,
@@ -94,21 +97,6 @@ async fn update_with_retry(
     while let Err(e) = update_storage_and_order(app_context.clone(), &order, Add, ReadyToDeliver).await {
         info!("delivery retrying update storage for order is: {:?}", &order);
         //sleep(Duration::from_millis(700)).await;
-    }
-}
-
-pub async fn handle_storage(
-    app_context: Arc<ModelManager>,
-    mut order_item_rx: Receiver<OrderStored>,
-    delivery_tx: Sender<OrderStored>,
-) {
-    while let Some(order) = order_item_rx.recv().await {
-        info!("updating storage for order is: {:?}", &order);
-        while let Err(e) = update_storage_and_order(app_context.clone(), &order, Add, ReadyToDeliver).await {
-            info!("retrying update storage for order is: {:?}", &order);
-            //sleep(Duration::from_millis(1000)).await;
-        }
-        delivery_tx.send(order).await.expect("ok")
     }
 }
 

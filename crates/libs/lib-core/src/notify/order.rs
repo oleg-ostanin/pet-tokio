@@ -71,17 +71,11 @@ pub async fn handle_notify(
 
     loop {
         while let Some(notification) = listener.try_recv().await.expect("error") {
-            info!(
-                "Getting notification with payload: {:?} from channel {:?}",
-                notification.payload(),
-                notification.channel()
-            );
-
             let strr = notification.payload().to_owned();
             let payload: OrderPayload = serde_json::from_str::<OrderPayload>(&strr).unwrap();
             let order_stored: OrderStored = serde_json::from_str::<OrderStored>(&strr).unwrap();
-            info!("the payload is {:?}", &payload);
-            info!("the order stored is {:?}", &order_stored);
+            info!("the payload is {:#?}", &payload);
+            info!("the order stored is {:#?}", &order_stored);
 
             match payload.action_type {
                 ActionType::INSERT => {
@@ -90,45 +84,6 @@ pub async fn handle_notify(
                         .expect("TODO: panic message");
                     let res = result_rx.await.expect("failed to receive result");
                     info!("Received order response: {:?}", res);
-                }
-                ActionType::UPDATE => {
-
-                }
-                ActionType::DELETE => {
-
-                }
-            };
-            info!(" ");
-        }
-    }
-}
-
-
-pub async fn notify_order(
-    app_context: Arc<ModelManager>,
-    order_payload_tx: Sender<OrderStored>,
-) -> Result<()> {
-    let channels = vec!["table_update"];
-
-    let mut listener = PgListener::connect_with(app_context.pg_pool()).await.unwrap();
-    listener.listen_all(channels).await?;
-    loop {
-        while let Some(notification) = listener.try_recv().await? {
-            info!(
-                "Getting notification with payload: {:?} from channel {:?}",
-                notification.payload(),
-                notification.channel()
-            );
-
-            let strr = notification.payload().to_owned();
-            let payload: OrderPayload = serde_json::from_str::<OrderPayload>(&strr).unwrap();
-            let order_stored: OrderStored = serde_json::from_str::<OrderStored>(&strr).unwrap();
-            info!("the payload is {:?}", &payload);
-            info!("the order stored is {:?}", &order_stored);
-
-            match payload.action_type {
-                ActionType::INSERT => {
-                    _ = order_payload_tx.send(order_stored).await;
                 }
                 ActionType::UPDATE => {
 

@@ -12,7 +12,7 @@ use tokio::{select};
 use tokio_util::sync::CancellationToken;
 use tracing::info;
 use tracing_subscriber::prelude::*;
-use tracing_subscriber::Registry;
+use tracing_subscriber::{EnvFilter, fmt, Registry};
 use tracing_subscriber::layer::SubscriberExt;
 
 use lib_core::context::app_context::ModelManager;
@@ -32,10 +32,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
     //     .with_target(false)
     //     .init();
 
+    // log level filtering here
+    let filter_layer = EnvFilter::try_from_default_env()
+        .or_else(|_| EnvFilter::try_new("info"))
+        .unwrap();
+
+    let fmt_layer = fmt::layer().compact();
+
     global::set_text_map_propagator(TraceContextPropagator::new());
     let tracer = init_trace().unwrap();
     let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
-    let subscriber = tracing_subscriber::Registry::default().with(telemetry);
+    let subscriber = tracing_subscriber::Registry::default()
+        .with(filter_layer)
+        .with(fmt_layer)
+        .with(telemetry);
     tracing::subscriber::set_global_default(subscriber).unwrap();
 
     info!("starting web server");

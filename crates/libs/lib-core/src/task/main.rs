@@ -8,13 +8,13 @@ use chrono::Duration;
 use tokio::select;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::oneshot;
-use tracing::{error, info};
+use tracing::{error, info, instrument};
 use lib_dto::order::OrderStored;
 use crate::bmc::book_info::BookBmc;
-use crate::notify::order::{notify_order, NotifyTask};
-use crate::task::delivery::{DeliveryRequest, DeliveryTask, handle_delivery};
-use crate::task::order::{handle_order, OrderRequest, OrderResponse, OrderTask};
-use crate::task::storage::{handle_storage, StorageRequest, StorageTask};
+use crate::notify::order::{NotifyTask};
+use crate::task::delivery::{DeliveryRequest, DeliveryTask};
+use crate::task::order::{OrderRequest, OrderResponse, OrderTask};
+use crate::task::storage::{StorageRequest, StorageTask};
 
 pub enum MainTaskRequest {
     Health(oneshot::Sender<MainTaskResponse>),
@@ -39,11 +39,12 @@ pub struct TaskManager {
 }
 
 impl TaskManager {
+    #[instrument(skip_all)]
     pub async fn start(
         main_task_channel: (Sender<MainTaskRequest>, Receiver<MainTaskRequest>),
         app_context: Arc<ModelManager>
     ) -> Result<()> {
-        let (tx, rx) = tokio::sync::mpsc::channel(64);
+        let (tx, rx) = main_task_channel;
 
         info!("creating NotifyTask");
         NotifyTask::start(tx.clone()).await;
@@ -72,6 +73,7 @@ impl TaskManager {
         Ok(())
     }
 
+    #[instrument(skip_all)]
     async fn handle_requests(
         mut self,
         mut rx: Receiver<MainTaskRequest>,
@@ -84,6 +86,7 @@ impl TaskManager {
         Ok(())
     }
 
+    #[instrument(skip_all)]
     async fn match_requests(&mut self, request: MainTaskRequest) {
         info!("matching MainTaskRequest");
         match request {
@@ -117,6 +120,7 @@ impl TaskManager {
         }
     }
 
+    #[instrument(skip_all)]
     async fn check_order_task(&mut self, ) -> Result<()> {
         let (health_tx, health_rx) = oneshot::channel();
         if let Some(tx) = self.order_tx.as_ref() {
@@ -127,6 +131,7 @@ impl TaskManager {
         bail!("order tx none")
     }
 
+    #[instrument(skip_all)]
     async fn check_storage_task(&mut self, ) -> Result<()> {
         let (health_tx, health_rx) = oneshot::channel();
         if let Some(tx) = self.storage_tx.as_ref() {
@@ -137,6 +142,7 @@ impl TaskManager {
         bail!("storage tx none")
     }
 
+    #[instrument(skip_all)]
     async fn check_delivery_task(&mut self, ) -> Result<()> {
         let (health_tx, health_rx) = oneshot::channel();
         if let Some(tx) = self.delivery_tx.as_ref() {
@@ -147,6 +153,7 @@ impl TaskManager {
         bail!("delivery tx none")
     }
 
+    #[instrument(skip_all)]
     pub(crate) async fn app_context(main_tx: Sender<MainTaskRequest>) -> Result<Arc<ModelManager>> {
         let (tx, rx) = oneshot::channel();
         info!("sending context request");
@@ -155,38 +162,25 @@ impl TaskManager {
         Ok(rx.await?)
     }
 
+    #[instrument(skip_all)]
     pub(crate) async fn order_sender(main_tx: Sender<MainTaskRequest>) -> Result<Sender<OrderRequest>> {
         let (tx, rx) = oneshot::channel();
         main_tx.send(MainTaskRequest::OrderSender(tx)).await?;
         Ok(rx.await?)
     }
 
+    #[instrument(skip_all)]
     pub(crate) async fn storage_sender(main_tx: Sender<MainTaskRequest>) -> Result<Sender<StorageRequest>> {
         let (tx, rx) = oneshot::channel();
         main_tx.send(MainTaskRequest::StorageSender(tx)).await?;
         Ok(rx.await?)
     }
 
+    #[instrument(skip_all)]
     pub(crate) async fn delivery_sender(main_tx: Sender<MainTaskRequest>) -> Result<Sender<DeliveryRequest>> {
         let (tx, rx) = oneshot::channel();
         main_tx.send(MainTaskRequest::DeliverySender(tx)).await?;
         Ok(rx.await?)
     }
-}
-
-pub async fn main(app_context: Arc<ModelManager>) -> Result<()> {
-    info!("Starting main task");
-
-    let (order_tx, order_rx) = tokio::sync::mpsc::channel(64);
-    let (storage_tx, storage_rx) = tokio::sync::mpsc::channel(64);
-    let (delivery_tx, delivery_rx) = tokio::sync::mpsc::channel(64);
-
-    select! {
-        _ = tokio::spawn(handle_order(app_context.clone(), order_rx, storage_tx, delivery_tx.clone())) => {}
-        _ = tokio::spawn(handle_storage(app_context.clone(), storage_rx, delivery_tx)) => {}
-        _ = tokio::spawn(handle_delivery(app_context.clone(), delivery_rx)) => {}
-        _ = tokio::spawn(notify_order(app_context, order_tx)) => {}
-    }
-    Ok(())
 }
 
