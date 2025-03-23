@@ -26,3 +26,5 @@ Cargo.lock
 
 /target
 ignored
+
+docker/pgdata

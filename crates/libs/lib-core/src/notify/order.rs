@@ -1,20 +1,13 @@
 use std::fmt::Debug;
-use std::sync::Arc;
 use serde::Deserialize;
 
-use serde::de::DeserializeOwned;
-use sqlx::error::Error;
 use sqlx::postgres::PgListener;
-use sqlx::Pool;
-use sqlx::Postgres;
-use tracing::{error, info, instrument};
-use lib_dto::order::{OrderContent, OrderId, OrderStatus, OrderStored};
+use tracing::{info, instrument};
+use lib_dto::order::OrderStored;
 
 use anyhow::Result;
-use chrono::{DateTime, Utc};
 use tokio::sync::mpsc::Sender;
 use tokio::sync::oneshot;
-use crate::context::app_context::ModelManager;
 use crate::task::main::{MainTaskRequest, TaskManager};
 use crate::task::order::OrderRequest;
 
@@ -62,7 +55,7 @@ pub async fn handle_notify(
 
     let mut listener = PgListener::connect_with(app_context.pg_pool()).await.unwrap();
     listener.listen_all(channels).await.expect("error");
-    let mut order_tx = TaskManager::order_sender(main_tx.clone()).await?;
+    let order_tx = TaskManager::order_sender(main_tx.clone()).await?;
 
     loop {
         while let Some(notification) = listener.try_recv().await.expect("error") {

@@ -5,7 +5,7 @@ use axum::extract::{Request, State};
 use axum::middleware::Next;
 use axum::response::Response;
 use tower_cookies::Cookies;
-use tracing::{debug, info};
+use tracing::debug;
 
 use lib_core::context::app_context::ModelManager;
 use lib_utils::constants::AUTH_TOKEN;

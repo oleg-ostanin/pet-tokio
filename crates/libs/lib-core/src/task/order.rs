@@ -1,18 +1,12 @@
-use std::ops::Deref;
-use std::sync::Arc;
-use sqlx::types::Json;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::oneshot;
 use tracing::{info, instrument};
 use anyhow::Result;
-use lib_dto::order::{OrderContent, OrderId, OrderItem, OrderItemExt, OrderStored};
+use lib_dto::order::OrderStored;
 
-use crate::bmc::book_info::BookBmc;
-use crate::bmc::storage::StorageBmc;
-use crate::context::app_context::ModelManager;
 use crate::task::delivery::DeliveryRequest;
 use crate::task::main::{MainTaskRequest, TaskManager};
-use crate::task::storage::{handle_requests, StorageRequest};
+use crate::task::storage::StorageRequest;
 
 #[derive(Debug)]
 pub(crate) enum OrderRequest {
@@ -44,8 +38,8 @@ pub async fn handle_order(
     main_tx: Sender<MainTaskRequest>,
     mut order_rx: Receiver<OrderRequest>,
 ) -> Result<()> {
-    let mut storage_tx = TaskManager::storage_sender(main_tx.clone()).await?;
-    let mut delivery_tx = TaskManager::delivery_sender(main_tx.clone()).await?;
+    let storage_tx = TaskManager::storage_sender(main_tx.clone()).await?;
+    let delivery_tx = TaskManager::delivery_sender(main_tx.clone()).await?;
 
     while let Some(order_request) = order_rx.recv().await {
         info!("received order is {:#?}", &order_request);

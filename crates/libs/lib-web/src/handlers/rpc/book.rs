@@ -3,7 +3,6 @@ use tracing::info;
 use lib_core::bmc::book_info::BookBmc;
 use lib_core::context::app_context::ModelManager;
 use lib_dto::book::{BookDescription, BookList};
-use lib_utils::json;
 use crate::error::Result;
 
 pub(super) async fn add_books(mm: &ModelManager, params: Value) -> Result<Value> {
@@ -14,7 +13,7 @@ pub(super) async fn add_books(mm: &ModelManager, params: Value) -> Result<Value>
     }
 
     let book_list: BookList = serde_json::from_value(params)?;
-    for book_info in book_list.book_list().into_iter() {
+    for book_info in book_list.book_list().iter() {
         BookBmc::create(mm, book_info).await?;
     }
     Ok(Value::Null)

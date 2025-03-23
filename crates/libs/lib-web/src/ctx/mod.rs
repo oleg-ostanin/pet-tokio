@@ -3,7 +3,7 @@ use axum::async_trait;
 use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
 use serde::Serialize;
-use tracing::{debug, info};
+use tracing::debug;
 
 use crate::error::{Error, Result};
 

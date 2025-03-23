@@ -1,19 +1,13 @@
-use std::ops::Deref;
 use std::sync::Arc;
-use std::thread::sleep;
 use crate::context::app_context::ModelManager;
 
 use anyhow::{bail, Result};
-use chrono::Duration;
-use tokio::select;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::oneshot;
 use tracing::{error, info, instrument};
-use lib_dto::order::OrderStored;
-use crate::bmc::book_info::BookBmc;
 use crate::notify::order::{NotifyTask};
 use crate::task::delivery::{DeliveryRequest, DeliveryTask};
-use crate::task::order::{OrderRequest, OrderResponse, OrderTask};
+use crate::task::order::{OrderRequest, OrderTask};
 use crate::task::storage::{StorageRequest, StorageTask};
 
 pub enum MainTaskRequest {
@@ -56,7 +50,7 @@ impl TaskManager {
 
         info!("creating MainTaskRequest");
 
-        let mut main_task = TaskManager {
+        let main_task = TaskManager {
             app_context,
             tx: tx.clone(),
             order_tx: None,

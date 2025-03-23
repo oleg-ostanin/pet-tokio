@@ -1,4 +1,3 @@
-use redis::ExpireOption::NONE;
 use serde_json::{json, Value};
 use tracing::error;
 use lib_core::bmc::order::OrderBmc;

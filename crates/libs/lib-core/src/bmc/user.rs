@@ -44,7 +44,7 @@ impl UserBmc {
             .bind(&user.first_name)
             .bind(&user.last_name)
             .bind(&pwd_hashed)
-            .bind(&pwd_salt)
+            .bind(pwd_salt)
             .bind(token_salt)
             .bind(Utc::now())
             .bind(Utc::now())

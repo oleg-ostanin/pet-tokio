@@ -38,7 +38,7 @@ impl OrderBmc {
 
         let json = sqlx::types::Json::from(order.content());
         let order_id = sqlx::query_as(INSERT_ORDER)
-            .bind(&order.user_id())
+            .bind(order.user_id())
             .bind(json)
             .bind(OrderStatus::New)
             .bind(Utc::now())
@@ -55,7 +55,7 @@ impl OrderBmc {
     ) -> Result<OrderStored> {
         info!("Trying to get order by id: {:#?}", order_id);
         let order: OrderStored = sqlx::query_as(SELECT_BY_ID)
-            .bind(&order_id)
+            .bind(order_id)
             .fetch_one(mm.pg_pool())
             .await?;
 
@@ -70,7 +70,7 @@ impl OrderBmc {
         info!("Trying to update order with id: {:#?}, new status: {:#?}", &order_id, &order_status);
         sqlx::query_as(UPDATE_STATUS)
             .bind(&order_status)
-            .bind(&order_id)
+            .bind(order_id)
             .fetch_one(mm.pg_pool())
             .await?;
 
@@ -85,7 +85,7 @@ impl OrderBmc {
         info!("Trying to update order with id: {:#?}, new status: {:#?}", &order_id, &order_status);
         sqlx::query_as(UPDATE_STATUS)
             .bind(&order_status)
-            .bind(&order_id)
+            .bind(order_id)
             .fetch_one(&mut **tx)
             .await?;
 

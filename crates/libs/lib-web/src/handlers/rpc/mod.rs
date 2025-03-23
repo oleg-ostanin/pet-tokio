@@ -6,7 +6,7 @@ use axum::Json;
 use axum::response::{IntoResponse, Response};
 use rpc_router::Request;
 use serde_json::{json, Value};
-use tracing::{info, info_span, instrument};
+use tracing::{info, instrument};
 use book::*;
 use lib_core::context::app_context::ModelManager;
 use order::create_order;

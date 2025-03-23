@@ -4,7 +4,7 @@ use axum::http::{Method, Uri};
 use axum::Json;
 use axum::response::{IntoResponse, Response};
 use serde_json::{json, to_value};
-use tracing::{debug, info};
+use tracing::debug;
 use uuid::Uuid;
 
 use crate::ctx::CtxW;

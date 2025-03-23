@@ -1,28 +1,22 @@
 use std::error::Error;
 use std::sync::Arc;
-use axum::routing::trace;
 use dotenv::dotenv;
 use opentelemetry::{global, KeyValue, runtime};
 use opentelemetry::sdk::{Resource, trace as sdktrace, trace};
 use opentelemetry::sdk::propagation::TraceContextPropagator;
 use opentelemetry::trace::TraceError;
 use opentelemetry_otlp::WithExportConfig;
-use sqlx::__rt::JoinHandle::Tokio;
 use tokio::{select};
 use tokio_util::sync::CancellationToken;
 use tracing::info;
 use tracing_subscriber::prelude::*;
-use tracing_subscriber::{EnvFilter, fmt, Registry};
+use tracing_subscriber::{EnvFilter, fmt};
 use tracing_subscriber::layer::SubscriberExt;
 
 use lib_core::context::app_context::ModelManager;
 use lib_web::app::context::create_app_context;
 use lib_web::app::web_app::web_app;
 
-use axum::http::StatusCode;
-use axum::Router;
-use axum::routing::get;
-use tracing::{error, event, Level, warn};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {

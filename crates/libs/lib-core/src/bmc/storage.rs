@@ -1,10 +1,6 @@
-use std::collections::HashMap;
-use std::sync::Arc;
 use sqlx::{Postgres, Transaction};
-use tracing::{info, instrument};
-use lib_dto::book::{BookInfo, BookList, BookStorageInfo};
-use lib_dto::order::{OrderItem, OrderStatus, OrderStored};
-use crate::bmc::order::OrderBmc;
+use lib_dto::book::BookStorageInfo;
+use lib_dto::order::OrderItem;
 use crate::context::app_context::ModelManager;
 use crate::error::Result;
 
@@ -41,7 +37,7 @@ impl StorageBmc {
         book_id: i64,
     ) -> Result<BookStorageInfo> {
         let book_storage: BookStorageInfo = sqlx::query_as(SELECT_JOIN_STORAGE)
-            .bind(&book_id)
+            .bind(book_id)
             .fetch_one(mm.pg_pool())
             .await?;
 
@@ -65,8 +61,8 @@ impl StorageBmc {
         item: &OrderItem,
     ) -> Result<()> {
         sqlx::query(UPDATE_STORAGE)
-            .bind(&item.book_id())
-            .bind(&item.quantity())
+            .bind(item.book_id())
+            .bind(item.quantity())
             .fetch_optional(mm.pg_pool())
             .await?;
 
@@ -78,8 +74,8 @@ impl StorageBmc {
         item: &OrderItem,
     ) -> Result<()> {
         sqlx::query(UPDATE_STORAGE)
-            .bind(&item.book_id())
-            .bind(&item.quantity())
+            .bind(item.book_id())
+            .bind(item.quantity())
             .fetch_optional(& mut **tx)
             .await?;
 

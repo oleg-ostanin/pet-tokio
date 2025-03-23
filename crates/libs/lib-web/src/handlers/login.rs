@@ -9,7 +9,7 @@ use hyper_util::client::legacy::Client;
 use hyper_util::client::legacy::connect::HttpConnector;
 use serde_json::{json, Value};
 use tower_cookies::{Cookie, Cookies};
-use tracing::{debug, info};
+use tracing::debug;
 
 use lib_core::context::app_context::ModelManager;
 use lib_dto::user::AuthCode;
@@ -57,7 +57,7 @@ pub async fn login(
             cookies.add(cookie);
 
             debug!("{:<12} - login code", &user.auth_code);
-            return Ok(());
+            Ok(())
         }
         StatusCode::FORBIDDEN => {
             debug!("{:<12} - status code: FORBIDDEN", &user.phone);

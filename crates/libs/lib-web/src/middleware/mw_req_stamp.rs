@@ -6,7 +6,7 @@ use axum::http::request::Parts;
 use axum::middleware::Next;
 use axum::response::Response;
 use time::OffsetDateTime;
-use tracing::{debug, info};
+use tracing::debug;
 use uuid::Uuid;
 
 use lib_utils::time::now_utc;
