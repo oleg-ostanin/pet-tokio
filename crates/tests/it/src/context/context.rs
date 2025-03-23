@@ -1,7 +1,7 @@
 use core::net::SocketAddr;
 use std::fmt::Debug;
 use std::sync::{Arc, OnceLock};
-
+use std::time::Duration;
 use axum::{body::Body, Error, http::{self, Request, StatusCode}};
 use axum::http::HeaderValue;
 use axum::response::Response;
@@ -16,7 +16,11 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use sqlx::{PgPool, Pool};
 use sqlx::postgres::PgPoolOptions;
-use testcontainers::{clients, Container, images::postgres::Postgres};
+// use testcontainers::{clients, Container, images::postgres::Postgres};
+use testcontainers::core::{IntoContainerPort, WaitFor};
+use testcontainers::{ContainerAsync, GenericImage, ImageExt};
+use testcontainers::runners::AsyncRunner;
+use testcontainers_modules::postgres::Postgres;
 use tokio::net::TcpListener;
 use tokio::select;
 use tokio_postgres::NoTls;
@@ -45,8 +49,8 @@ struct HeaderWrapper {
 
 pub(crate) struct TestContext<> {
     app_context: Arc<ModelManager>,
-    docker: &'static clients::Cli,
-    pg_container: &'static(Container<'static, Postgres>),
+    //docker: &'static clients::Cli,
+    pg_container: ContainerAsync<Postgres>,
     pool: PgPool,
     pub(crate) client: Client<HttpConnector, Body>,
     pub(crate) mock_server: MockServer,
@@ -78,27 +82,38 @@ impl TestContext {
 
         let mock_server = MockServer::start().await;
 
-        let docker: &'static clients::Cli = Box::leak(Box::new(clients::Cli::default()));
+        //let docker: &'static clients::Cli = Box::leak(Box::new(clients::Cli::default()));
 
         // Define a PostgreSQL container image
-        let postgres_image = Postgres::default();
+        //let postgres_image = Postgres::default();
 
-        let pg_container = docker.run(postgres_image);
+        //let pg_container = docker.run(postgres_image);
 
-        let pg_container: &'static Container<Postgres> = Box::leak(Box::new(pg_container));
+        //let pg_container: &'static Container<Postgres> = Box::leak(Box::new(pg_container));
+        // let pg_container = GenericImage::new("postgres", "latest")
+        //     .with_exposed_port(5432.tcp())
+        //     .with_startup_timeout(Duration::from_secs(30))
+        //     //.with_wait_for(WaitFor::message_on_stdout("Ready to accept connections"))
+        //     .start().await.unwrap();
+        //     //.await;
 
-        pg_container.start();
+        let pg_container = Postgres::default()
+            .with_db_name("postgres")
+            .with_user("postgres")
+            .with_password("root")
+            .start().await.unwrap();
+        //pg_container.start();
 
         // Get the PostgreSQL port
-        let pg_port = pg_container.get_host_port_ipv4(5432);
+        let pg_port = pg_container.get_host_port_ipv4(5432).await.unwrap();
 
         // Define the connection to the Postgress client
         let (pg_client, connection) = tokio_postgres::Config::new()
             .user("postgres")
-            .password("postgres")
+            .password("root")
             .host("localhost")
             .port(pg_port)
-            .dbname("postgres")
+            //.dbname("postgres")
             .connect(NoTls)
             .await
             .unwrap();
@@ -153,7 +168,7 @@ impl TestContext {
 
         Self {
             app_context,
-            docker,
+            //docker,
             pg_container,
             pool,
             client,
@@ -170,7 +185,7 @@ impl TestContext {
     }
 
     pub(crate) async fn cancel(&self) {
-        self.pg_container.stop();
+        //self.pg_container.stop();
         self.cancellation_token.cancel()
     }
 
