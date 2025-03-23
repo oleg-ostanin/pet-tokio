@@ -16,13 +16,13 @@ use crate::task::main::{MainTaskRequest, TaskManager};
 use crate::task::storage::StorageResponse::HealthOk;
 
 #[derive(Debug)]
-pub(crate) enum StorageRequest {
+pub enum StorageRequest {
     Health(oneshot::Sender<StorageResponse>),
     UpdateStorage(OrderStored, oneshot::Sender<StorageResponse>),
 }
 
 #[derive(Debug)]
-pub(crate) enum StorageResponse {
+pub enum StorageResponse {
     HealthOk,
     Updated,
     FailedToUpdate(OrderStored)
@@ -87,7 +87,7 @@ async fn update_with_retry(
     order: OrderStored,
 )  {
     while let Err(e) = update_storage_and_order(app_context.clone(), &order, Add, ReadyToDeliver).await {
-        info!("delivery retrying update storage for order is: {:#?}", &order);
+        info!("delivery retrying update storage for order is: {:#?} because of {:#?}", &order, e);
         //sleep(Duration::from_millis(700)).await;
     }
 }

@@ -39,7 +39,7 @@ impl UserBmc {
         let pwd_hashed = hash_pwd(to_hash).await?;
         let token_salt = Uuid::new_v4();
 
-        sqlx::query_as(INSERT_USER)
+        sqlx::query(INSERT_USER)
             .bind(&user.phone)
             .bind(&user.first_name)
             .bind(&user.last_name)
@@ -48,7 +48,7 @@ impl UserBmc {
             .bind(token_salt)
             .bind(Utc::now())
             .bind(Utc::now())
-            .fetch_one(mm.pg_pool())
+            .execute(mm.pg_pool())
             .await?;
 
         let res = Uuid::new_v4().to_string();

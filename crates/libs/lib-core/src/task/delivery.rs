@@ -14,13 +14,13 @@ use crate::task::main::{MainTaskRequest, TaskManager};
 use anyhow::Result;
 
 #[derive(Debug)]
-pub(crate) enum DeliveryRequest {
+pub enum DeliveryRequest {
     Health(oneshot::Sender<DeliveryResponse>),
     Deliver(OrderStored, oneshot::Sender<DeliveryResponse>),
 }
 
 #[derive(Debug)]
-pub(crate) enum DeliveryResponse {
+pub enum DeliveryResponse {
     HealthOk,
     Delivered,
     FailedToDeliver(OrderStored)
@@ -90,6 +90,6 @@ async fn update_with_retry(
     order: OrderStored,
 )  {
     while let Err(e) = update_storage_and_order(app_context.clone(), &order, Remove, Delivered).await {
-        info!("delivery retrying update storage for order is: {:#?}", &order);
+        info!("delivery retrying update storage for order is: {:#?} because of {:#?}", &order, e);
     }
 }

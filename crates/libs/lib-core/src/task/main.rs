@@ -44,10 +44,6 @@ impl TaskManager {
         NotifyTask::start(tx.clone()).await;
         info!("creating OrderTask");
 
-        let order_tx = OrderTask::start(tx.clone());
-        let storage_tx = StorageTask::start(tx.clone());
-        let delivery_tx = DeliveryTask::start(tx.clone());
-
         info!("creating MainTaskRequest");
 
         let main_task = TaskManager {

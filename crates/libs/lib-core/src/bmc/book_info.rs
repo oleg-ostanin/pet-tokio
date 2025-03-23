@@ -19,10 +19,6 @@ const SELECT_ALL: &str = r#"
 SELECT * FROM book_info;
 "#;
 
-const SELECT_BY_ID: &str = r#"
-SELECT * FROM book_info WHERE id=$1;
-"#;
-
 const SELECT_BY_TITLE: &str = r#"
 SELECT * FROM book_info WHERE title=$1;
 "#;
@@ -36,12 +32,12 @@ impl BookBmc {
         mm: &ModelManager,
         book: &BookInfo,
     ) -> Result<()> {
-        sqlx::query_as(INSERT_BOOK)
+        sqlx::query(INSERT_BOOK)
             .bind(&book.title)
             .bind(&book.author)
             .bind(&book.isbn)
             .bind(&book.description)
-            .fetch_one(mm.pg_pool())
+            .execute(mm.pg_pool())
             .await?;
 
         Ok(())

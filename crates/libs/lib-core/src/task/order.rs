@@ -9,13 +9,13 @@ use crate::task::main::{MainTaskRequest, TaskManager};
 use crate::task::storage::StorageRequest;
 
 #[derive(Debug)]
-pub(crate) enum OrderRequest {
+pub enum OrderRequest {
     Health(oneshot::Sender<OrderResponse>),
     ProcessOrder(OrderStored, oneshot::Sender<OrderResponse>),
 }
 
 #[derive(Debug)]
-pub(crate) enum OrderResponse {
+pub enum OrderResponse {
     HealthOk,
     Processed,
     FailedToProcess(OrderStored)
@@ -52,11 +52,11 @@ pub async fn handle_order(
                 let (storage_resp_tx, storage_resp_rx) = oneshot::channel();
                 //todo deal with clone()
                 storage_tx.send(StorageRequest::UpdateStorage(order.clone(), storage_resp_tx)).await.unwrap();
-                let storage_resp = storage_resp_rx.await.unwrap();
+                let _storage_resp = storage_resp_rx.await.unwrap();
 
                 let (delivery_resp_tx, delivery_resp_rx) = oneshot::channel();
                 delivery_tx.send(DeliveryRequest::Deliver(order, delivery_resp_tx)).await.unwrap();
-                let delivery_resp = delivery_resp_rx.await.unwrap();
+                let _delivery_resp = delivery_resp_rx.await.unwrap();
 
                 tx.send(OrderResponse::Processed).unwrap();
             }

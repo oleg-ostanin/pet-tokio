@@ -21,7 +21,7 @@ struct ErrorData {
 #[derive(Deserialize)]
 struct ErrorResponse {
     error: ErrorDetail,
-    id: Option<String>,
+    _id: Option<String>,
 }
 
 pub async fn message_from_response(response: Response<Incoming>) -> String {

@@ -68,10 +68,10 @@ impl OrderBmc {
         order_status: OrderStatus,
     ) -> Result<()> {
         info!("Trying to update order with id: {:#?}, new status: {:#?}", &order_id, &order_status);
-        sqlx::query_as(UPDATE_STATUS)
+        sqlx::query(UPDATE_STATUS)
             .bind(&order_status)
             .bind(order_id)
-            .fetch_one(mm.pg_pool())
+            .execute(mm.pg_pool())
             .await?;
 
         Ok(())
@@ -83,10 +83,10 @@ impl OrderBmc {
         order_status: OrderStatus,
     ) -> Result<()> {
         info!("Trying to update order with id: {:#?}, new status: {:#?}", &order_id, &order_status);
-        sqlx::query_as(UPDATE_STATUS)
+        sqlx::query(UPDATE_STATUS)
             .bind(&order_status)
             .bind(order_id)
-            .fetch_one(&mut **tx)
+            .execute(&mut **tx)
             .await?;
 
         Ok(())

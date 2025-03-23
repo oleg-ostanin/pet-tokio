@@ -15,16 +15,7 @@ pub fn token(phone: impl Into<String>, token_key: &str) -> Result<String> {
     Ok(claims.sign_with_key(&key)?)
 }
 
-fn verify_token(phone: impl Into<String>, token: impl Into<String>, token_key: &str) -> Result<bool> {
-    let key: Hmac<Sha256> = Hmac::new_from_slice(token_key.as_bytes())?;
-    let claims: BTreeMap<String, String> = token.into().verify_with_key(&key)?;
-    if let Some(sub) = claims.get("sub") {
-        return Ok(sub.eq(&phone.into()))
-    }
-    Ok(false)
-}
-
-pub fn phone_from_token(token: String, token_key: &str) -> Option<String> {
+pub fn phone_from_token(token: &str, token_key: &str) -> Option<String> {
     let key: Hmac<Sha256> = Hmac::new_from_slice(token_key.as_bytes()).ok()?;
     let claims: BTreeMap<String, String> = token.verify_with_key(&key).ok()?;
     claims.get("sub").cloned() // todo remove clone
@@ -42,15 +33,5 @@ mod tests {
     fn create() {
         let token = token(TEST_SUB, TEST_TOKEN_KEY);
         assert_eq!(TEST_TOKEN, token.expect("should be there"))
-    }
-
-    #[test]
-    fn verify() {
-        assert!(verify_token(TEST_SUB, TEST_TOKEN, TEST_TOKEN_KEY).expect("should be ok"))
-    }
-
-    #[test]
-    fn verify_fail() {
-        assert_eq!(false, verify_token("wrong_sub", TEST_TOKEN, TEST_TOKEN_KEY).expect("should be ok"))
     }
 }

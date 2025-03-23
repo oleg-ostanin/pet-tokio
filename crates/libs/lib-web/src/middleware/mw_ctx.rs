@@ -60,7 +60,7 @@ async fn ctx_resolve(mm: Arc<ModelManager>, cookies: &Cookies) -> CtxExtResult {
     let token_key = std::env::var("SERVICE_TOKEN_KEY").expect("TOKEN must be set.");
     debug!("Token_key in ctx resolve: {:#?}", token_key);
 
-    let phone = phone_from_token(token, &token_key);
+    let phone = phone_from_token(&token, &token_key);
     debug!("phone in ctx resolve: {:#?}", phone);
 
 

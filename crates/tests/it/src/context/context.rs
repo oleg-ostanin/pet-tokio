@@ -36,7 +36,6 @@ use lib_web::app::web_app::web_app;
 use tokio_util::sync::CancellationToken;
 use lib_load::requests::user_context::UserContext;
 use lib_load::utils::body_utils::message_and_detail;
-use crate::context::sql::{CREATE_PHONE_TYPE, CREATE_USER_TABLE};
 
 #[derive(Debug, Clone)]
 struct HeaderWrapper {
@@ -86,7 +85,7 @@ impl TestContext {
 
         let pg_container = docker.run(postgres_image);
 
-        let pg_container: &'static(Container<Postgres>) = Box::leak(Box::new(pg_container));
+        let pg_container: &'static Container<Postgres> = Box::leak(Box::new(pg_container));
 
         pg_container.start();
 
@@ -193,10 +192,6 @@ impl TestContext {
             .await;
     }
 
-    pub(crate) fn invalidate_token(&mut self) -> Option<String> {
-        self.auth_token.take()
-    }
-
     pub(crate) async fn create_user(&mut self, user_body: &UserForCreate) -> Response<Incoming> {
         self.post("/sign-up", json!(user_body)).await
     }
@@ -239,10 +234,6 @@ impl TestContext {
     pub fn app_context(&self) -> &Arc<ModelManager> {
         &self.app_context
     }
-
-    pub fn pool(&self) -> &PgPool {
-        &self.pool
-    }
 }
 
 pub(crate) fn extract_token(response: &Response<Incoming>) -> Option<String> {
@@ -254,7 +245,7 @@ pub(crate) fn extract_token(response: &Response<Incoming>) -> Option<String> {
     None
 }
 
-async fn get_pool(db_url: &String) -> Pool<sqlx::Postgres> {
+async fn get_pool(db_url: &str) -> Pool<sqlx::Postgres> {
     let pool = PgPoolOptions::new()
         .max_connections(5)
         .connect(db_url)
@@ -264,9 +255,4 @@ async fn get_pool(db_url: &String) -> Pool<sqlx::Postgres> {
     sqlx::migrate!("../../../db/migrations-auth").run(&pool).await.unwrap();
 
     pool
-}
-
-async fn init_db(pg_client: &tokio_postgres::Client) {
-    pg_client.execute(CREATE_PHONE_TYPE, &[]).await.unwrap();
-    pg_client.execute(CREATE_USER_TABLE, &[]).await.unwrap();
 }

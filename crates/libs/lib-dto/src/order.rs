@@ -1,7 +1,6 @@
-use std::ops::Deref;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{Decode, FromRow};
+use sqlx::{FromRow};
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, sqlx::Type, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
