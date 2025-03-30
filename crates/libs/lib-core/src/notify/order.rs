@@ -8,7 +8,7 @@ use lib_dto::order::OrderStored;
 use anyhow::Result;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::oneshot;
-use crate::task::main::{MainTaskRequest, TaskManager};
+use crate::task::main_task::{MainTaskRequest, TaskManager};
 use crate::task::order::OrderRequest;
 
 pub(crate) struct NotifyTask {}

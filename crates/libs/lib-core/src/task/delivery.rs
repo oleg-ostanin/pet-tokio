@@ -10,7 +10,7 @@ use crate::bmc::general::update_storage_and_order;
 use crate::bmc::storage::UpdateType::Remove;
 use crate::context::app_context::ModelManager;
 use crate::task::delivery::DeliveryResponse::HealthOk;
-use crate::task::main::{MainTaskRequest, TaskManager};
+use crate::task::main_task::{MainTaskRequest, TaskManager};
 use anyhow::Result;
 
 #[derive(Debug)]

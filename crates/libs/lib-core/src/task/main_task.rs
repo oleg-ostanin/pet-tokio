@@ -40,9 +40,8 @@ impl TaskManager {
     ) -> Result<()> {
         let (tx, rx) = main_task_channel;
 
-        info!("creating NotifyTask");
+        info!("Creating NotifyTask");
         NotifyTask::start(tx.clone()).await;
-        info!("creating OrderTask");
 
         info!("creating MainTaskRequest");
 

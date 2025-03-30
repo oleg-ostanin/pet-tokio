@@ -52,7 +52,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let cancellation_token: CancellationToken = app_context.cancellation_token();
 
     select! {
-        _ = lib_core::task::main::TaskManager::start(main_task_channel, app_context) => {}
+        _ = lib_core::task::main_task::TaskManager::start(main_task_channel, app_context) => {}
         _ = axum::serve(listener, app) => {}
         _ = cancellation_token.cancelled() => {
                 info!("Cancelled by cancellation token.")

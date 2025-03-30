@@ -5,7 +5,7 @@ use anyhow::Result;
 use lib_dto::order::OrderStored;
 
 use crate::task::delivery::DeliveryRequest;
-use crate::task::main::{MainTaskRequest, TaskManager};
+use crate::task::main_task::{MainTaskRequest, TaskManager};
 use crate::task::storage::StorageRequest;
 
 #[derive(Debug)]
