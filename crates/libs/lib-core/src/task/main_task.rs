@@ -7,6 +7,7 @@ use tokio::sync::oneshot;
 use tracing::{error, info, instrument};
 use crate::notify::order::{NotifyTask};
 use crate::task::delivery::{DeliveryRequest, DeliveryTask};
+use crate::task::kafka::producer_task::{KafkaProducerRequest, KafkaProducerTask};
 use crate::task::order::{OrderRequest, OrderTask};
 use crate::task::storage::{StorageRequest, StorageTask};
 
@@ -16,6 +17,7 @@ pub enum MainTaskRequest {
     OrderSender(oneshot::Sender<Sender<OrderRequest>>),
     StorageSender(oneshot::Sender<Sender<StorageRequest>>),
     DeliverySender(oneshot::Sender<Sender<DeliveryRequest>>),
+    KafkaProducerSender(oneshot::Sender<Sender<KafkaProducerRequest>>),
 }
 
 #[derive(Debug)]
@@ -30,6 +32,7 @@ pub struct TaskManager {
     order_tx: Option<Sender<OrderRequest>>,
     storage_tx: Option<Sender<StorageRequest>>,
     delivery_tx: Option<Sender<DeliveryRequest>>,
+    kafka_producer_tx: Option<Sender<KafkaProducerRequest>>,
 }
 
 impl TaskManager {
@@ -51,6 +54,7 @@ impl TaskManager {
             order_tx: None,
             storage_tx: None,
             delivery_tx: None,
+            kafka_producer_tx: None,
         };
 
         info!("spawning MainTaskRequest");
@@ -104,6 +108,13 @@ impl TaskManager {
                 }
                 tx.send(self.delivery_tx.as_ref().expect("must be some").clone()).expect("TODO: panic message");
             }
+            MainTaskRequest::KafkaProducerSender(tx) => {
+                if let Err(e) = self.check_delivery_task().await {
+                    error!("Failed to check task: {:#?}", e);
+                    self.kafka_producer_tx = Some(KafkaProducerTask::start(self.tx.clone()).await);
+                }
+                tx.send(self.kafka_producer_tx.as_ref().expect("must be some").clone()).expect("TODO: panic message");
+            }
         }
     }
 
@@ -138,6 +149,17 @@ impl TaskManager {
             return Ok(());
         }
         bail!("delivery tx none")
+    }
+
+    #[instrument(skip_all)]
+    async fn check_kafka_producer_task(&mut self, ) -> Result<()> {
+        let (health_tx, health_rx) = oneshot::channel();
+        if let Some(tx) = self.kafka_producer_tx.as_ref() {
+            tx.send(KafkaProducerRequest::Health(health_tx)).await?;
+            health_rx.await?;
+            return Ok(());
+        }
+        bail!("kafka producer tx none")
     }
 
     #[instrument(skip_all)]

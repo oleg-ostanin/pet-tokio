@@ -44,7 +44,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 testcontainers = "0.23.3"
-testcontainers-modules = { version = "0.11.6", features = ["postgres"] }
+testcontainers-modules = { version = "0.11.6", features = ["postgres", "kafka"] }
 tower = "0.5.1"
 
 dotenv = "0.15.0"

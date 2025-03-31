@@ -1,6 +1,7 @@
 #![allow(unused_imports)]
 #![allow(dead_code)]
 
+use std::env;
 use std::fs::File;
 use std::io::BufReader;
 use std::ops::Deref;
@@ -26,11 +27,15 @@ use crate::middleware::mw_req_stamp::mw_req_stamp_resolver;
 use crate::middleware::mw_res_map::mw_response_map;
 
 pub async fn create_app_context(main_tx: Sender<MainTaskRequest>) -> Arc<ModelManager> {
-    let db_url = read_db_url("local.properties");
+    let db_url = read_db_url("local.properties"); // todo from env
     let client = get_client(&db_url).await;
     let pool = get_pool(&db_url).await;
 
-    let app_config: AppConfig = AppConfig { auth_url: Arc::new("http://127.0.0.1:3001".to_string())};
+    let kafka_url = env::var("KAFKA_URL").expect("must be ok");
+    let app_config: AppConfig = AppConfig {
+        auth_url: Arc::new("http://127.0.0.1:3001".to_string()), //todo from env
+        kafka_url: Arc::new(kafka_url),
+    };
 
     let app_context: Arc<ModelManager> = Arc::new(ModelManager::create(
         main_tx,

@@ -20,6 +20,7 @@ use testcontainers::ContainerAsync;
 // use testcontainers::{clients, Container, images::postgres::Postgres};
 use testcontainers::runners::AsyncRunner;
 use testcontainers_modules::postgres::Postgres;
+use testcontainers_modules::kafka::Kafka;
 use tokio::net::TcpListener;
 use tokio::select;
 use tokio_postgres::NoTls;
@@ -49,6 +50,7 @@ struct HeaderWrapper {
 pub(crate) struct TestContext<> {
     app_context: Arc<ModelManager>,
     pg_container: ContainerAsync<Postgres>,
+    kafka_container: ContainerAsync<Kafka>,
     pool: PgPool,
     pub(crate) client: Client<HttpConnector, Body>,
     pub(crate) mock_server: MockServer,
@@ -80,7 +82,6 @@ impl TestContext {
 
         let mock_server = MockServer::start().await;
 
-
         let pg_container = Postgres::default()
             .with_db_name("postgres")
             .with_user("postgres")
@@ -107,10 +108,18 @@ impl TestContext {
             }
         });
 
+        let kafka_container = Kafka::default().start().await.unwrap();
+        let kafka_port = kafka_container.get_host_port_ipv4(9092).await.unwrap();
+        let kafka_url = format!{"localhost:{kafka_port}"};
+        info!("kafka_url: {}", kafka_url);
+
         //init_db(&pg_client).await;
         let mock_auth_url = mock_server.uri();
         info!("mock_auth_url: {:#?}", &mock_auth_url);
-        let app_config: AppConfig = AppConfig { auth_url: Arc::new(mock_auth_url)};
+        let app_config: AppConfig = AppConfig {
+            auth_url: Arc::new(mock_auth_url),
+            kafka_url: Arc::new(kafka_url),
+        };
 
         let db_url = format!("postgresql://postgres:root@localhost:{pg_port}/postgres");
         let pool = get_pool(&db_url).await;
@@ -152,6 +161,7 @@ impl TestContext {
             app_context,
             //docker,
             pg_container,
+            kafka_container,
             pool,
             client,
             mock_server,
@@ -168,6 +178,7 @@ impl TestContext {
 
     pub(crate) async fn cancel(&self) {
         let _ = self.pg_container.stop().await;
+        let _ = self.kafka_container.stop().await;
         self.cancellation_token.cancel()
     }
 

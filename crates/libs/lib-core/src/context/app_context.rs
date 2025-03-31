@@ -77,4 +77,5 @@ impl ModelManager {
 #[derive(Clone)]
 pub struct AppConfig {
     pub auth_url: Arc<String>,
+    pub kafka_url: Arc<String>,
 }

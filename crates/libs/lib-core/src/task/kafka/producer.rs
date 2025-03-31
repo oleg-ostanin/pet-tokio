@@ -2,29 +2,19 @@ use std::time::Duration;
 use rdkafka::{ClientConfig};
 use rdkafka::producer::{FutureProducer, FutureRecord};
 use rdkafka::util::Timeout;
+use tokio::sync::mpsc::Sender;
+use crate::task::main_task::{MainTaskRequest, TaskManager};
 
-pub fn create() -> FutureProducer {
+pub async fn create(main_tx: Sender<MainTaskRequest>) -> FutureProducer {
+    let app_context = TaskManager::app_context(main_tx).await.expect("must be ok");
+    let app_config = app_context.app_config();
+
     let mut config = ClientConfig::new();
-    config.set("bootstrap.servers","localhost:9092");
+    config.set("bootstrap.servers", app_config.kafka_url.as_str());
 
     let producer : FutureProducer = config
         .create()
         .expect("Failure in creating producer");
 
     producer
-}
-
-pub async fn produce(future_producer: FutureProducer, msg: String) {
-    let record = FutureRecord::to("test-topic")
-        .payload(msg.as_str())
-        .key("Test-Key");
-
-    let status_delivery = future_producer
-        .send(record, Timeout::After(Duration::from_secs(2)))
-        .await;
-
-    match status_delivery {
-        Ok(report) => println!("Message Sent {:?}",report),
-        Err(e) => println!("Error producing.. {:?}",e)
-    }
 }

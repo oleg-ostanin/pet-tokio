@@ -11,18 +11,18 @@ use rdkafka::producer::{FutureProducer, FutureRecord};
 use rdkafka::util::Timeout;
 use lib_dto::order::OrderStored;
 use crate::context::app_context::ModelManager;
-use crate::task::kafka::producer_task::KafkaResponse::HealthOk;
+use crate::task::kafka::producer_task::KafkaProducerResponse::HealthOk;
 use crate::task::kafka::producer::create;
 use crate::task::main_task::{MainTaskRequest, TaskManager};
 
 #[derive(Debug)]
-pub enum KafkaRequest {
-    Health(oneshot::Sender<KafkaResponse>),
-    ProduceOrder(OrderStored, oneshot::Sender<KafkaResponse>),
+pub enum KafkaProducerRequest {
+    Health(oneshot::Sender<KafkaProducerResponse>),
+    ProduceOrder(OrderStored, oneshot::Sender<KafkaProducerResponse>),
 }
 
 #[derive(Debug)]
-pub enum KafkaResponse {
+pub enum KafkaProducerResponse {
     HealthOk,
     Produced,
     FailedToProduce(OrderStored)
@@ -33,10 +33,10 @@ pub(crate) struct KafkaProducerTask {
 }
 
 impl KafkaProducerTask {
-    pub(crate) fn start(
+    pub(crate) async fn start(
         main_tx: Sender<MainTaskRequest>,
-    ) -> Sender<KafkaRequest> {
-        let producer = create();
+    ) -> Sender<KafkaProducerRequest> {
+        let producer = create(main_tx.clone()).await;
         let task = {
             Self { producer }
         };
@@ -49,7 +49,7 @@ impl KafkaProducerTask {
     pub async fn handle_requests(
         self,
         main_tx: Sender<MainTaskRequest>,
-        mut kafka_rx: Receiver<KafkaRequest>,
+        mut kafka_rx: Receiver<KafkaProducerRequest>,
     ) -> Result<()> {
         info!("Starting kafka task");
         let app_context = TaskManager::app_context(main_tx.clone()).await?;
@@ -58,10 +58,10 @@ impl KafkaProducerTask {
             info!("Got Kafka request: {:#?}", &request);
 
             match request {
-                KafkaRequest::Health(tx) => {
+                KafkaProducerRequest::Health(tx) => {
                     tx.send(HealthOk).unwrap()
                 }
-                KafkaRequest::ProduceOrder(order, tx) => {
+                KafkaProducerRequest::ProduceOrder(order, tx) => {
                     let producer = self.producer.clone();
                     tokio::spawn(produce(producer, order, tx)).await.unwrap()
                 }
@@ -76,7 +76,7 @@ impl KafkaProducerTask {
 pub async fn produce(
     producer: FutureProducer,
     order: OrderStored,
-    response_tx: oneshot::Sender<KafkaResponse>
+    response_tx: oneshot::Sender<KafkaProducerResponse>
 ) {
     info!("producing order: {:#?}", &order);
     let res = serde_json::to_string(&order).unwrap();

@@ -1,3 +1,4 @@
 mod consumer;
 mod producer;
-mod producer_task;
+pub(crate) mod producer_task;
+pub(crate) mod consumer_task;
