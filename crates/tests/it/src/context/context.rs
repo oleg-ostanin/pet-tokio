@@ -16,7 +16,8 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use sqlx::{PgPool, Pool};
 use sqlx::postgres::PgPoolOptions;
-use testcontainers::ContainerAsync;
+use testcontainers::{ContainerAsync, ImageExt};
+use testcontainers::core::ContainerPort;
 // use testcontainers::{clients, Container, images::postgres::Postgres};
 use testcontainers::runners::AsyncRunner;
 use testcontainers_modules::postgres::Postgres;
@@ -108,8 +109,12 @@ impl TestContext {
             }
         });
 
-        let kafka_container = Kafka::default().start().await.unwrap();
-        let kafka_port = kafka_container.get_host_port_ipv4(9092).await.unwrap();
+        let kafka_container = Kafka::default()
+            //.with_mapped_port(9093, ContainerPort::Tcp(9093))
+            .start()
+            .await
+            .unwrap();
+        let kafka_port = kafka_container.get_host_port_ipv4(9093).await.unwrap();
         let kafka_url = format!{"localhost:{kafka_port}"};
         info!("kafka_url: {}", kafka_url);
 

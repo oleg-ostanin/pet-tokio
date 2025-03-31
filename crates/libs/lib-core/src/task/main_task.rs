@@ -7,6 +7,7 @@ use tokio::sync::oneshot;
 use tracing::{error, info, instrument};
 use crate::notify::order::{NotifyTask};
 use crate::task::delivery::{DeliveryRequest, DeliveryTask};
+use crate::task::kafka::consumer_task::KafkaConsumerTask;
 use crate::task::kafka::producer_task::{KafkaProducerRequest, KafkaProducerTask};
 use crate::task::order::{OrderRequest, OrderTask};
 use crate::task::storage::{StorageRequest, StorageTask};
@@ -43,8 +44,11 @@ impl TaskManager {
     ) -> Result<()> {
         let (tx, rx) = main_task_channel;
 
-        info!("Creating NotifyTask");
+        info!("Starting NotifyTask");
         NotifyTask::start(tx.clone()).await;
+
+        info!("Starting KafkaConsumerTask");
+        //KafkaConsumerTask::start(tx.clone()).await;
 
         info!("creating MainTaskRequest");
 
@@ -187,6 +191,15 @@ impl TaskManager {
     pub(crate) async fn delivery_sender(main_tx: Sender<MainTaskRequest>) -> Result<Sender<DeliveryRequest>> {
         let (tx, rx) = oneshot::channel();
         main_tx.send(MainTaskRequest::DeliverySender(tx)).await?;
+        Ok(rx.await?)
+    }
+
+    #[instrument(skip_all)]
+    pub(crate) async fn kafka_producer_sender(
+        main_tx: Sender<MainTaskRequest>
+    ) -> Result<Sender<KafkaProducerRequest>> {
+        let (tx, rx) = oneshot::channel();
+        main_tx.send(MainTaskRequest::KafkaProducerSender(tx)).await?;
         Ok(rx.await?)
     }
 }

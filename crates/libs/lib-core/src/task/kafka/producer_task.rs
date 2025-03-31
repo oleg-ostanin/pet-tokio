@@ -18,7 +18,7 @@ use crate::task::main_task::{MainTaskRequest, TaskManager};
 #[derive(Debug)]
 pub enum KafkaProducerRequest {
     Health(oneshot::Sender<KafkaProducerResponse>),
-    ProduceOrder(OrderStored, oneshot::Sender<KafkaProducerResponse>),
+    ProduceOrder(OrderStored),
 }
 
 #[derive(Debug)]
@@ -61,9 +61,9 @@ impl KafkaProducerTask {
                 KafkaProducerRequest::Health(tx) => {
                     tx.send(HealthOk).unwrap()
                 }
-                KafkaProducerRequest::ProduceOrder(order, tx) => {
+                KafkaProducerRequest::ProduceOrder(order) => {
                     let producer = self.producer.clone();
-                    tokio::spawn(produce(producer, order, tx)).await.unwrap()
+                    tokio::spawn(produce(producer, order)).await.unwrap()
                 }
             }
         }
@@ -75,9 +75,7 @@ impl KafkaProducerTask {
 #[instrument(skip_all)]
 pub async fn produce(
     producer: FutureProducer,
-    order: OrderStored,
-    response_tx: oneshot::Sender<KafkaProducerResponse>
-) {
+    order: OrderStored, ) {
     info!("producing order: {:#?}", &order);
     let res = serde_json::to_string(&order).unwrap();
     let payload = res.as_str();

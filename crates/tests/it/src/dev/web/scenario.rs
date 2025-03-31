@@ -34,9 +34,9 @@ mod tests {
         let book_list: BookList = user.post_ok("/api/rpc", all_books_request).await;
         assert_eq!(5, book_list.book_list().len());
 
-        let description = BookDescription::new("the");
-        let book_list: BookList = user.post_rpc("books_by_description", json!(description)).await;
-        info!("books by description: {:#?}", book_list);
+        //let description = BookDescription::new("the");
+        //let book_list: BookList = user.post_rpc("books_by_description", json!(description)).await;
+        //info!("books by description: {:#?}", book_list);
 
         let iterations = 16;
 

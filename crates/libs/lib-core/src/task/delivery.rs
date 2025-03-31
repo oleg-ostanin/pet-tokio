@@ -12,6 +12,7 @@ use crate::context::app_context::ModelManager;
 use crate::task::delivery::DeliveryResponse::HealthOk;
 use crate::task::main_task::{MainTaskRequest, TaskManager};
 use anyhow::Result;
+use crate::task::kafka::producer_task::KafkaProducerRequest;
 
 #[derive(Debug)]
 pub enum DeliveryRequest {
@@ -23,7 +24,9 @@ pub enum DeliveryRequest {
 pub enum DeliveryResponse {
     HealthOk,
     Delivered,
-    FailedToDeliver(OrderStored)
+
+    // contains order_id
+    FailedToDeliver(i64)
 }
 
 pub(crate) struct DeliveryTask {
@@ -49,6 +52,7 @@ pub async fn handle_requests(
 ) -> Result<()> {
     info!("Starting handle delivery task");
     let app_context = TaskManager::app_context(main_tx.clone()).await?;
+    //let kafka_tx = TaskManager::kafka_producer_sender(main_tx.clone()).await?;
 
     while let Some(request) = delivery_rx.recv().await {
         info!("Got delivery request: {:#?}", &request);
@@ -57,6 +61,7 @@ pub async fn handle_requests(
                 tx.send(HealthOk).expect("TODO: panic message")
             }
             DeliveryRequest::Deliver(order, tx) => {
+                //kafka_tx.send(KafkaProducerRequest::ProduceOrder(order.clone())).await.expect("must be ok");
                 tokio::spawn(handle_order(app_context.clone(), order, tx)).await.expect("TODO: panic message")
             }
         }
@@ -75,11 +80,11 @@ pub async fn handle_order(
     info!("delivering order: {:#?}", &order_id);
     select! {
         // todo think about cancellation safety here
-        _ = update_with_retry(app_context, order.clone()) => {
+        _ = update_with_retry(app_context, &order) => {
             response_tx.send(DeliveryResponse::Delivered).expect("TODO: panic message");
         }
         _ = tokio::time::sleep(Duration::from_secs(3)) => {
-            response_tx.send(DeliveryResponse::FailedToDeliver(order)).expect("TODO: panic message");
+            response_tx.send(DeliveryResponse::FailedToDeliver(order_id)).expect("TODO: panic message");
         }
     }
 }
@@ -87,7 +92,7 @@ pub async fn handle_order(
 #[instrument(skip_all)]
 async fn update_with_retry(
     app_context: Arc<ModelManager>,
-    order: OrderStored,
+    order: &OrderStored,
 )  {
     while let Err(e) = update_storage_and_order(app_context.clone(), &order, Remove, Delivered).await {
         info!("delivery retrying update storage for order is: {:#?} because of {:#?}", &order, e);
