@@ -52,7 +52,7 @@ pub async fn handle_requests(
 ) -> Result<()> {
     info!("Starting handle delivery task");
     let app_context = TaskManager::app_context(main_tx.clone()).await?;
-    //let kafka_tx = TaskManager::kafka_producer_sender(main_tx.clone()).await?;
+    let kafka_tx = TaskManager::kafka_producer_sender(main_tx.clone()).await?;
 
     while let Some(request) = delivery_rx.recv().await {
         info!("Got delivery request: {:#?}", &request);
@@ -61,7 +61,7 @@ pub async fn handle_requests(
                 tx.send(HealthOk).expect("TODO: panic message")
             }
             DeliveryRequest::Deliver(order, tx) => {
-                //kafka_tx.send(KafkaProducerRequest::ProduceOrder(order.clone())).await.expect("must be ok");
+                kafka_tx.send(KafkaProducerRequest::ProduceOrder(order.clone())).await.expect("must be ok");
                 tokio::spawn(handle_order(app_context.clone(), order, tx)).await.expect("TODO: panic message")
             }
         }

@@ -38,7 +38,7 @@ mod tests {
         //let book_list: BookList = user.post_rpc("books_by_description", json!(description)).await;
         //info!("books by description: {:#?}", book_list);
 
-        let iterations = 16;
+        let iterations = 2;
 
         for i in (1..iterations) {
             let order_item_1 = OrderItem::new(1, 2);

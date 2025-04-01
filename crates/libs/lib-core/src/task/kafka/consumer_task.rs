@@ -32,17 +32,19 @@ impl KafkaConsumerTask {
     pub(crate) async fn start(
         main_tx: Sender<MainTaskRequest>,
     ) -> Sender<KafkaConsumerRequest> {
+        info!("Starting Kafka Consumer  Task");
+
         let consumer = create(main_tx.clone()).await;
         let task = {
             Self { consumer }
         };
         let (tx, rx) = tokio::sync::mpsc::channel(64);
-        tokio::spawn(task.handle_requests(main_tx, rx));
+        tokio::spawn(task.handle_kafka_consumer(main_tx, rx));
         tx.clone()
     }
 
     #[instrument(skip_all)]
-    pub async fn handle_requests(
+    pub async fn handle_kafka_consumer(
         self,
         main_tx: Sender<MainTaskRequest>,
         mut kafka_rx: Receiver<KafkaConsumerRequest>,
@@ -71,6 +73,7 @@ impl KafkaConsumerTask {
 }
 
 async fn create(main_tx: Sender<MainTaskRequest>) -> StreamConsumer {
+    info!("Creating Kafka Consumer");
     let app_context = TaskManager::app_context(main_tx).await.expect("must be ok");
     let app_config = app_context.app_config();
 

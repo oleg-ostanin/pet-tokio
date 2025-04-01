@@ -36,22 +36,24 @@ impl KafkaProducerTask {
     pub(crate) async fn start(
         main_tx: Sender<MainTaskRequest>,
     ) -> Sender<KafkaProducerRequest> {
+        info!("Starting kafka producer task");
         let producer = create(main_tx.clone()).await;
+        info!("created producer");
         let task = {
             Self { producer }
         };
         let (tx, rx) = tokio::sync::mpsc::channel(64);
-        tokio::spawn(task.handle_requests(main_tx, rx));
+        tokio::spawn(task.handle_kafka_producer_requests(main_tx, rx));
         tx.clone()
     }
 
     #[instrument(skip_all)]
-    pub async fn handle_requests(
+    pub async fn handle_kafka_producer_requests(
         self,
         main_tx: Sender<MainTaskRequest>,
         mut kafka_rx: Receiver<KafkaProducerRequest>,
     ) -> Result<()> {
-        info!("Starting kafka task");
+        info!("Handling kafka requests");
         let app_context = TaskManager::app_context(main_tx.clone()).await?;
 
         while let Some(request) = kafka_rx.recv().await {

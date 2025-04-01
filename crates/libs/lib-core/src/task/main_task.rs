@@ -3,7 +3,7 @@ use crate::context::app_context::ModelManager;
 
 use anyhow::{bail, Result};
 use tokio::sync::mpsc::{Receiver, Sender};
-use tokio::sync::oneshot;
+use tokio::sync::{Mutex, oneshot};
 use tracing::{error, info, instrument};
 use crate::notify::order::{NotifyTask};
 use crate::task::delivery::{DeliveryRequest, DeliveryTask};
@@ -24,6 +24,11 @@ pub enum MainTaskRequest {
 #[derive(Debug)]
 pub enum MainTaskResponse {
     HealthOk,
+}
+
+#[derive(Clone)]
+pub(crate) struct SharedSender<T> {
+    inner: Arc<Mutex<Option<Sender<T>>>>
 }
 
 #[derive(Clone)]
@@ -48,7 +53,7 @@ impl TaskManager {
         NotifyTask::start(tx.clone()).await;
 
         info!("Starting KafkaConsumerTask");
-        //KafkaConsumerTask::start(tx.clone()).await;
+        tokio::spawn(KafkaConsumerTask::start(tx.clone()));
 
         info!("creating MainTaskRequest");
 
@@ -113,7 +118,7 @@ impl TaskManager {
                 tx.send(self.delivery_tx.as_ref().expect("must be some").clone()).expect("TODO: panic message");
             }
             MainTaskRequest::KafkaProducerSender(tx) => {
-                if let Err(e) = self.check_delivery_task().await {
+                if let Err(e) = self.check_kafka_producer_task().await {
                     error!("Failed to check task: {:#?}", e);
                     self.kafka_producer_tx = Some(KafkaProducerTask::start(self.tx.clone()).await);
                 }
