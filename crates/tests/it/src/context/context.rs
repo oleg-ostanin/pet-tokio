@@ -39,6 +39,9 @@ use lib_utils::rpc::request;
 use lib_web::app::auth_app::auth_app;
 use lib_web::app::web_app::web_app;
 use tokio_util::sync::CancellationToken;
+use tracing_subscriber::{EnvFilter, fmt};
+use tracing_subscriber::layer::SubscriberExt;
+
 use lib_load::requests::user_context::UserContext;
 use lib_load::utils::body_utils::message_and_detail;
 
@@ -73,10 +76,24 @@ impl TestContext {
         dotenv().ok();
         // for setting subscriber only once
         TRACING.get_or_init(|| {
-            tracing_subscriber::fmt()
-                .without_time() // For early local development.
-                .with_target(false)
-                .init();
+            // tracing_subscriber::fmt()
+            //     .without_time() // For early local development.
+            //     .with_target(false)
+            //     .init();
+
+            let filter_layer = EnvFilter::try_from_default_env()
+                .or_else(|_| EnvFilter::try_new("info"))
+                .unwrap();
+
+            let fmt_layer = fmt::layer().compact();
+
+            let console_layer = console_subscriber::spawn();
+            let subscriber = tracing_subscriber::Registry::default()
+                .with(console_layer)
+                .with(filter_layer)
+                .with(fmt_layer);
+            subscriber::set_global_default(subscriber).unwrap();
+
             info!("subscriber initialized");
             }
         );

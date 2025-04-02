@@ -11,7 +11,7 @@ lib-utils = { path = "../../libs/lib-utils"}
 lib-web = { path = "../../libs/lib-web"}
 
 # -- Async
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = ["full", "tracing"] }
 axum = {version = "0.7", features = ["macros"]}
 
 # -- Http

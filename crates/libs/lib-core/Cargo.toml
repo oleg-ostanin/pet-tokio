@@ -17,7 +17,7 @@ lib-dto = { path = "../../libs/lib-dto"}
 lib-utils = { path = "../../libs/lib-utils"}
 
 axum = { version = "0.7", features = ["tokio", "http1"] }
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = ["full", "tracing"] }
 redis = "0.26.1"
 postgres = "0.19.3"
 tokio-postgres = { version = "0.7.11", features = ["with-chrono-0_4"] }
@@ -27,6 +27,7 @@ rdkafka = "0.36.2"
 
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+console-subscriber = { workspace = true }
 uuid = { version = "1.12.1", features = ["v4"] }
 sha2 = "0.10.8"
 hmac = "0.12.1"

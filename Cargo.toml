@@ -18,6 +18,8 @@ members = [
 ]
 
 [workspace.dependencies]
+# -- Tokio
+console-subscriber = "0.4.1"
 # -- Serde
 serde_with = {version = "3", features = ["time_0_3"] }
 # -- Data

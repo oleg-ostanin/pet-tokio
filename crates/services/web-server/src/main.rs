@@ -4,7 +4,7 @@ use dotenv::dotenv;
 use opentelemetry::{global, KeyValue, runtime};
 use opentelemetry::sdk::{Resource, trace as sdktrace, trace};
 use opentelemetry::sdk::propagation::TraceContextPropagator;
-use opentelemetry::trace::TraceError;
+use opentelemetry::trace::{FutureExt, TraceError};
 use opentelemetry_otlp::WithExportConfig;
 use tokio::{select};
 use tokio_util::sync::CancellationToken;
@@ -12,6 +12,7 @@ use tracing::info;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::{EnvFilter, fmt};
 use tracing_subscriber::layer::SubscriberExt;
+use console_subscriber;
 
 use lib_core::context::app_context::ModelManager;
 use lib_web::app::context::create_app_context;
@@ -36,7 +37,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     global::set_text_map_propagator(TraceContextPropagator::new());
     let tracer = init_trace().unwrap();
     let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
+    let console_layer = console_subscriber::spawn();
     let subscriber = tracing_subscriber::Registry::default()
+        .with(console_layer)
         .with(filter_layer)
         .with(fmt_layer)
         .with(telemetry);
