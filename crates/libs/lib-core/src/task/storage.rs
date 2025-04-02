@@ -35,18 +35,19 @@ impl StorageTask {
         main_tx: Sender<MainTaskRequest>,
     ) -> Sender<StorageRequest> {
         let (tx, rx) = tokio::sync::mpsc::channel(64);
-        tokio::spawn(handle_requests(main_tx, rx));
+        tokio::spawn(handle_storage_requests(main_tx, rx));
         tx.clone()
     }
 }
 
 #[instrument(skip_all)]
-pub async fn handle_requests(
+pub async fn handle_storage_requests(
     main_tx: Sender<MainTaskRequest>,
     mut storage_rx: Receiver<StorageRequest>,
 ) -> Result<()> {
     info!("Starting handle storage task");
     let app_context = TaskManager::app_context(main_tx.clone()).await?;
+    info!("Got app context");
 
     while let Some(request) = storage_rx.recv().await {
         info!("Got storage request: {:#?}", &request);

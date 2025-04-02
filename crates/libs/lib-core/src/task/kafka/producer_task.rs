@@ -10,7 +10,7 @@ use rdkafka::consumer::StreamConsumer;
 use rdkafka::producer::{FutureProducer, FutureRecord};
 use rdkafka::util::Timeout;
 use lib_dto::order::OrderStored;
-use crate::context::app_context::ModelManager;
+use crate::context::app_context::{AppConfig, ModelManager};
 use crate::task::kafka::producer_task::KafkaProducerResponse::HealthOk;
 use crate::task::kafka::producer::create;
 use crate::task::main_task::{MainTaskRequest, TaskManager};
@@ -34,27 +34,25 @@ pub(crate) struct KafkaProducerTask {
 
 impl KafkaProducerTask {
     pub(crate) async fn start(
-        main_tx: Sender<MainTaskRequest>,
+        app_config: AppConfig,
     ) -> Sender<KafkaProducerRequest> {
         info!("Starting kafka producer task");
-        let producer = create(main_tx.clone()).await;
+        let producer = create(app_config).await;
         info!("created producer");
         let task = {
             Self { producer }
         };
         let (tx, rx) = tokio::sync::mpsc::channel(64);
-        tokio::spawn(task.handle_kafka_producer_requests(main_tx, rx));
+        tokio::spawn(task.handle_kafka_producer_requests(rx));
         tx.clone()
     }
 
     #[instrument(skip_all)]
     pub async fn handle_kafka_producer_requests(
         self,
-        main_tx: Sender<MainTaskRequest>,
         mut kafka_rx: Receiver<KafkaProducerRequest>,
     ) -> Result<()> {
         info!("Handling kafka requests");
-        let app_context = TaskManager::app_context(main_tx.clone()).await?;
 
         while let Some(request) = kafka_rx.recv().await {
             info!("Got Kafka request: {:#?}", &request);

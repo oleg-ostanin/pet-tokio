@@ -47,23 +47,27 @@ impl TaskManager {
         main_task_channel: (Sender<MainTaskRequest>, Receiver<MainTaskRequest>),
         app_context: Arc<ModelManager>
     ) -> Result<()> {
+        let app_config = app_context.app_config().clone();
         let (tx, rx) = main_task_channel;
 
         info!("Starting NotifyTask");
         NotifyTask::start(tx.clone()).await;
 
         info!("Starting KafkaConsumerTask");
-        tokio::spawn(KafkaConsumerTask::start(tx.clone()));
+        tokio::spawn(KafkaConsumerTask::start(tx.clone(), app_config.clone()));
 
-        info!("creating MainTaskRequest");
+        let order_tx = Some(OrderTask::start(tx.clone()));
+        let storage_tx = Some(StorageTask::start(tx.clone()));
+        let delivery_tx = Some(DeliveryTask::start(tx.clone()));
+        let kafka_producer_tx = Some(KafkaProducerTask::start(app_config).await);
 
         let main_task = TaskManager {
             app_context,
             tx: tx.clone(),
-            order_tx: None,
-            storage_tx: None,
-            delivery_tx: None,
-            kafka_producer_tx: None,
+            order_tx,
+            storage_tx,
+            delivery_tx,
+            kafka_producer_tx,
         };
 
         info!("spawning MainTaskRequest");
@@ -90,11 +94,21 @@ impl TaskManager {
 
     #[instrument(skip_all)]
     async fn match_requests(&mut self, request: MainTaskRequest) {
+        let app_config = self.app_context.app_config().clone();
         info!("matching MainTaskRequest");
         match request {
             MainTaskRequest::Health(_) => {}
             MainTaskRequest::AppContext(tx) => {
-                let _ = tx.send(self.app_context.clone());
+                info!("matching AppContext");
+                let result = tx.send(self.app_context.clone());
+                match result {
+                    Ok(_) => {
+                        info!("sent AppContext");
+                    }
+                    Err(error) => {
+                        error!("failed to send app context")
+                    }
+                }
             }
             MainTaskRequest::OrderSender(tx) => {
                 if let Err(e) = self.check_order_task().await {
@@ -120,7 +134,7 @@ impl TaskManager {
             MainTaskRequest::KafkaProducerSender(tx) => {
                 if let Err(e) = self.check_kafka_producer_task().await {
                     error!("Failed to check task: {:#?}", e);
-                    self.kafka_producer_tx = Some(KafkaProducerTask::start(self.tx.clone()).await);
+                    self.kafka_producer_tx = Some(KafkaProducerTask::start(app_config).await);
                 }
                 tx.send(self.kafka_producer_tx.as_ref().expect("must be some").clone()).expect("TODO: panic message");
             }
@@ -173,6 +187,7 @@ impl TaskManager {
 
     #[instrument(skip_all)]
     pub(crate) async fn app_context(main_tx: Sender<MainTaskRequest>) -> Result<Arc<ModelManager>> {
+        info!("Called app_context");
         let (tx, rx) = oneshot::channel();
         main_tx.send(MainTaskRequest::AppContext(tx)).await?;
         Ok(rx.await?)

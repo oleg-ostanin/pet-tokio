@@ -10,7 +10,7 @@ use rdkafka::{ClientConfig, Message};
 use rdkafka::consumer::{CommitMode, Consumer, StreamConsumer};
 use rdkafka::util::Timeout;
 use lib_dto::order::OrderStored;
-use crate::context::app_context::ModelManager;
+use crate::context::app_context::{AppConfig, ModelManager};
 use crate::task::kafka::consumer_task::KafkaConsumerResponse::HealthOk;
 use crate::task::main_task::{MainTaskRequest, TaskManager};
 
@@ -31,10 +31,11 @@ pub(crate) struct KafkaConsumerTask {
 impl KafkaConsumerTask {
     pub(crate) async fn start(
         main_tx: Sender<MainTaskRequest>,
+        app_config: AppConfig,
     ) -> Sender<KafkaConsumerRequest> {
         info!("Starting Kafka Consumer  Task");
 
-        let consumer = create(main_tx.clone()).await;
+        let consumer = create(app_config).await;
         let task = {
             Self { consumer }
         };
@@ -72,10 +73,8 @@ impl KafkaConsumerTask {
     }
 }
 
-async fn create(main_tx: Sender<MainTaskRequest>) -> StreamConsumer {
+async fn create(app_config: AppConfig) -> StreamConsumer {
     info!("Creating Kafka Consumer");
-    let app_context = TaskManager::app_context(main_tx).await.expect("must be ok");
-    let app_config = app_context.app_config();
 
     let mut config = ClientConfig::new();
     config.set("bootstrap.servers", app_config.kafka_url.as_str())
