@@ -12,6 +12,7 @@ mod tests {
     use tracing::info;
     use lib_dto::book::{BookDescription, BookList};
     use lib_dto::order::{OrderContent, OrderId, OrderItem, OrderStatus, OrderStored};
+    use lib_load::requests::user_context::UserContext;
     use lib_load::scenario::books::BOOK_LIST;
     use lib_utils::rpc::request;
 
@@ -53,17 +54,20 @@ mod tests {
 
         sleep(Duration::from_secs(3)).await;
 
-        for i in (1..iterations) {
-            let check_order_id = OrderId::new(i as i64);
-            let check_stored: OrderStored = user.post_rpc("check_order", json!(check_order_id)).await;
-            assert_eq!(i as i64, check_stored.order_id());
-            assert_eq!(&OrderStatus::Delivered, check_stored.status());
-        }
+        check_order_status(user, order_ids).await;
 
         sleep(Duration::from_secs(3)).await;
 
         ctx.cancel().await;
     }
 
+    async fn check_order_status(mut user: UserContext, order_ids: Vec<i64>) {
+        for i in order_ids {
+            let check_order_id = OrderId::new(i);
+            let check_stored: OrderStored = user.post_rpc("check_order", json!(check_order_id)).await;
+            assert_eq!(i, check_stored.order_id());
+            assert_eq!(&OrderStatus::Delivered, check_stored.status());
+        }
+    }
 
 }

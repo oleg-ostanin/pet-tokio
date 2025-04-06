@@ -1,5 +1,6 @@
 use std::fmt::Debug;
-
+use std::ops::Deref;
+use std::sync::Mutex;
 use axum::{body::Body, http::{self, Request}};
 use axum::http::{HeaderValue, StatusCode};
 use axum::response::Response;
@@ -29,7 +30,7 @@ pub struct UserContext {
     phone: String,
     pub client: Client<HttpConnector, Body>,
     test_socket_addr: Option<String>,
-    auth_token: Option<String>,
+    auth_token: Mutex<Option<String>>,
     headers: Vec<HeaderWrapper>,
 }
 
@@ -48,7 +49,7 @@ impl UserContext {
             phone,
             client,
             test_socket_addr: None,
-            auth_token: None,
+            auth_token: Mutex::new(None),
             headers: Vec::new(),
         }
     }
@@ -67,13 +68,9 @@ impl UserContext {
             phone,
             client,
             test_socket_addr,
-            auth_token: None,
+            auth_token: Mutex::new(None),
             headers: Vec::new(),
         }
-    }
-
-    pub fn invalidate_token(&mut self) -> Option<String> {
-        self.auth_token.take()
     }
 
     pub async fn clean_up(&mut self) {
@@ -94,7 +91,7 @@ impl UserContext {
         self.post("/check-code", json!(user_body)).await
     }
 
-    pub async fn post(&mut self, path: impl Into<String>, body: Value) -> Response<Incoming> {
+    pub async fn post(&self, path: impl Into<String>, body: Value) -> Response<Incoming> {
         let path: String = path.into();
         let addr = &self.socket_addr(&path);
 
@@ -104,8 +101,10 @@ impl UserContext {
             .uri(format!("http://{addr}{path}"))
             .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref());
 
-        if let Some(auth_token) = self.auth_token.clone() {
-            builder = builder.header("cookie", auth_token)
+        if let guard = self.auth_token.lock().expect("must be ok") {
+            if let Some(auth_token) = guard.deref() {
+                builder = builder.header("cookie", auth_token)
+            }
         }
 
         let builder = builder.body(Body::from(serde_json::to_string(&json!(body)).unwrap())).unwrap();
@@ -116,26 +115,28 @@ impl UserContext {
 
         let token = extract_token(&response);
         if let Some(token) = token {
-            self.auth_token = Some(token);
+            if let mut guard = self.auth_token.lock().expect("must be ok") {
+                let _ = guard.insert(token);
+            }
         }
 
         response
     }
 
-    pub async fn post_rpc<T: for<'a> Deserialize<'a>>(&mut self, rpc_path: impl Into<String>, body: Value) -> T {
+    pub async fn post_rpc<T: for<'a> Deserialize<'a>>(&self, rpc_path: impl Into<String>, body: Value) -> T {
         let body = request(rpc_path, Some(body));
         let response = self.post("/api/rpc", body).await;
         assert_eq!(response.status(), StatusCode::OK);
         result(response).await.expect("must be ok")
     }
 
-    pub async fn post_ok<T: for<'a> Deserialize<'a>>(&mut self, path: impl Into<String>, body: Value) -> T {
+    pub async fn post_ok<T: for<'a> Deserialize<'a>>(&self, path: impl Into<String>, body: Value) -> T {
         let response = self.post(path, body).await;
         assert_eq!(response.status(), StatusCode::OK);
         result(response).await.expect("must be ok")
     }
 
-    pub async fn post_bad(&mut self, path: impl Into<String>, body: Value) -> (String, String) {
+    pub async fn post_bad(&self, path: impl Into<String>, body: Value) -> (String, String) {
         let body = request(path, Some(body));
         let response = self.post("/api/rpc", body).await;
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
@@ -163,7 +164,7 @@ impl UserContext {
         &self.client
     }
 
-    pub fn auth_token(&self) -> &Option<String> {
+    pub fn auth_token(&self) -> &Mutex<Option<String>> {
         &self.auth_token
     }
 

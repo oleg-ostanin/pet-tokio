@@ -48,7 +48,9 @@ pub async fn start_user(idx: usize) -> UserContext {
     let auth_code = AuthCode::new(phone, auth_code);
     user_ctx.post("/login", json!(auth_code)).await;
 
-    assert!(user_ctx.auth_token().is_some());
+    if let guard = user_ctx.auth_token().lock().expect("must be ok") {
+        assert!(guard.is_some());
+    }
 
     // ensures only one user adds books
     BOOKS_INITIALIZED.get_or_init(|| async {
