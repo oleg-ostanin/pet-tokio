@@ -49,6 +49,8 @@ impl ModelManager {
         }
     }
 
+
+
     pub fn pg_pool(&self) -> &PgPool {
         self.pg_pool.deref()
     }
@@ -71,6 +73,10 @@ impl ModelManager {
 
     pub fn db_mutex(&self) -> &Arc<Mutex<()>> {
         &self.db_mutex
+    }
+
+    pub fn main_tx(&self) -> Sender<MainTaskRequest> {
+        self.main_tx.clone()
     }
 }
 

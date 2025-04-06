@@ -37,22 +37,21 @@ pub(crate) struct DeliveryTask {
 
 impl DeliveryTask {
     pub(crate) fn start(
-        main_tx: Sender<MainTaskRequest>,
+        app_context: Arc<ModelManager>,
     ) -> Sender<DeliveryRequest> {
         let (tx, rx) = tokio::sync::mpsc::channel(64);
-        tokio::spawn(handle_delivery_requests(main_tx, rx));
+        tokio::spawn(handle_delivery_requests(app_context, rx));
         tx.clone()
     }
 }
 
 #[instrument(skip_all)]
 pub async fn handle_delivery_requests(
-    main_tx: Sender<MainTaskRequest>,
+    app_context: Arc<ModelManager>,
     mut delivery_rx: Receiver<DeliveryRequest>,
 ) -> Result<()> {
     info!("Starting handle delivery task");
-    let app_context = TaskManager::app_context(main_tx.clone()).await?;
-    info!("Got app context");
+    let main_tx = app_context.main_tx();
     let kafka_tx = TaskManager::kafka_producer_sender(main_tx.clone()).await?;
     info!("Got kafka_tx");
 

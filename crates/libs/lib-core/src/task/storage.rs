@@ -32,23 +32,19 @@ pub(crate) struct StorageTask {}
 
 impl StorageTask {
     pub(crate) fn start(
-        main_tx: Sender<MainTaskRequest>,
+        app_context: Arc<ModelManager>,
     ) -> Sender<StorageRequest> {
         let (tx, rx) = tokio::sync::mpsc::channel(64);
-        tokio::spawn(handle_storage_requests(main_tx, rx));
+        tokio::spawn(handle_storage_requests(app_context, rx));
         tx.clone()
     }
 }
 
 #[instrument(skip_all)]
 pub async fn handle_storage_requests(
-    main_tx: Sender<MainTaskRequest>,
+    app_context: Arc<ModelManager>,
     mut storage_rx: Receiver<StorageRequest>,
 ) -> Result<()> {
-    info!("Starting handle storage task");
-    let app_context = TaskManager::app_context(main_tx.clone()).await?;
-    info!("Got app context");
-
     while let Some(request) = storage_rx.recv().await {
         info!("Got storage request: {:#?}", &request);
 

@@ -34,9 +34,10 @@ pub(crate) struct KafkaProducerTask {
 
 impl KafkaProducerTask {
     pub(crate) async fn start(
-        app_config: AppConfig,
+        app_context: Arc<ModelManager>,
     ) -> Sender<KafkaProducerRequest> {
         info!("Starting kafka producer task");
+        let app_config = app_context.app_config();
         let producer = create(app_config).await;
         info!("created producer");
         let task = {

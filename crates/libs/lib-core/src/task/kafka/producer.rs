@@ -7,7 +7,7 @@ use tracing::info;
 use crate::context::app_context::AppConfig;
 use crate::task::main_task::{MainTaskRequest, TaskManager};
 
-pub async fn create(app_config: AppConfig) -> FutureProducer {
+pub async fn create(app_config: &AppConfig) -> FutureProducer {
     info!("Creating kafka producer");
 
     info!("app_config: {:#?}", &app_config);

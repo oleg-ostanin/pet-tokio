@@ -30,24 +30,25 @@ pub(crate) struct KafkaConsumerTask {
 
 impl KafkaConsumerTask {
     pub(crate) async fn start(
-        main_tx: Sender<MainTaskRequest>,
+        app_context: Arc<ModelManager>,
         app_config: AppConfig,
     ) -> Sender<KafkaConsumerRequest> {
         info!("Starting Kafka Consumer  Task");
+        let main_tx = app_context.main_tx();
 
         let consumer = create(app_config).await;
         let task = {
             Self { consumer }
         };
         let (tx, rx) = tokio::sync::mpsc::channel(64);
-        tokio::spawn(task.handle_kafka_consumer(main_tx, rx));
+        tokio::spawn(task.handle_kafka_consumer(app_context, rx));
         tx.clone()
     }
 
     #[instrument(skip_all)]
     pub async fn handle_kafka_consumer(
         self,
-        main_tx: Sender<MainTaskRequest>,
+        app_context: Arc<ModelManager>,
         mut kafka_rx: Receiver<KafkaConsumerRequest>,
     ) -> Result<()> {
         info!("Starting kafka consumer task");

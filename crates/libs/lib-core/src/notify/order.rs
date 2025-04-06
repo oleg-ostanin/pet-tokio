@@ -1,4 +1,5 @@
 use std::fmt::Debug;
+use std::sync::Arc;
 use serde::Deserialize;
 
 use sqlx::postgres::PgListener;
@@ -8,6 +9,7 @@ use lib_dto::order::OrderStored;
 use anyhow::Result;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::oneshot;
+use crate::context::app_context::ModelManager;
 use crate::task::main_task::{MainTaskRequest, TaskManager};
 use crate::task::order::OrderRequest;
 
@@ -15,10 +17,9 @@ pub(crate) struct NotifyTask {}
 
 impl NotifyTask {
     #[instrument(skip_all)]
-    pub(crate) async fn start(main_tx: Sender<MainTaskRequest>) {
+    pub(crate) async fn start(app_context: Arc<ModelManager>) {
         info!("Starting notify task");
-
-        let jh = tokio::spawn(handle_notify(main_tx));
+        let jh = tokio::spawn(handle_notify(app_context));
         match jh.await {
             Ok(_) => {
                 info!("Notify task completed.")
@@ -46,11 +47,10 @@ struct OrderPayload {
 
 #[instrument(skip_all)]
 pub async fn handle_notify(
-    main_tx: Sender<MainTaskRequest>
+    app_context: Arc<ModelManager>
 ) -> Result<()> {
     info!("Starting handle_notify");
-    let app_context = TaskManager::app_context(main_tx.clone()).await?;
-    info!("Got app context");
+    let main_tx = app_context.main_tx();
 
     let channels = vec!["table_update"];
 

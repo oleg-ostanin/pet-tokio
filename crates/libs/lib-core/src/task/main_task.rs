@@ -53,15 +53,15 @@ impl TaskManager {
         let (tx, rx) = main_task_channel;
 
         info!("Starting NotifyTask");
-        tokio::spawn(NotifyTask::start(tx.clone()));
+        tokio::spawn(NotifyTask::start(Arc::clone(&app_context)));
 
         info!("Starting KafkaConsumerTask");
-        tokio::spawn(KafkaConsumerTask::start(tx.clone(), app_config.clone()));
+        tokio::spawn(KafkaConsumerTask::start(Arc::clone(&app_context), app_config.clone()));
 
-        let order_tx = Some(OrderTask::start(tx.clone()));
-        let storage_tx = Some(StorageTask::start(tx.clone()));
-        let delivery_tx = Some(DeliveryTask::start(tx.clone()));
-        let kafka_producer_tx = Some(KafkaProducerTask::start(app_config).await);
+        let order_tx = None;
+        let storage_tx = None;
+        let delivery_tx = None;
+        let kafka_producer_tx = None;
 
         let main_task = TaskManager {
             app_context,
@@ -118,7 +118,7 @@ impl TaskManager {
                 info!("matching OrderSender");
                 if let Err(e) = self.check_order_task().await {
                     error!("Failed to check task: {:#?}", e);
-                    self.order_tx = Some(OrderTask::start(self.tx.clone()));
+                    self.order_tx = Some(OrderTask::start(Arc::clone(&self.app_context)));
                 }
                 tx.send(self.order_tx.as_ref().expect("must be some").clone()).expect("should be ok");
             }
@@ -126,7 +126,7 @@ impl TaskManager {
                 info!("matching StorageSender");
                 if let Err(e) = self.check_storage_task().await {
                     error!("Failed to check task: {:#?}", e);
-                    self.storage_tx = Some(StorageTask::start(self.tx.clone()));
+                    self.storage_tx = Some(StorageTask::start(Arc::clone(&self.app_context)));
                 }
                 tx.send(self.storage_tx.as_ref().expect("must be some").clone()).expect("TODO: panic message");
             }
@@ -134,7 +134,7 @@ impl TaskManager {
                 info!("matching DeliverySender");
                 if let Err(e) = self.check_delivery_task().await {
                     error!("Failed to check task: {:#?}", e);
-                    self.delivery_tx = Some(DeliveryTask::start(self.tx.clone()));
+                    self.delivery_tx = Some(DeliveryTask::start(Arc::clone(&self.app_context)));
                 }
                 tx.send(self.delivery_tx.as_ref().expect("must be some").clone()).expect("TODO: panic message");
             }
@@ -142,7 +142,7 @@ impl TaskManager {
                 info!("matching KafkaProducerSender");
                 if let Err(e) = self.check_kafka_producer_task().await {
                     error!("Failed to check task: {:#?}", e);
-                    self.kafka_producer_tx = Some(KafkaProducerTask::start(app_config).await);
+                    self.kafka_producer_tx = Some(KafkaProducerTask::start(Arc::clone(&self.app_context)).await);
                 }
                 tx.send(self.kafka_producer_tx.as_ref().expect("must be some").clone()).expect("TODO: panic message");
             }

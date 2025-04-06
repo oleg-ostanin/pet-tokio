@@ -1,9 +1,10 @@
+use std::sync::Arc;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::oneshot;
 use tracing::{info, instrument};
 use anyhow::Result;
 use lib_dto::order::OrderStored;
-
+use crate::context::app_context::ModelManager;
 use crate::task::delivery::DeliveryRequest;
 use crate::task::main_task::{MainTaskRequest, TaskManager};
 use crate::task::storage::StorageRequest;
@@ -25,19 +26,20 @@ pub(crate) struct OrderTask {}
 
 impl OrderTask {
     pub(crate) fn start(
-        main_tx: Sender<MainTaskRequest>,
+        app_context: Arc<ModelManager>,
     ) -> Sender<OrderRequest> {
         let (tx, rx) = tokio::sync::mpsc::channel(64);
-        tokio::spawn(handle_order(main_tx, rx));
+        tokio::spawn(handle_order(app_context, rx));
         tx.clone()
     }
 }
 
 #[instrument(skip_all)]
 pub async fn handle_order(
-    main_tx: Sender<MainTaskRequest>,
+    app_context: Arc<ModelManager>,
     mut order_rx: Receiver<OrderRequest>,
 ) -> Result<()> {
+    let main_tx = app_context.main_tx();
     let storage_tx = TaskManager::storage_sender(main_tx.clone()).await?;
     let delivery_tx = TaskManager::delivery_sender(main_tx.clone()).await?;
 
