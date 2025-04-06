@@ -11,7 +11,7 @@ use lib_load::scenario::stage_01::load;
 // use crate::scenario::stage_01::load;
 // use crate::utils::file::from_file;
 
-const USERS_NUM: usize = 8;
+const USERS_NUM: usize = 1;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {

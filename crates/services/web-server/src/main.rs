@@ -8,9 +8,9 @@ use opentelemetry::trace::{FutureExt, TraceError};
 use opentelemetry_otlp::WithExportConfig;
 use tokio::{select};
 use tokio_util::sync::CancellationToken;
-use tracing::info;
+use tracing::{info, Level};
 use tracing_subscriber::prelude::*;
-use tracing_subscriber::{EnvFilter, fmt};
+use tracing_subscriber::{EnvFilter, filter, fmt};
 use tracing_subscriber::layer::SubscriberExt;
 use console_subscriber;
 
@@ -32,7 +32,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .or_else(|_| EnvFilter::try_new("info"))
         .unwrap();
 
-    let fmt_layer = fmt::layer().compact();
+    let fmt_layer = fmt::layer()
+        .with_filter(filter::LevelFilter::from_level(Level::INFO));
+        //.compact();
 
     global::set_text_map_propagator(TraceContextPropagator::new());
     let tracer = init_trace().unwrap();
@@ -40,7 +42,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let console_layer = console_subscriber::spawn();
     let subscriber = tracing_subscriber::Registry::default()
         .with(console_layer)
-        .with(filter_layer)
+        //.with(filter_layer)
         .with(fmt_layer)
         .with(telemetry);
     tracing::subscriber::set_global_default(subscriber).unwrap();

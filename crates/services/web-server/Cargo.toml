@@ -29,4 +29,5 @@ tracing-opentelemetry = "0.19.0" # Integration between tracing and OpenTelemetry
 dotenv = "0.15.0"
 dotenv_codegen = "0.15.0"
 tokio-util = "0.7.13"
+tracing-core = "0.1.33"
 

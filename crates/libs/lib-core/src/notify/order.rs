@@ -2,7 +2,7 @@ use std::fmt::Debug;
 use serde::Deserialize;
 
 use sqlx::postgres::PgListener;
-use tracing::{info, instrument};
+use tracing::{error, info, instrument};
 use lib_dto::order::OrderStored;
 
 use anyhow::Result;
@@ -18,15 +18,15 @@ impl NotifyTask {
     pub(crate) async fn start(main_tx: Sender<MainTaskRequest>) {
         info!("Starting notify task");
 
-        tokio::spawn(handle_notify(main_tx));
-        // match jh.await {
-        //     Ok(_) => {
-        //         info!("Task completed.")
-        //     }
-        //     Err(e) => {
-        //         error!("Error during task: {:#?}", e)
-        //     }
-        // }
+        let jh = tokio::spawn(handle_notify(main_tx));
+        match jh.await {
+            Ok(_) => {
+                info!("Notify task completed.")
+            }
+            Err(e) => {
+                error!("Error during notify task: {:#?}", e)
+            }
+        }
     }
 }
 
@@ -50,12 +50,15 @@ pub async fn handle_notify(
 ) -> Result<()> {
     info!("Starting handle_notify");
     let app_context = TaskManager::app_context(main_tx.clone()).await?;
+    info!("Got app context");
 
     let channels = vec!["table_update"];
 
     let mut listener = PgListener::connect_with(app_context.pg_pool()).await.unwrap();
     listener.listen_all(channels).await.expect("error");
+    info!("Getting order tx");
     let order_tx = TaskManager::order_sender(main_tx.clone()).await?;
+    info!("Got order tx");
 
     loop {
         while let Some(notification) = listener.try_recv().await.expect("error") {

@@ -12,6 +12,8 @@ use crate::task::kafka::producer_task::{KafkaProducerRequest, KafkaProducerTask}
 use crate::task::order::{OrderRequest, OrderTask};
 use crate::task::storage::{StorageRequest, StorageTask};
 
+
+#[derive(Debug)]
 pub enum MainTaskRequest {
     Health(oneshot::Sender<MainTaskResponse>),
     AppContext(oneshot::Sender<Arc<ModelManager>>),
@@ -51,7 +53,7 @@ impl TaskManager {
         let (tx, rx) = main_task_channel;
 
         info!("Starting NotifyTask");
-        NotifyTask::start(tx.clone()).await;
+        tokio::spawn(NotifyTask::start(tx.clone()));
 
         info!("Starting KafkaConsumerTask");
         tokio::spawn(KafkaConsumerTask::start(tx.clone(), app_config.clone()));
@@ -86,8 +88,10 @@ impl TaskManager {
     ) -> Result<()> {
         info!("starting MainTaskRequest");
         while let Some(request) = rx.recv().await {
+            let dbg_str = format!("{:?}", &request);
             info!("got MainTaskRequest");
             self.match_requests(request).await;
+            info!("MainTaskRequest loop end for request: {:?}", dbg_str);
         }
         Ok(())
     }
@@ -95,7 +99,7 @@ impl TaskManager {
     #[instrument(skip_all)]
     async fn match_requests(&mut self, request: MainTaskRequest) {
         let app_config = self.app_context.app_config().clone();
-        info!("matching MainTaskRequest");
+        info!("matching MainTaskRequest: {:?}", request);
         match request {
             MainTaskRequest::Health(_) => {}
             MainTaskRequest::AppContext(tx) => {
@@ -111,6 +115,7 @@ impl TaskManager {
                 }
             }
             MainTaskRequest::OrderSender(tx) => {
+                info!("matching OrderSender");
                 if let Err(e) = self.check_order_task().await {
                     error!("Failed to check task: {:#?}", e);
                     self.order_tx = Some(OrderTask::start(self.tx.clone()));
@@ -118,6 +123,7 @@ impl TaskManager {
                 tx.send(self.order_tx.as_ref().expect("must be some").clone()).expect("should be ok");
             }
             MainTaskRequest::StorageSender(tx) => {
+                info!("matching StorageSender");
                 if let Err(e) = self.check_storage_task().await {
                     error!("Failed to check task: {:#?}", e);
                     self.storage_tx = Some(StorageTask::start(self.tx.clone()));
@@ -125,6 +131,7 @@ impl TaskManager {
                 tx.send(self.storage_tx.as_ref().expect("must be some").clone()).expect("TODO: panic message");
             }
             MainTaskRequest::DeliverySender(tx) => {
+                info!("matching DeliverySender");
                 if let Err(e) = self.check_delivery_task().await {
                     error!("Failed to check task: {:#?}", e);
                     self.delivery_tx = Some(DeliveryTask::start(self.tx.clone()));
@@ -132,6 +139,7 @@ impl TaskManager {
                 tx.send(self.delivery_tx.as_ref().expect("must be some").clone()).expect("TODO: panic message");
             }
             MainTaskRequest::KafkaProducerSender(tx) => {
+                info!("matching KafkaProducerSender");
                 if let Err(e) = self.check_kafka_producer_task().await {
                     error!("Failed to check task: {:#?}", e);
                     self.kafka_producer_tx = Some(KafkaProducerTask::start(app_config).await);
@@ -195,13 +203,17 @@ impl TaskManager {
 
     #[instrument(skip_all)]
     pub(crate) async fn order_sender(main_tx: Sender<MainTaskRequest>) -> Result<Sender<OrderRequest>> {
+        info!("Called order_sender");
         let (tx, rx) = oneshot::channel();
         main_tx.send(MainTaskRequest::OrderSender(tx)).await?;
-        Ok(rx.await?)
+        let sender = rx.await?;
+        info!("Returning order_sender");
+        Ok(sender)
     }
 
     #[instrument(skip_all)]
     pub(crate) async fn storage_sender(main_tx: Sender<MainTaskRequest>) -> Result<Sender<StorageRequest>> {
+        info!("Called storage_sender");
         let (tx, rx) = oneshot::channel();
         main_tx.send(MainTaskRequest::StorageSender(tx)).await?;
         Ok(rx.await?)
@@ -209,8 +221,10 @@ impl TaskManager {
 
     #[instrument(skip_all)]
     pub(crate) async fn delivery_sender(main_tx: Sender<MainTaskRequest>) -> Result<Sender<DeliveryRequest>> {
+        info!("Called delivery_sender");
         let (tx, rx) = oneshot::channel();
         main_tx.send(MainTaskRequest::DeliverySender(tx)).await?;
+        info!("Returning delivery_sender");
         Ok(rx.await?)
     }
 

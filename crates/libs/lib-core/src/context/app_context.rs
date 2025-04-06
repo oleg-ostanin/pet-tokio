@@ -11,7 +11,7 @@ use tokio::sync::Mutex;
 use tokio_util::sync::CancellationToken;
 use crate::task::main_task::MainTaskRequest;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ModelManager {
     main_tx: Sender<MainTaskRequest>,
     pg_pool: Arc<PgPool>,

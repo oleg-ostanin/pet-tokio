@@ -1,4 +1,5 @@
 use std::time::Duration;
+use tokio::time::sleep;
 use lib_dto::order::{OrderContent, OrderItem, OrderStatus};
 use crate::ITERATIONS;
 use crate::requests::user_context::UserContext;
@@ -32,6 +33,7 @@ async fn load_user(mut user: UserContext) -> UserContext {
         let order_content = OrderContent::new(items);
         let order_id = create_order(&mut user, order_content).await;
         orders.push(order_id);
+        sleep(Duration::from_secs(1)).await;
     }
 
     tokio::time::sleep(Duration::from_secs(15)).await;
