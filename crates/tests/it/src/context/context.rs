@@ -87,9 +87,9 @@ impl TestContext {
 
             let fmt_layer = fmt::layer().compact();
 
-            let console_layer = console_subscriber::spawn();
+            //let console_layer = console_subscriber::spawn();
             let subscriber = tracing_subscriber::Registry::default()
-                .with(console_layer)
+                //.with(console_layer)
                 .with(filter_layer)
                 .with(fmt_layer);
             subscriber::set_global_default(subscriber).unwrap();

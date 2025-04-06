@@ -48,7 +48,7 @@ mod tests {
             assert_eq!(i, order_id.order_id());
         }
 
-        sleep(Duration::from_secs(5)).await;
+        sleep(Duration::from_secs(3)).await;
 
         for i in (1..iterations) {
             let check_order_id = OrderId::new(i);
@@ -56,6 +56,8 @@ mod tests {
             assert_eq!(i, check_stored.order_id());
             assert_eq!(&OrderStatus::Delivered, check_stored.status());
         }
+
+        sleep(Duration::from_secs(3)).await;
 
         ctx.cancel().await;
     }

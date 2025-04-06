@@ -29,6 +29,7 @@ pub(crate) struct KafkaConsumerTask {
 }
 
 impl KafkaConsumerTask {
+    #[instrument(skip_all)]
     pub(crate) async fn start(
         app_context: Arc<ModelManager>,
         app_config: AppConfig,

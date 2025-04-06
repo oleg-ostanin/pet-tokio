@@ -55,7 +55,6 @@ pub async fn handle_delivery_requests(
     let kafka_tx = TaskManager::kafka_producer_sender(main_tx.clone()).await?;
     info!("Got kafka_tx");
 
-
     while let Some(request) = delivery_rx.recv().await {
         info!("Got delivery request: {:#?}", &request);
         match request {
