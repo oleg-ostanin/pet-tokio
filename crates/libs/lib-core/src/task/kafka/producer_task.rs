@@ -6,13 +6,13 @@ use tokio::sync::oneshot;
 use tracing::{info, instrument};
 
 use anyhow::Result;
+use rdkafka::ClientConfig;
 use rdkafka::consumer::StreamConsumer;
 use rdkafka::producer::{FutureProducer, FutureRecord};
 use rdkafka::util::Timeout;
 use lib_dto::order::OrderStored;
 use crate::context::app_context::{AppConfig, ModelManager};
 use crate::task::kafka::producer_task::KafkaProducerResponse::HealthOk;
-use crate::task::kafka::producer::create;
 use crate::task::main_task::{MainTaskRequest, TaskManager};
 
 #[derive(Debug)]
@@ -71,6 +71,25 @@ impl KafkaProducerTask {
 
         Ok(())
     }
+}
+
+#[instrument(skip_all)]
+pub async fn create(app_config: &AppConfig) -> FutureProducer {
+    info!("Creating kafka producer");
+
+    info!("app_config: {:#?}", &app_config);
+
+    let mut config = ClientConfig::new();
+    config.set("bootstrap.servers", app_config.kafka_url.as_str());
+    //config.set("auto.create.topics.enable", "true");
+
+    info!("config: {:#?}", &config);
+
+    let producer : FutureProducer = config
+        .create()
+        .expect("Failure in creating producer");
+
+    producer
 }
 
 #[instrument(skip_all)]
