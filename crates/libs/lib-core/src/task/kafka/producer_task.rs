@@ -6,6 +6,7 @@ use tokio::sync::oneshot;
 use tracing::{info, instrument};
 
 use anyhow::Result;
+use log::error;
 use rdkafka::ClientConfig;
 use rdkafka::consumer::StreamConsumer;
 use rdkafka::producer::{FutureProducer, FutureRecord};
@@ -108,8 +109,8 @@ pub async fn produce(
         .await;
 
     match status_delivery {
-        Ok(report) => println!("Message Sent {:?}",report),
-        Err(e) => println!("Error producing.. {:?}",e)
+        Ok(report) => info!("Message Sent {:?}",report),
+        Err(e) => error!("Error producing.. {:?}",e)
     }
 }
 

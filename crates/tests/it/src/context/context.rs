@@ -127,7 +127,6 @@ impl TestContext {
         });
 
         let kafka_container = Kafka::default()
-            //.with_mapped_port(9093, ContainerPort::Tcp(9093))
             .start()
             .await
             .unwrap();
@@ -135,7 +134,6 @@ impl TestContext {
         let kafka_url = format!{"localhost:{kafka_port}"};
         info!("kafka_url: {}", kafka_url);
 
-        //init_db(&pg_client).await;
         let mock_auth_url = mock_server.uri();
         info!("mock_auth_url: {:#?}", &mock_auth_url);
         let app_config: AppConfig = AppConfig {

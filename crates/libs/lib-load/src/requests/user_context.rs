@@ -9,7 +9,7 @@ use hyper_util::client::legacy::Client;
 use hyper_util::client::legacy::connect::HttpConnector;
 use serde::Deserialize;
 use serde_json::{json, Value};
-use tracing::info;
+use tracing::{debug, info};
 
 use lib_dto::user::{AuthCode, UserForCreate, UserForSignIn};
 use lib_utils::constants::{AUTH_SOCKET_ADDR, WEB_SOCKET_ADDR};
@@ -98,7 +98,7 @@ impl UserContext {
         let path: String = path.into();
         let addr = &self.socket_addr(&path);
 
-        info!("socket_addr_in_post: {:#?}", &addr);
+        debug!("socket_addr_in_post: {:#?}", &addr);
         let mut builder = Request::builder()
             .method(http::Method::POST)
             .uri(format!("http://{addr}{path}"))

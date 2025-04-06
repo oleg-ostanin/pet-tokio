@@ -77,7 +77,7 @@ impl TaskManager {
         let jh = tokio::spawn(main_task.handle_requests(rx));
         jh.await.expect("TODO: panic message").expect("TODO: panic message");
 
-        tokio::time::sleep(core::time::Duration::from_secs(20)).await;
+        //tokio::time::sleep(core::time::Duration::from_secs(20)).await;
         Ok(())
     }
 
@@ -89,7 +89,6 @@ impl TaskManager {
         info!("starting MainTaskRequest");
         while let Some(request) = rx.recv().await {
             let dbg_str = format!("{:?}", &request);
-            info!("got MainTaskRequest");
             self.match_requests(request).await;
             info!("MainTaskRequest loop end for request: {:?}", dbg_str);
         }

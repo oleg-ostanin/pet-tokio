@@ -40,20 +40,23 @@ mod tests {
 
         let iterations = 2;
 
+        let mut order_ids: Vec<i64> = Vec::with_capacity(iterations);
+
         for i in (1..iterations) {
             let order_item_1 = OrderItem::new(1, 2);
             let order_item_2 = OrderItem::new(2, 4);
             let order_content = OrderContent::new(vec!(order_item_1, order_item_2));
             let order_id: OrderId = user.post_rpc("create_order", json!(order_content)).await;
-            assert_eq!(i, order_id.order_id());
+            assert_eq!(i as i64, order_id.order_id());
+            order_ids.push(order_id.order_id());
         }
 
         sleep(Duration::from_secs(3)).await;
 
         for i in (1..iterations) {
-            let check_order_id = OrderId::new(i);
+            let check_order_id = OrderId::new(i as i64);
             let check_stored: OrderStored = user.post_rpc("check_order", json!(check_order_id)).await;
-            assert_eq!(i, check_stored.order_id());
+            assert_eq!(i as i64, check_stored.order_id());
             assert_eq!(&OrderStatus::Delivered, check_stored.status());
         }
 
@@ -62,18 +65,5 @@ mod tests {
         ctx.cancel().await;
     }
 
-    #[test]
-    fn b() {
-        let mut b = Box::new(5);
-        let shared_b = &b;
-        println!("{:#?}", shared_b);
 
-        let mut mut_b = &mut b;
-        *mut_b.as_mut() = 6;
-        println!("{:#?}", mut_b);
-        *mut_b.as_mut() = 7;
-        println!("{:#?}", mut_b);
-
-        println!("{:#?}", b);
-    }
 }

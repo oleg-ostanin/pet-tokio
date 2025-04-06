@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::{Debug, Formatter};
 use std::ops::Deref;
 use std::sync::{Arc, RwLock};
 
@@ -11,7 +12,7 @@ use tokio::sync::Mutex;
 use tokio_util::sync::CancellationToken;
 use crate::task::main_task::MainTaskRequest;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct ModelManager {
     main_tx: Sender<MainTaskRequest>,
     pg_pool: Arc<PgPool>,
@@ -84,4 +85,10 @@ impl ModelManager {
 pub struct AppConfig {
     pub auth_url: Arc<String>,
     pub kafka_url: Arc<String>,
+}
+
+impl Debug for ModelManager {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str("ModeManager")
+    }
 }

@@ -6,6 +6,7 @@ use tokio::sync::oneshot;
 use tracing::{info, instrument};
 
 use anyhow::Result;
+use log::error;
 use rdkafka::{ClientConfig, Message};
 use rdkafka::consumer::{CommitMode, Consumer, StreamConsumer};
 use rdkafka::util::Timeout;
@@ -34,7 +35,7 @@ impl KafkaConsumerTask {
         app_context: Arc<ModelManager>,
         app_config: AppConfig,
     ) -> Sender<KafkaConsumerRequest> {
-        info!("Starting Kafka Consumer  Task");
+        info!("Starting Kafka Consumer Task");
         let main_tx = app_context.main_tx();
 
         let consumer = create(app_config).await;
@@ -52,19 +53,19 @@ impl KafkaConsumerTask {
         app_context: Arc<ModelManager>,
         mut kafka_rx: Receiver<KafkaConsumerRequest>,
     ) -> Result<()> {
-        info!("Starting kafka consumer task");
+        info!("Handling kafka consumer task");
         self.consumer.subscribe(
             &["order-topic"]
         ).expect("Can't Subscribe");
 
         loop {
             match self.consumer.recv().await {
-                Err(e) => println!("{:?}",e),
+                Err(e) => error!("{:?}",e),
                 Ok(message) => {
                     match message.payload_view::<str>() {
-                        None => println!("None message"),
-                        Some(Ok(msg)) => println!("Message Consumed : {}", msg),
-                        Some(Err(e)) => println!("Error Parsing : {}",e)
+                        None => info!("None message"),
+                        Some(Ok(msg)) => info!("Message Consumed : {}", msg),
+                        Some(Err(e)) => error!("Error Parsing : {}",e)
                     }
                     self.consumer.commit_message(&message, CommitMode::Async).unwrap();
                 }
@@ -82,7 +83,7 @@ async fn create(app_config: AppConfig) -> StreamConsumer {
     config.set("bootstrap.servers", app_config.kafka_url.as_str())
         .set("auto.offset.reset", "earliest")
         .set("group.id", "test-group")
-        .set("socket.timeout.ms","4000");
+        .set("socket.timeout.ms","1000");
 
     let consumer : StreamConsumer =
         config.create()
