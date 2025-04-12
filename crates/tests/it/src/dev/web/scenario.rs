@@ -7,17 +7,21 @@ mod tests {
     use std::time::Duration;
 
     use axum::http::StatusCode;
+    use rdkafka::consumer::{CommitMode, Consumer, StreamConsumer};
+    use rdkafka::Message;
     use serde_json::{json, Value};
     use serial_test::serial;
     use tokio::time::sleep;
-    use tokio_retry2::{Retry, RetryError};
     use tokio_retry2::strategy::{ExponentialBackoff, MaxInterval};
-
+    use tracing::info;
+    use tracing::log::error;
     use lib_dto::book::BookList;
     use lib_dto::order::{OrderContent, OrderId, OrderItem, OrderStatus, OrderStored};
     use lib_load::requests::user_context::UserContext;
     use lib_load::scenario::books::BOOK_LIST;
+    use lib_utils::json::body;
     use lib_utils::rpc::request;
+    use lib_core::task::kafka::consumer_task::create;
 
     use crate::context::context::{ServiceType, TestContext};
     use crate::dev::web::login;
@@ -57,18 +61,52 @@ mod tests {
 
         sleep(Duration::from_secs(3)).await;
 
-        check_orders(&user, order_ids).await;
+        let orders = check_orders(&user, order_ids).await;
+        check_kafka(&ctx, orders).await;
 
         sleep(Duration::from_secs(3)).await;
 
         ctx.cancel().await;
     }
 
-    async fn check_orders(user: &UserContext, order_ids: Vec<i64>) {
+    async fn check_orders(user: &UserContext, order_ids: Vec<i64>) -> Vec<OrderStored> {
+        let mut orders = Vec::with_capacity(order_ids.len());
         for order_id in order_ids {
             let check_order_id = OrderId::new(order_id);
             let check_stored: OrderStored = user.post_rpc("check_order", json!(check_order_id)).await;
             assert_eq!(&OrderStatus::Delivered, check_stored.status());
+            orders.push(check_stored);
+        }
+        orders
+    }
+
+    async fn check_kafka(ctx: &TestContext, orders: Vec<OrderStored>) {
+        let app_config = ctx.app_context().app_config();
+        let consumer = create(app_config.clone(), "test_group").await;
+
+        info!("Handling kafka consumer task");
+        consumer.subscribe(
+            &["order-topic"]
+        ).expect("Can't Subscribe");
+
+        let mut orders_from_kafka = Vec::with_capacity(orders.len());
+
+        while orders_from_kafka.len() < orders.len() {
+            match consumer.recv().await {
+                Err(e) => error!("{:?}",e),
+                Ok(message) => {
+                    match message.payload_view::<str>() {
+                        None => info!("None message"),
+                        Some(Ok(msg)) => {
+                            info!("Message Consumed : {}", &msg);
+                            let order: OrderStored = serde_json::from_str(msg).expect("must be ok");
+                            orders_from_kafka.push(order);
+                        },
+                        Some(Err(e)) => error!("Error Parsing : {}",e)
+                    }
+                    consumer.commit_message(&message, CommitMode::Async).unwrap();
+                }
+            }
         }
     }
 }

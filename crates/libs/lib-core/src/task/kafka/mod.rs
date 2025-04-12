@@ -1,2 +1,2 @@
 pub(crate) mod producer_task;
-pub(crate) mod consumer_task;
+pub mod consumer_task;

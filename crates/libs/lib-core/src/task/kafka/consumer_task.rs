@@ -28,7 +28,7 @@ impl KafkaConsumerTask {
     ) {
         info!("Starting Kafka Consumer Task");
 
-        let consumer = create(app_config).await;
+        let consumer = create(app_config, "main-group").await;
         let task = {
             Self { consumer }
         };
@@ -60,13 +60,13 @@ impl KafkaConsumerTask {
     }
 }
 
-async fn create(app_config: AppConfig) -> StreamConsumer {
+pub async fn create(app_config: AppConfig, group_id: &str) -> StreamConsumer {
     info!("Creating Kafka Consumer");
 
     let mut config = ClientConfig::new();
     config.set("bootstrap.servers", app_config.kafka_url.as_str())
         .set("auto.offset.reset", "earliest")
-        .set("group.id", "test-group")
+        .set("group.id", group_id)
         .set("socket.timeout.ms","1000");
 
     let consumer : StreamConsumer =

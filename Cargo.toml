@@ -22,6 +22,9 @@ members = [
 console-subscriber = "0.4.1"
 # -- Serde
 serde_with = {version = "3", features = ["time_0_3"] }
+
+rdkafka = "0.36.2"
+
 # -- Data
 # Note: we lock modql version during rcs
 #modql = { version = "0.4.0", features = ["with-sea-query"]}
