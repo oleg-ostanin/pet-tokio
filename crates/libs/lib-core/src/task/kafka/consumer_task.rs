@@ -1,16 +1,18 @@
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::select;
-use tokio::sync::mpsc::{Receiver, Sender};
-use tokio::sync::oneshot;
-use tracing::{info, instrument};
 
 use anyhow::Result;
 use log::error;
 use rdkafka::{ClientConfig, Message};
 use rdkafka::consumer::{CommitMode, Consumer, StreamConsumer};
 use rdkafka::util::Timeout;
+use tokio::select;
+use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::sync::oneshot;
+use tracing::{info, instrument};
+
 use lib_dto::order::OrderStored;
+
 use crate::context::app_context::{AppConfig, ModelManager};
 use crate::task::kafka::consumer_task::KafkaConsumerResponse::HealthOk;
 use crate::task::main_task::{MainTaskRequest, TaskManager};

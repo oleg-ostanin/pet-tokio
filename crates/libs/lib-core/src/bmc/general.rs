@@ -1,9 +1,12 @@
 use std::collections::HashMap;
 use std::ops::Add;
 use std::sync::Arc;
+
 use sqlx::{Postgres, Transaction};
 use tracing::{debug, instrument};
+
 use lib_dto::order::{OrderItem, OrderStatus, OrderStored};
+
 use crate::bmc::order::OrderBmc;
 use crate::bmc::storage::{StorageBmc, UpdateType};
 use crate::context::app_context::ModelManager;

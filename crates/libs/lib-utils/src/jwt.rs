@@ -1,11 +1,10 @@
 use std::collections::BTreeMap;
 
+use anyhow::Result;
 use hmac::{Hmac, Mac};
 use jwt::SignWithKey;
 use jwt::VerifyWithKey;
 use sha2::Sha256;
-
-use anyhow::{Result};
 
 pub fn token(phone: impl Into<String>, token_key: &str) -> Result<String> {
     let key: Hmac<Sha256> = Hmac::new_from_slice(token_key.as_bytes())?;

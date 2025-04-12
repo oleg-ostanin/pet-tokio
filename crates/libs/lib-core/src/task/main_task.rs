@@ -1,17 +1,17 @@
 use std::sync::Arc;
-use crate::context::app_context::ModelManager;
 
 use anyhow::{bail, Result};
-use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::{Mutex, oneshot};
+use tokio::sync::mpsc::{Receiver, Sender};
 use tracing::{error, info, instrument};
-use crate::notify::order::{NotifyTask};
+
+use crate::context::app_context::ModelManager;
+use crate::notify::order::NotifyTask;
 use crate::task::delivery::{DeliveryRequest, DeliveryTask};
 use crate::task::kafka::consumer_task::KafkaConsumerTask;
 use crate::task::kafka::producer_task::{KafkaProducerRequest, KafkaProducerTask};
 use crate::task::order::{OrderRequest, OrderTask};
 use crate::task::storage::{StorageRequest, StorageTask};
-
 
 #[derive(Debug)]
 pub enum MainTaskRequest {

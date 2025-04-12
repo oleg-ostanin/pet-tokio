@@ -5,6 +5,7 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 use tracing::{error, info};
+
 use crate::ctx::CtxExtError;
 
 pub type Result<T> = core::result::Result<T, Error>;

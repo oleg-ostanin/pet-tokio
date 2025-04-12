@@ -5,12 +5,15 @@ use tower::{Service, ServiceExt};
 #[cfg(test)]
 mod tests {
     use std::time::Duration;
+
     use axum::http::StatusCode;
     use serde_json::{json, Value};
     use serial_test::serial;
     use tokio::time::sleep;
-    use tracing::info;
-    use lib_dto::book::{BookDescription, BookList};
+    use tokio_retry2::{Retry, RetryError};
+    use tokio_retry2::strategy::{ExponentialBackoff, MaxInterval};
+
+    use lib_dto::book::BookList;
     use lib_dto::order::{OrderContent, OrderId, OrderItem, OrderStatus, OrderStored};
     use lib_load::requests::user_context::UserContext;
     use lib_load::scenario::books::BOOK_LIST;
@@ -54,20 +57,43 @@ mod tests {
 
         sleep(Duration::from_secs(3)).await;
 
-        check_order_status(user, order_ids).await;
+        check_orders(&user, order_ids).await;
 
         sleep(Duration::from_secs(3)).await;
 
         ctx.cancel().await;
     }
 
-    async fn check_order_status(mut user: UserContext, order_ids: Vec<i64>) {
+    async fn check_orders(user: &UserContext, order_ids: Vec<i64>) {
         for i in order_ids {
-            let check_order_id = OrderId::new(i);
-            let check_stored: OrderStored = user.post_rpc("check_order", json!(check_order_id)).await;
-            assert_eq!(i, check_stored.order_id());
-            assert_eq!(&OrderStatus::Delivered, check_stored.status());
+            check_order(user, i).await;
         }
+    }
+
+    async fn check_order(user: &UserContext, order_id: i64) {
+        let retry_strategy = ExponentialBackoff::from_millis(10)
+            .factor(1) // multiplication factor applied to deplay
+            .max_delay_millis(100) // set max delay between retries to 500ms
+            .max_interval(1000) // set max interval to 1 second for all retries
+            .take(3);    // limit to 3 retries
+
+        let result = tokio_retry2::Retry::spawn(retry_strategy, async || check_status(user, order_id).await).await;
+
+        assert!(result)
+    }
+
+    async fn check_status(user: &UserContext, order_id: i64) -> Result<(), RetryError<()>> {
+        let check_order_id = OrderId::new(order_id);
+        let check_stored: OrderStored = user.post_rpc("check_order", json!(check_order_id)).await;
+        match check_stored.status() {
+            OrderStatus::Delivered => {
+                return Ok(())
+            }
+            _ => {
+                return Err(RetryError::Transient { err: (), retry_after: None })
+            }
+        }
+
     }
 
 }

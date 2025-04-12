@@ -1,22 +1,23 @@
+use std::error::Error;
+use std::time::Duration;
+
+use axum::http::HeaderValue;
 use axum::response::Response;
+use http_body_util::BodyExt;
+use hyper::body::Buf;
 use hyper::body::Incoming;
-use tokio::sync::OnceCell;
 use serde_json::{json, Value};
+use tokio::sync::OnceCell;
+use tokio::time::sleep;
 use tracing::info;
+
 use lib_dto::book::BookList;
 use lib_dto::order::{OrderContent, OrderId, OrderItem, OrderStored};
 use lib_dto::user::{AuthCode, UserExists, UserForCreate, UserForSignIn};
 use lib_utils::json::{body, value};
 use lib_utils::rpc::request;
+
 use crate::requests::user_context::UserContext;
-
-use std::error::Error;
-use std::time::Duration;
-use axum::http::HeaderValue;
-use http_body_util::BodyExt;
-use hyper::body::Buf;
-
-use tokio::time::sleep;
 use crate::scenario::books::BOOK_LIST;
 
 static BOOKS_INITIALIZED: OnceCell<()> = OnceCell::const_new();

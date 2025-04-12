@@ -7,6 +7,7 @@ use axum::response::{IntoResponse, Response};
 use rpc_router::Request;
 use serde_json::{json, Value};
 use tracing::{info, instrument};
+
 use book::*;
 use lib_core::context::app_context::ModelManager;
 use order::create_order;
@@ -15,6 +16,7 @@ use crate::ctx::{Ctx, CtxW};
 use crate::error::Error::{RpcNoParams, RpcRequestParsing, UnknownRpcMethod};
 use crate::error::Result;
 use crate::handlers::rpc::order::{check_order, clean_up, pick_up_order};
+
 pub mod book;
 pub mod order;
 pub mod rpc;

@@ -7,13 +7,14 @@ mod tests {
     use axum::http::StatusCode;
     use serde_json::json;
     use serial_test::serial;
+
     use lib_dto::book::BookList;
     use lib_dto::user::AuthCode;
+    use lib_load::scenario::books::BOOK_LIST;
+    use lib_load::utils::body_utils::message_from_response;
     use lib_utils::rpc::request;
 
     use crate::context::context::{ServiceType, TestContext};
-    use lib_load::scenario::books::BOOK_LIST;
-    use lib_load::utils::body_utils::message_from_response;
 
     #[tokio::test]
     #[serial]

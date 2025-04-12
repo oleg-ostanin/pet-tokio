@@ -1,6 +1,9 @@
 use std::time::Duration;
+
 use tokio::time::sleep;
+
 use lib_dto::order::{OrderContent, OrderItem, OrderStatus};
+
 use crate::ITERATIONS;
 use crate::requests::user_context::UserContext;
 use crate::scenario::common::{BOOKS_SIZE, check_order, create_order};

@@ -1,18 +1,21 @@
 use std::sync::Arc;
 use std::time::Duration;
+
+use anyhow::Result;
 use tokio::select;
-use tokio::sync::oneshot;
 use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::sync::oneshot;
 use tracing::{info, instrument};
-use lib_dto::order::OrderStored;
+
 use lib_dto::order::OrderStatus::Delivered;
+use lib_dto::order::OrderStored;
+
 use crate::bmc::general::update_storage_and_order;
 use crate::bmc::storage::UpdateType::Remove;
 use crate::context::app_context::ModelManager;
 use crate::task::delivery::DeliveryResponse::HealthOk;
-use crate::task::main_task::{MainTaskRequest, TaskManager};
-use anyhow::Result;
 use crate::task::kafka::producer_task::KafkaProducerRequest;
+use crate::task::main_task::{MainTaskRequest, TaskManager};
 
 #[derive(Debug)]
 pub enum DeliveryRequest {

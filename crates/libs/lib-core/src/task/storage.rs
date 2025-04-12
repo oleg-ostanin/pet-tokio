@@ -1,14 +1,15 @@
 use std::sync::Arc;
 use std::time::Duration;
+
+use anyhow::Result;
 use tokio::select;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::oneshot;
 use tracing::{info, instrument};
 
-use anyhow::Result;
-
-use lib_dto::order::OrderStored;
 use lib_dto::order::OrderStatus::ReadyToDeliver;
+use lib_dto::order::OrderStored;
+
 use crate::bmc::general::update_storage_and_order;
 use crate::bmc::storage::UpdateType::Add;
 use crate::context::app_context::ModelManager;

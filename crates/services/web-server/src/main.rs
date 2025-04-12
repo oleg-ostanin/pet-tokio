@@ -1,23 +1,23 @@
 use std::error::Error;
 use std::sync::Arc;
+
+use console_subscriber;
 use dotenv::dotenv;
 use opentelemetry::{global, KeyValue, runtime};
 use opentelemetry::sdk::{Resource, trace as sdktrace, trace};
 use opentelemetry::sdk::propagation::TraceContextPropagator;
 use opentelemetry::trace::{FutureExt, TraceError};
 use opentelemetry_otlp::WithExportConfig;
-use tokio::{select};
+use tokio::select;
 use tokio_util::sync::CancellationToken;
 use tracing::{info, Level};
-use tracing_subscriber::prelude::*;
 use tracing_subscriber::{EnvFilter, filter, fmt};
 use tracing_subscriber::layer::SubscriberExt;
-use console_subscriber;
+use tracing_subscriber::prelude::*;
 
 use lib_core::context::app_context::ModelManager;
 use lib_web::app::context::create_app_context;
 use lib_web::app::web_app::web_app;
-
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {

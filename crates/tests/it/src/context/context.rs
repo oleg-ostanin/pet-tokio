@@ -2,6 +2,7 @@ use core::net::SocketAddr;
 use std::fmt::Debug;
 use std::sync::{Arc, OnceLock};
 use std::time::Duration;
+
 use axum::{body::Body, Error, http::{self, Request, StatusCode}};
 use axum::http::HeaderValue;
 use axum::response::Response;
@@ -20,30 +21,29 @@ use testcontainers::{ContainerAsync, ImageExt};
 use testcontainers::core::ContainerPort;
 // use testcontainers::{clients, Container, images::postgres::Postgres};
 use testcontainers::runners::AsyncRunner;
-use testcontainers_modules::postgres::Postgres;
 use testcontainers_modules::kafka::Kafka;
+use testcontainers_modules::postgres::Postgres;
 use tokio::net::TcpListener;
 use tokio::select;
 use tokio_postgres::NoTls;
+use tokio_util::sync::CancellationToken;
 use tower::builder;
 use tower_cookies::{Cookie, Cookies};
 use tracing::{error, info, subscriber};
+use tracing_subscriber::{EnvFilter, fmt};
+use tracing_subscriber::layer::SubscriberExt;
 use uuid::Uuid;
 use wiremock::{Mock, MockServer, ResponseTemplate};
 use wiremock::matchers::{body_json, method, path};
 
 use lib_core::context::app_context::{AppConfig, ModelManager};
 use lib_dto::user::{AuthCode, UserForCreate, UserForSignIn};
+use lib_load::requests::user_context::UserContext;
+use lib_load::utils::body_utils::message_and_detail;
 use lib_utils::json::result;
 use lib_utils::rpc::request;
 use lib_web::app::auth_app::auth_app;
 use lib_web::app::web_app::web_app;
-use tokio_util::sync::CancellationToken;
-use tracing_subscriber::{EnvFilter, fmt};
-use tracing_subscriber::layer::SubscriberExt;
-
-use lib_load::requests::user_context::UserContext;
-use lib_load::utils::body_utils::message_and_detail;
 
 #[derive(Debug, Clone)]
 struct HeaderWrapper {
