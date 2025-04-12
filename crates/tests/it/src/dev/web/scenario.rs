@@ -12,7 +12,6 @@ mod tests {
     use serde_json::{json, Value};
     use serial_test::serial;
     use tokio::time::sleep;
-    use tokio_retry2::strategy::{ExponentialBackoff, MaxInterval};
     use tracing::info;
     use tracing::log::error;
     use lib_dto::book::BookList;
@@ -46,7 +45,7 @@ mod tests {
         //let book_list: BookList = user.post_rpc("books_by_description", json!(description)).await;
         //info!("books by description: {:#?}", book_list);
 
-        let iterations = 2;
+        let iterations = 16;
 
         let mut order_ids: Vec<i64> = Vec::with_capacity(iterations);
 
@@ -98,7 +97,7 @@ mod tests {
                     match message.payload_view::<str>() {
                         None => info!("None message"),
                         Some(Ok(msg)) => {
-                            info!("Message Consumed : {}", &msg);
+                            info!("Message Consumed in test: {}", &msg);
                             let order: OrderStored = serde_json::from_str(msg).expect("must be ok");
                             orders_from_kafka.push(order);
                         },

@@ -25,6 +25,7 @@ Cargo.lock
 # Added by cargo
 
 /target
+rust-toolchain
 ignored
 
 docker/pgdata
