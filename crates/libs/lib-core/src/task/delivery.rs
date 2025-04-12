@@ -15,7 +15,7 @@ use crate::bmc::storage::UpdateType::Remove;
 use crate::context::app_context::ModelManager;
 use crate::task::delivery::DeliveryResponse::HealthOk;
 use crate::task::kafka::producer_task::KafkaProducerRequest;
-use crate::task::main_task::{MainTaskRequest, TaskManager};
+use crate::task::main_task::{TaskManager};
 
 #[derive(Debug)]
 pub enum DeliveryRequest {

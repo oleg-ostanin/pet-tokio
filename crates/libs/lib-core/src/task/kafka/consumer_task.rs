@@ -1,21 +1,11 @@
-use std::sync::Arc;
-use std::time::Duration;
-
 use anyhow::Result;
 use log::error;
 use rdkafka::{ClientConfig, Message};
 use rdkafka::consumer::{CommitMode, Consumer, StreamConsumer};
-use rdkafka::util::Timeout;
-use tokio::select;
-use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::oneshot;
 use tracing::{info, instrument};
 
-use lib_dto::order::OrderStored;
-
 use crate::context::app_context::{AppConfig, ModelManager};
-use crate::task::kafka::consumer_task::KafkaConsumerResponse::HealthOk;
-use crate::task::main_task::{MainTaskRequest, TaskManager};
 
 #[derive(Debug)]
 pub enum KafkaConsumerRequest {
@@ -34,26 +24,20 @@ pub(crate) struct KafkaConsumerTask {
 impl KafkaConsumerTask {
     #[instrument(skip_all)]
     pub(crate) async fn start(
-        app_context: Arc<ModelManager>,
         app_config: AppConfig,
-    ) -> Sender<KafkaConsumerRequest> {
+    ) {
         info!("Starting Kafka Consumer Task");
-        let main_tx = app_context.main_tx();
 
         let consumer = create(app_config).await;
         let task = {
             Self { consumer }
         };
-        let (tx, rx) = tokio::sync::mpsc::channel(64);
-        tokio::spawn(task.handle_kafka_consumer(app_context, rx));
-        tx.clone()
+        tokio::spawn(task.handle_kafka_consumer());
     }
 
     #[instrument(skip_all)]
     pub async fn handle_kafka_consumer(
         self,
-        app_context: Arc<ModelManager>,
-        mut kafka_rx: Receiver<KafkaConsumerRequest>,
     ) -> Result<()> {
         info!("Handling kafka consumer task");
         self.consumer.subscribe(
@@ -73,8 +57,6 @@ impl KafkaConsumerTask {
                 }
             }
         }
-
-        Ok(())
     }
 }
 

@@ -4,14 +4,13 @@ use std::sync::Arc;
 use anyhow::Result;
 use serde::Deserialize;
 use sqlx::postgres::PgListener;
-use tokio::sync::mpsc::Sender;
 use tokio::sync::oneshot;
 use tracing::{error, info, instrument};
 
 use lib_dto::order::OrderStored;
 
 use crate::context::app_context::ModelManager;
-use crate::task::main_task::{MainTaskRequest, TaskManager};
+use crate::task::main_task::{TaskManager};
 use crate::task::order::OrderRequest;
 
 pub(crate) struct NotifyTask {}

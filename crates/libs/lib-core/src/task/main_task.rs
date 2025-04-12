@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use anyhow::{bail, Result};
-use tokio::sync::{Mutex, oneshot};
+use tokio::sync::{oneshot};
 use tokio::sync::mpsc::{Receiver, Sender};
 use tracing::{error, info, instrument};
 
@@ -29,11 +29,6 @@ pub enum MainTaskResponse {
 }
 
 #[derive(Clone)]
-pub(crate) struct SharedSender<T> {
-    inner: Arc<Mutex<Option<Sender<T>>>>
-}
-
-#[derive(Clone)]
 pub struct TaskManager {
     app_context: Arc<ModelManager>,
     tx: Sender<MainTaskRequest>,
@@ -56,7 +51,7 @@ impl TaskManager {
         tokio::spawn(NotifyTask::start(Arc::clone(&app_context)));
 
         info!("Starting KafkaConsumerTask");
-        tokio::spawn(KafkaConsumerTask::start(Arc::clone(&app_context), app_config.clone()));
+        tokio::spawn(KafkaConsumerTask::start(app_config.clone()));
 
         let order_tx = None;
         let storage_tx = None;
@@ -97,7 +92,6 @@ impl TaskManager {
 
     #[instrument(skip_all)]
     async fn match_requests(&mut self, request: MainTaskRequest) {
-        let app_config = self.app_context.app_config().clone();
         info!("matching MainTaskRequest: {:?}", request);
         match request {
             MainTaskRequest::Health(_) => {}
@@ -108,7 +102,7 @@ impl TaskManager {
                     Ok(_) => {
                         info!("sent AppContext");
                     }
-                    Err(error) => {
+                    Err(_) => {
                         error!("failed to send app context")
                     }
                 }

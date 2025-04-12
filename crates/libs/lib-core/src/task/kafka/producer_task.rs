@@ -4,10 +4,8 @@ use std::time::Duration;
 use anyhow::Result;
 use log::error;
 use rdkafka::ClientConfig;
-use rdkafka::consumer::StreamConsumer;
 use rdkafka::producer::{FutureProducer, FutureRecord};
 use rdkafka::util::Timeout;
-use tokio::select;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::oneshot;
 use tracing::{info, instrument};
@@ -16,7 +14,6 @@ use lib_dto::order::OrderStored;
 
 use crate::context::app_context::{AppConfig, ModelManager};
 use crate::task::kafka::producer_task::KafkaProducerResponse::HealthOk;
-use crate::task::main_task::{MainTaskRequest, TaskManager};
 
 #[derive(Debug)]
 pub enum KafkaProducerRequest {
