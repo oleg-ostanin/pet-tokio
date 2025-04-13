@@ -13,6 +13,7 @@ use lib_dto::order::OrderStored;
 use crate::bmc::general::update_storage_and_order;
 use crate::bmc::storage::UpdateType::Remove;
 use crate::context::app_context::ModelManager;
+use crate::select_cancel;
 use crate::task::delivery::DeliveryResponse::HealthOk;
 use crate::task::kafka::producer_task::KafkaProducerRequest;
 use crate::task::main_task::{TaskManager};
@@ -83,14 +84,15 @@ pub async fn handle_delivery_requests(
             DeliveryRequest::Deliver(order, tx) => {
                 info!("Sending kafka request: {:#?}", &order.order_id());
                 kafka_tx.send(KafkaProducerRequest::ProduceOrder(order.clone())).await.expect("must be ok");
-                tokio::spawn(async move {
-                    select! {
-                        _ = handle_order(app_context_cloned, order, tx) => {}
-                        _ = cancellation_token_cloned.cancelled() => {
-                            info!("Cancelled by cancellation token.")
-                        }
-                    }
-                });
+                // tokio::spawn(async move {
+                //     select! {
+                //         _ = handle_order(app_context_cloned, order, tx) => {}
+                //         _ = cancellation_token_cloned.cancelled() => {
+                //             info!("Cancelled by cancellation token.")
+                //         }
+                //     }
+                // });
+                select_cancel!(handle_order(app_context_cloned, order, tx), cancellation_token_cloned);
             }
         }
     }
