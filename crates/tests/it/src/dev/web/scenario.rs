@@ -60,51 +60,40 @@ mod tests {
             order_ids.push(order_id.order_id());
         }
 
-        sleep(Duration::from_secs(3)).await;
+        // waiting until all orders have expected status
+        let orders: Vec<OrderStored> = select! {
+            orders = check_orders(&user, order_ids) => { orders }
+            orders = tokio::time::sleep(Duration::from_secs(10)) => { Vec::default() }
+        };
 
-        let orders = check_orders(&user, order_ids).await;
-        check_kafka(&ctx, orders).await;
+        assert_eq!(iterations - 1, orders.len());
 
-        //sleep(Duration::from_secs(3)).await;
+        // waiting until all orders are consumed from kafka
+        let orders_from_kafka: Vec<OrderStored> = select! {
+            orders = check_kafka(&ctx, &orders) => { orders }
+            orders = tokio::time::sleep(Duration::from_secs(10)) => { Vec::default() }
+        };
+
+        assert_eq!(orders.len(), orders_from_kafka.len());
 
         ctx.cancel().await;
-
-        //let token = ctx.app_context().cancellation_token();
-        // let cloned_token = token.clone();
-        //
-        // let join_handle = tokio::spawn(async move {
-        //     // Wait for either cancellation or a very long time
-        //     select! {
-        //     _ = cloned_token.cancelled() => {
-        //         info!("Cancelled by cancellation token.");
-        //
-        //         // The token was cancelled
-        //         5
-        //     }
-        //     _ = tokio::time::sleep(std::time::Duration::from_secs(9999)) => {
-        //         99
-        //     }
-        // }
-        // });
-
-        // tokio::spawn(async move {
-        //     //tokio::time::sleep(Duration::from_millis(10)).await;
-        //     token.cancel();
-        // });
     }
 
     async fn check_orders(user: &UserContext, order_ids: Vec<i64>) -> Vec<OrderStored> {
         let mut orders = Vec::with_capacity(order_ids.len());
         for order_id in order_ids {
             let check_order_id = OrderId::new(order_id);
-            let check_stored: OrderStored = user.post_rpc("check_order", json!(check_order_id)).await;
-            assert_eq!(&OrderStatus::Delivered, check_stored.status());
+            let mut check_stored: OrderStored = user.post_rpc("check_order", json!(check_order_id)).await;
+            while &check_stored.status() != &&OrderStatus::Delivered {
+                tokio::time::sleep(Duration::from_millis(100)).await;
+                check_stored = user.post_rpc("check_order", json!(check_order_id)).await;
+            }
             orders.push(check_stored);
         }
         orders
     }
 
-    async fn check_kafka(ctx: &TestContext, orders: Vec<OrderStored>) {
+    async fn check_kafka(ctx: &TestContext, orders: &Vec<OrderStored>) -> Vec<OrderStored> {
         let app_config = ctx.app_context().app_config();
         let consumer = create(app_config.clone(), "test_group").await;
 
@@ -132,6 +121,8 @@ mod tests {
                 }
             }
         }
+
+        orders_from_kafka
     }
 
     #[tokio::test]
