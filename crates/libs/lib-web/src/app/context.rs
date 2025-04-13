@@ -29,7 +29,6 @@ use crate::middleware::mw_res_map::mw_response_map;
 
 pub async fn create_app_context(main_tx: Sender<MainTaskRequest>) -> Arc<ModelManager> {
     let db_url = read_db_url("local.properties"); // todo from env
-    let client = get_client(&db_url).await;
     let pool = get_pool(&db_url).await;
 
     let kafka_url = env::var("KAFKA_URL").expect("must be ok");
@@ -70,7 +69,6 @@ async fn get_pool(db_url: &String) -> Pool<Postgres> {
         .await
         .unwrap();
 
-    let db_migrations = read_db_migrations("local.properties");
     sqlx::migrate!("../../../db/migrations-auth").run(&pool).await.unwrap();
 
     pool
@@ -83,14 +81,5 @@ fn read_db_url(path: &str) -> String {
     let map2 = read(BufReader::new(f)).unwrap();
     let db_url = map2.get("db.url").unwrap().to_string();
     db_url
-}
-
-fn read_db_migrations(path: &str) -> String {
-
-    // Reading
-    let f = File::open(path).unwrap();
-    let map2 = read(BufReader::new(f)).unwrap();
-    let db_migrations = map2.get("db.migrations").unwrap().to_string();
-    db_migrations
 }
 

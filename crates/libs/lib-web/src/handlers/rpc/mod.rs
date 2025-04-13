@@ -38,9 +38,6 @@ pub async fn rpc(
     Json(rpc_req): Json<Value>,
 ) -> Response {
     let ctx = ctx.0;
-    // let span = info_span!("rpc_handler", " {}", ctx.phone());
-    // let _guard = span.enter();
-
 
     // // -- Parse and RpcRequest validate the rpc_request
     let rpc_req = match rpc_router::Request::try_from(rpc_req) {

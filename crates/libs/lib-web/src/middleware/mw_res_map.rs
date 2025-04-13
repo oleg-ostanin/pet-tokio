@@ -1,29 +1,17 @@
 use std::sync::Arc;
 
-use axum::http::{Method, Uri};
 use axum::Json;
 use axum::response::{IntoResponse, Response};
 use serde_json::{json, to_value};
 use tracing::debug;
 use uuid::Uuid;
 
-use crate::ctx::CtxW;
-//use crate::handlers::handlers_rpc::RpcInfo;
 use crate::error::Error;
 use crate::handlers::rpc::RpcInfo;
-//use crate::log::log_request;
-//use crate::middleware::mw_auth::CtxW;
-use crate::middleware::mw_req_stamp::ReqStamp;
 
 pub async fn mw_response_map(
-	ctx: Option<CtxW>,
-	uri: Uri,
-	req_method: Method,
-	req_stamp: ReqStamp,
 	res: Response,
 ) -> Response {
-	let ctx = ctx.map(|ctx| ctx.0);
-
 	debug!("{:<12} - mw_response_map", "RES_MAPPER");
 	let uuid = Uuid::new_v4();
 

@@ -14,7 +14,6 @@ use crate::bmc::general::update_storage_and_order;
 use crate::bmc::storage::UpdateType::Add;
 use crate::context::app_context::ModelManager;
 use crate::select_cancel;
-use crate::task::delivery::handle_delivery_requests;
 use crate::task::storage::StorageResponse::HealthOk;
 
 #[derive(Debug)]

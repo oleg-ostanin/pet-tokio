@@ -65,7 +65,7 @@ impl std::error::Error for Error {}
 // endregion: --- Error Boilerplate
 
 impl From<lib_core::error::Error> for Error {
-    fn from(value: lib_core::error::Error) -> Self {
+    fn from(_: lib_core::error::Error) -> Self {
         Error::WebError
     }
 }
@@ -98,13 +98,13 @@ impl From<CtxExtError> for Error {
 }
 
 impl From<PoisonError<RwLockWriteGuard<'_, HashMap<String, String>>>> for Error {
-    fn from(value: PoisonError<RwLockWriteGuard<'_, HashMap<String, String>>>) -> Self {
+    fn from(_: PoisonError<RwLockWriteGuard<'_, HashMap<String, String>>>) -> Self {
         Error::FailedToWriteCache
     }
 }
 
 impl From<PoisonError<RwLockReadGuard<'_, HashMap<String, String>>>> for Error {
-    fn from(value: PoisonError<RwLockReadGuard<'_, HashMap<String, String>>>) -> Self {
+    fn from(_: PoisonError<RwLockReadGuard<'_, HashMap<String, String>>>) -> Self {
         Error::FailedToWriteCache
     }
 }

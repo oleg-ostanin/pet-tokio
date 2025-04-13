@@ -33,7 +33,7 @@ pub enum MainTaskResponse {
 #[derive(Clone)]
 pub struct TaskManager {
     app_context: Arc<ModelManager>,
-    tx: Sender<MainTaskRequest>,
+    //tx: Sender<MainTaskRequest>,
     order_tx: Option<Sender<OrderRequest>>,
     storage_tx: Option<Sender<StorageRequest>>,
     delivery_tx: Option<Sender<DeliveryRequest>>,
@@ -43,11 +43,9 @@ pub struct TaskManager {
 impl TaskManager {
     #[instrument(skip_all)]
     pub async fn start(
-        main_task_channel: (Sender<MainTaskRequest>, Receiver<MainTaskRequest>),
+        rx: Receiver<MainTaskRequest>,
         app_context: Arc<ModelManager>
     ) -> Result<()> {
-        let (tx, rx) = main_task_channel;
-
         info!("Starting NotifyTask");
         let cancellation_token = app_context.cancellation_token();
         let app_context_cloned = Arc::clone(&app_context);
@@ -67,7 +65,7 @@ impl TaskManager {
 
         let main_task = TaskManager {
             app_context: app_context_cloned,
-            tx: tx.clone(),
+            //tx: tx.clone(),
             order_tx,
             storage_tx,
             delivery_tx,
@@ -76,7 +74,6 @@ impl TaskManager {
 
         info!("Spawning MainTask");
         let cancellation_token = app_context.clone().cancellation_token();
-        let app_context_cloned = Arc::clone(&app_context);
         let jh = select_cancel!(main_task.handle_requests(rx), cancellation_token);
 
         jh.await.expect("TODO: panic message");

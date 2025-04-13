@@ -33,11 +33,7 @@ pub enum DeliveryResponse {
     FailedToDeliver(i64)
 }
 
-pub(crate) struct DeliveryTask {
-    app_context: Arc<ModelManager>,
-    tx: Sender<DeliveryRequest>,
-    rx: Receiver<DeliveryRequest>,
-}
+pub(crate) struct DeliveryTask;
 
 impl DeliveryTask {
     pub(crate) fn start(

@@ -50,6 +50,7 @@ pub enum ActionType {
     DELETE,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 struct OrderPayload {
     table: String,

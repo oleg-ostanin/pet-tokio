@@ -1,13 +1,10 @@
-use std::ops::Deref;
 use std::sync::Arc;
 use anyhow::Result;
 use log::error;
 use rdkafka::{ClientConfig, Message};
 use rdkafka::consumer::{CommitMode, Consumer, StreamConsumer};
 use tokio::select;
-use tokio::sync::oneshot;
-use tokio::task::JoinHandle;
-use tracing::{info, instrument};
+use tokio::sync::oneshot;use tracing::{info, instrument};
 
 use crate::context::app_context::{AppConfig, ModelManager};
 

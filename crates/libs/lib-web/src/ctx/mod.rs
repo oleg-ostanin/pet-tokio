@@ -6,7 +6,6 @@ use tracing::debug;
 
 use crate::error::{Error, Result};
 
-#[cfg_attr(feature = "with-rpc", derive(rpc_router::RpcResource))]
 #[derive(Clone, Debug)]
 pub struct Ctx {
     phone: String,
