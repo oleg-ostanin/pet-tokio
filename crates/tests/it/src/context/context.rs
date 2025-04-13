@@ -25,6 +25,7 @@ use testcontainers_modules::kafka::Kafka;
 use testcontainers_modules::postgres::Postgres;
 use tokio::net::TcpListener;
 use tokio::select;
+use tokio::task::JoinHandle;
 use tokio_postgres::NoTls;
 use tokio_util::sync::CancellationToken;
 use tower::builder;
@@ -61,6 +62,7 @@ pub(crate) struct TestContext<> {
     pub(crate) socket_addr: SocketAddr,
     auth_token: Option<String>,
     headers: Vec<HeaderWrapper>,
+    main_join_handle: JoinHandle<()>,
 }
 
 pub(crate) enum ServiceType {
@@ -168,7 +170,7 @@ impl TestContext {
         let cancellation_token: CancellationToken = app_context.cancellation_token();
         let cancellation_token_cloned: CancellationToken = cancellation_token.clone();
         let app_context_cloned = app_context.clone();
-        tokio::spawn(async move {
+        let main_join_handle = tokio::spawn(async move {
             select! {
                 _ = lib_core::task::main_task::TaskManager::start(main_task_channel, app_context_cloned) => {}
                 _ = axum::serve(listener, app) => {}
@@ -189,18 +191,22 @@ impl TestContext {
             socket_addr,
             auth_token: None,
             headers: Vec::new(),
+            main_join_handle,
         }
     }
+
+
 
     pub(crate) fn user(&self, idx: usize) -> UserContext {
         UserContext::with_socket_address(idx, Some(self.socket_addr.to_string()))
     }
 
-    pub(crate) async fn cancel(&self) {
+    pub(crate) async fn cancel(self) {
         info!("Canceling test context.");
         //let _ = self.pg_container.stop().await;
         //let _ = self.kafka_container.stop().await;
-        self.app_context.cancellation_token().cancel()
+        self.app_context.cancellation_token().cancel();
+        self.main_join_handle.await.expect("must be ok");
     }
 
     pub(crate) async fn mock_ok(&self, value: Value) {
@@ -262,6 +268,10 @@ impl TestContext {
 
     pub fn app_context(&self) -> &Arc<ModelManager> {
         &self.app_context
+    }
+
+    pub fn main_join_handle(&self) -> &JoinHandle<()> {
+        &self.main_join_handle
     }
 }
 

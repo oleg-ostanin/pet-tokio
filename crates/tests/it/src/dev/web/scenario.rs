@@ -11,7 +11,9 @@ mod tests {
     use rdkafka::Message;
     use serde_json::{json, Value};
     use serial_test::serial;
+    use tokio::select;
     use tokio::time::sleep;
+    use tokio_util::sync::CancellationToken;
     use tracing::info;
     use tracing::log::error;
     use lib_dto::book::BookList;
@@ -66,6 +68,29 @@ mod tests {
         //sleep(Duration::from_secs(3)).await;
 
         ctx.cancel().await;
+
+        //let token = ctx.app_context().cancellation_token();
+        // let cloned_token = token.clone();
+        //
+        // let join_handle = tokio::spawn(async move {
+        //     // Wait for either cancellation or a very long time
+        //     select! {
+        //     _ = cloned_token.cancelled() => {
+        //         info!("Cancelled by cancellation token.");
+        //
+        //         // The token was cancelled
+        //         5
+        //     }
+        //     _ = tokio::time::sleep(std::time::Duration::from_secs(9999)) => {
+        //         99
+        //     }
+        // }
+        // });
+
+        // tokio::spawn(async move {
+        //     //tokio::time::sleep(Duration::from_millis(10)).await;
+        //     token.cancel();
+        // });
     }
 
     async fn check_orders(user: &UserContext, order_ids: Vec<i64>) -> Vec<OrderStored> {
@@ -107,5 +132,36 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn cancel() {
+        let mut ctx = TestContext::new(ServiceType::Web).await;
+
+        let token = ctx.app_context().cancellation_token();
+        let cloned_token = token.clone();
+
+        let join_handle = tokio::spawn(async move {
+            // Wait for either cancellation or a very long time
+            select! {
+            _ = cloned_token.cancelled() => {
+                info!("Cancelled by cancellation token.");
+
+                // The token was cancelled
+                5
+            }
+            _ = tokio::time::sleep(std::time::Duration::from_secs(9999)) => {
+                99
+            }
+        }
+        });
+
+        tokio::spawn(async move {
+            tokio::time::sleep(Duration::from_millis(10)).await;
+            token.cancel();
+        });
+
+        assert_eq!(5, join_handle.await.unwrap());
     }
 }
