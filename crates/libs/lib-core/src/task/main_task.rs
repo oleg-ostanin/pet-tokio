@@ -8,6 +8,7 @@ use tracing::{error, info, instrument};
 
 use crate::context::app_context::ModelManager;
 use crate::notify::order::NotifyTask;
+use crate::select_cancel;
 use crate::task::delivery::{DeliveryRequest, DeliveryTask};
 use crate::task::kafka::consumer_task::KafkaConsumerTask;
 use crate::task::kafka::producer_task::{KafkaProducerRequest, KafkaProducerTask};
@@ -48,32 +49,14 @@ impl TaskManager {
         let (tx, rx) = main_task_channel;
 
         info!("Starting NotifyTask");
-        //tokio::spawn(NotifyTask::start(Arc::clone(&app_context)));
-
         let cancellation_token = app_context.cancellation_token();
         let app_context_cloned = Arc::clone(&app_context);
-        tokio::spawn(async move {
-            select! {
-                _ = NotifyTask::start(app_context_cloned) => {}
-                _ = cancellation_token.cancelled() => {
-                    info!("Cancelled by cancellation token.")
-                }
-            }
-        });
-
+        select_cancel!(NotifyTask::start(app_context_cloned), cancellation_token);
 
         info!("Starting KafkaConsumerTask");
-        //tokio::spawn(KafkaConsumerTask::start(Arc::clone(&app_context)));
         let cancellation_token = app_context.clone().cancellation_token();
         let app_context_cloned = Arc::clone(&app_context);
-        tokio::spawn(async move {
-            select! {
-                _ = KafkaConsumerTask::start(app_context_cloned) => {}
-                _ = cancellation_token.cancelled() => {
-                    info!("Cancelled by cancellation token.")
-                }
-            }
-        });
+        select_cancel!(KafkaConsumerTask::start(app_context_cloned), cancellation_token);
 
         let order_tx = None;
         let storage_tx = None;
@@ -91,25 +74,13 @@ impl TaskManager {
             kafka_producer_tx,
         };
 
-        info!("spawning MainTaskRequest");
-
-        //let jh = tokio::spawn(main_task.handle_requests(rx));
-
+        info!("Spawning MainTask");
         let cancellation_token = app_context.clone().cancellation_token();
         let app_context_cloned = Arc::clone(&app_context);
-        let jh = tokio::spawn(async move {
-            select! {
-                _ = main_task.handle_requests(rx) => {}
-                _ = cancellation_token.cancelled() => {
-                    info!("Cancelled by cancellation token.")
-                }
-            }
-        });
+        let jh = select_cancel!(main_task.handle_requests(rx), cancellation_token);
 
         jh.await.expect("TODO: panic message");
 
-
-        //tokio::time::sleep(core::time::Duration::from_secs(20)).await;
         Ok(())
     }
 

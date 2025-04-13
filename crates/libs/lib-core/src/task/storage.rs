@@ -13,6 +13,7 @@ use lib_dto::order::OrderStored;
 use crate::bmc::general::update_storage_and_order;
 use crate::bmc::storage::UpdateType::Add;
 use crate::context::app_context::ModelManager;
+use crate::select_cancel;
 use crate::task::delivery::handle_delivery_requests;
 use crate::task::storage::StorageResponse::HealthOk;
 
@@ -68,14 +69,7 @@ pub async fn handle_storage_requests(
                 tx.send(HealthOk).unwrap()
             }
             StorageRequest::UpdateStorage(order, tx) => {
-                tokio::spawn(async move {
-                    select! {
-                        _ = handle_storage(app_context_cloned, order, tx) => {}
-                        _ = cancellation_token_cloned.cancelled() => {
-                    info!("Cancelled by cancellation token.")
-                }
-            }
-                });
+                select_cancel!(handle_storage(app_context_cloned, order, tx), cancellation_token_cloned);
             }
         }
     }

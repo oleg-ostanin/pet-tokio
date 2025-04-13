@@ -84,14 +84,6 @@ pub async fn handle_delivery_requests(
             DeliveryRequest::Deliver(order, tx) => {
                 info!("Sending kafka request: {:#?}", &order.order_id());
                 kafka_tx.send(KafkaProducerRequest::ProduceOrder(order.clone())).await.expect("must be ok");
-                // tokio::spawn(async move {
-                //     select! {
-                //         _ = handle_order(app_context_cloned, order, tx) => {}
-                //         _ = cancellation_token_cloned.cancelled() => {
-                //             info!("Cancelled by cancellation token.")
-                //         }
-                //     }
-                // });
                 select_cancel!(handle_order(app_context_cloned, order, tx), cancellation_token_cloned);
             }
         }

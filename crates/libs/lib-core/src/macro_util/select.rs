@@ -2,7 +2,7 @@
 macro_rules! select_cancel {
     ( $future:expr , $cancellation_token:ident ) => {
         {
-            tokio::spawn(async move {
+            let join_handle = tokio::spawn(async move {
                     select! {
                         _ = $future => {}
                         _ = $cancellation_token.cancelled() => {
@@ -10,6 +10,8 @@ macro_rules! select_cancel {
                         }
                     }
             });
+
+            join_handle
         }
     };
 }

@@ -9,6 +9,7 @@ use tracing::{info, instrument};
 use lib_dto::order::OrderStored;
 
 use crate::context::app_context::ModelManager;
+use crate::select_cancel;
 use crate::task::delivery::DeliveryRequest;
 use crate::task::main_task::{TaskManager};
 use crate::task::storage::StorageRequest;
@@ -35,14 +36,7 @@ impl OrderTask {
         let (tx, rx) = tokio::sync::mpsc::channel(64);
 
         let cancellation_token = app_context.cancellation_token();
-        tokio::spawn(async move {
-            select! {
-                _ = handle_order(app_context, rx) => {}
-                _ = cancellation_token.cancelled() => {
-                    info!("Cancelled by cancellation token.")
-                }
-            }
-        });
+        select_cancel!(handle_order(app_context, rx), cancellation_token);
         tx.clone()
     }
 }
@@ -76,8 +70,6 @@ pub async fn handle_order(
                 tx.send(OrderResponse::Processed).unwrap();
             }
         }
-
-        //storage_tx.send(order).await.unwrap();
     }
 
     Ok(())
