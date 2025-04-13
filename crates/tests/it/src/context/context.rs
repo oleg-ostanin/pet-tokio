@@ -61,7 +61,6 @@ pub(crate) struct TestContext<> {
     pub(crate) socket_addr: SocketAddr,
     auth_token: Option<String>,
     headers: Vec<HeaderWrapper>,
-    cancellation_token: CancellationToken,
 }
 
 pub(crate) enum ServiceType {
@@ -85,11 +84,13 @@ impl TestContext {
                 .or_else(|_| EnvFilter::try_new("info"))
                 .unwrap();
 
-            let fmt_layer = fmt::layer().compact();
+            let fmt_layer = fmt::layer()
+                //.without_time() // For tests.
+                .compact();
 
-            //let console_layer = console_subscriber::spawn();
+            let console_layer = console_subscriber::spawn();
             let subscriber = tracing_subscriber::Registry::default()
-                //.with(console_layer)
+                .with(console_layer)
                 .with(filter_layer)
                 .with(fmt_layer);
             subscriber::set_global_default(subscriber).unwrap();
@@ -164,7 +165,7 @@ impl TestContext {
             hyper_util::client::legacy::Client::builder(hyper_util::rt::TokioExecutor::new())
                 .build_http();
 
-        let cancellation_token: CancellationToken = CancellationToken::new();
+        let cancellation_token: CancellationToken = app_context.cancellation_token();
         let cancellation_token_cloned: CancellationToken = cancellation_token.clone();
         let app_context_cloned = app_context.clone();
         tokio::spawn(async move {
@@ -188,7 +189,6 @@ impl TestContext {
             socket_addr,
             auth_token: None,
             headers: Vec::new(),
-            cancellation_token,
         }
     }
 
@@ -197,9 +197,10 @@ impl TestContext {
     }
 
     pub(crate) async fn cancel(&self) {
-        let _ = self.pg_container.stop().await;
-        let _ = self.kafka_container.stop().await;
-        self.cancellation_token.cancel()
+        info!("Canceling test context.");
+        //let _ = self.pg_container.stop().await;
+        //let _ = self.kafka_container.stop().await;
+        self.app_context.cancellation_token().cancel()
     }
 
     pub(crate) async fn mock_ok(&self, value: Value) {

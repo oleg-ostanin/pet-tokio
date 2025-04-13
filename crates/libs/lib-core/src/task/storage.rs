@@ -13,6 +13,7 @@ use lib_dto::order::OrderStored;
 use crate::bmc::general::update_storage_and_order;
 use crate::bmc::storage::UpdateType::Add;
 use crate::context::app_context::ModelManager;
+use crate::task::delivery::handle_delivery_requests;
 use crate::task::storage::StorageResponse::HealthOk;
 
 #[derive(Debug)]
@@ -35,7 +36,17 @@ impl StorageTask {
         app_context: Arc<ModelManager>,
     ) -> Sender<StorageRequest> {
         let (tx, rx) = tokio::sync::mpsc::channel(64);
-        tokio::spawn(handle_storage_requests(app_context, rx));
+
+        let cancellation_token = app_context.cancellation_token();
+        tokio::spawn(async move {
+            select! {
+                _ = handle_storage_requests(app_context, rx) => {}
+                _ = cancellation_token.cancelled() => {
+                    info!("Cancelled by cancellation token.")
+                }
+            }
+        });
+
         tx.clone()
     }
 }
@@ -45,15 +56,26 @@ pub async fn handle_storage_requests(
     app_context: Arc<ModelManager>,
     mut storage_rx: Receiver<StorageRequest>,
 ) -> Result<()> {
+    let cancellation_token = app_context.cancellation_token();
+
     while let Some(request) = storage_rx.recv().await {
         info!("Got storage request: {:#?}", &request);
 
+        let cancellation_token_cloned = cancellation_token.clone();
+        let app_context_cloned = app_context.clone();
         match request {
             StorageRequest::Health(tx) => {
                 tx.send(HealthOk).unwrap()
             }
             StorageRequest::UpdateStorage(order, tx) => {
-                tokio::spawn(handle_storage(app_context.clone(), order, tx)).await.unwrap()
+                tokio::spawn(async move {
+                    select! {
+                        _ = handle_storage(app_context_cloned, order, tx) => {}
+                        _ = cancellation_token_cloned.cancelled() => {
+                    info!("Cancelled by cancellation token.")
+                }
+            }
+                });
             }
         }
     }

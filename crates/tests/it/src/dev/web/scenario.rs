@@ -63,7 +63,7 @@ mod tests {
         let orders = check_orders(&user, order_ids).await;
         check_kafka(&ctx, orders).await;
 
-        sleep(Duration::from_secs(3)).await;
+        //sleep(Duration::from_secs(3)).await;
 
         ctx.cancel().await;
     }

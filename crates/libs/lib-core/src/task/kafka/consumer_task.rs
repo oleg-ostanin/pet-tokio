@@ -1,8 +1,12 @@
+use std::ops::Deref;
+use std::sync::Arc;
 use anyhow::Result;
 use log::error;
 use rdkafka::{ClientConfig, Message};
 use rdkafka::consumer::{CommitMode, Consumer, StreamConsumer};
+use tokio::select;
 use tokio::sync::oneshot;
+use tokio::task::JoinHandle;
 use tracing::{info, instrument};
 
 use crate::context::app_context::{AppConfig, ModelManager};
@@ -24,15 +28,34 @@ pub(crate) struct KafkaConsumerTask {
 impl KafkaConsumerTask {
     #[instrument(skip_all)]
     pub(crate) async fn start(
-        app_config: AppConfig,
+        app_context: Arc<ModelManager>,
     ) {
         info!("Starting Kafka Consumer Task");
 
+        let app_config: AppConfig = app_context.app_config().clone();
         let consumer = create(app_config, "main-group").await;
         let task = {
             Self { consumer }
         };
-        tokio::spawn(task.handle_kafka_consumer());
+
+        let cancellation_token = app_context.cancellation_token();
+        let jh = tokio::spawn(async move {
+            select! {
+                _ = task.handle_kafka_consumer() => {}
+                _ = cancellation_token.cancelled() => {
+                    info!("Cancelled by cancellation token.")
+                }
+            }
+        }).await;
+
+        match jh {
+            Ok(_) => {
+                info!("task finished ok")
+            }
+            Err(e) => {
+                info!("task finished with error: {:?}", e)
+            }
+        }
     }
 
     #[instrument(skip_all)]

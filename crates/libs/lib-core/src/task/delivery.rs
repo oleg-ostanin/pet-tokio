@@ -43,7 +43,17 @@ impl DeliveryTask {
         app_context: Arc<ModelManager>,
     ) -> Sender<DeliveryRequest> {
         let (tx, rx) = tokio::sync::mpsc::channel(64);
-        tokio::spawn(handle_delivery_requests(app_context, rx));
+
+        let cancellation_token = app_context.cancellation_token();
+        tokio::spawn(async move {
+            select! {
+                _ = handle_delivery_requests(app_context, rx) => {}
+                _ = cancellation_token.cancelled() => {
+                    info!("Cancelled by cancellation token.")
+                }
+            }
+        });
+
         tx.clone()
     }
 }
@@ -58,8 +68,14 @@ pub async fn handle_delivery_requests(
     let kafka_tx = TaskManager::kafka_producer_sender(main_tx.clone()).await?;
     info!("Got kafka_tx");
 
+    let cancellation_token = app_context.cancellation_token();
+
     while let Some(request) = delivery_rx.recv().await {
         info!("Got delivery request: {:#?}", &request);
+
+        let cancellation_token_cloned = cancellation_token.clone();
+        let app_context_cloned = app_context.clone();
+
         match request {
             DeliveryRequest::Health(tx) => {
                 tx.send(HealthOk).expect("TODO: panic message")
@@ -67,7 +83,14 @@ pub async fn handle_delivery_requests(
             DeliveryRequest::Deliver(order, tx) => {
                 info!("Sending kafka request: {:#?}", &order.order_id());
                 kafka_tx.send(KafkaProducerRequest::ProduceOrder(order.clone())).await.expect("must be ok");
-                tokio::spawn(handle_order(app_context.clone(), order, tx)).await.expect("TODO: panic message")
+                tokio::spawn(async move {
+                    select! {
+                        _ = handle_order(app_context_cloned, order, tx) => {}
+                        _ = cancellation_token_cloned.cancelled() => {
+                            info!("Cancelled by cancellation token.")
+                        }
+                    }
+                });
             }
         }
     }

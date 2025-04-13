@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use anyhow::Result;
+use tokio::select;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::oneshot;
 use tracing::{info, instrument};
@@ -32,7 +33,16 @@ impl OrderTask {
         app_context: Arc<ModelManager>,
     ) -> Sender<OrderRequest> {
         let (tx, rx) = tokio::sync::mpsc::channel(64);
-        tokio::spawn(handle_order(app_context, rx));
+
+        let cancellation_token = app_context.cancellation_token();
+        tokio::spawn(async move {
+            select! {
+                _ = handle_order(app_context, rx) => {}
+                _ = cancellation_token.cancelled() => {
+                    info!("Cancelled by cancellation token.")
+                }
+            }
+        });
         tx.clone()
     }
 }

@@ -4,6 +4,7 @@ use std::sync::Arc;
 use anyhow::Result;
 use serde::Deserialize;
 use sqlx::postgres::PgListener;
+use tokio::select;
 use tokio::sync::oneshot;
 use tracing::{error, info, instrument};
 
@@ -19,8 +20,18 @@ impl NotifyTask {
     #[instrument(skip_all)]
     pub(crate) async fn start(app_context: Arc<ModelManager>) {
         info!("Starting notify task");
-        let jh = tokio::spawn(handle_notify(app_context));
-        match jh.await {
+
+        let cancellation_token = app_context.cancellation_token();
+        let jh = tokio::spawn(async move {
+            select! {
+                _ = handle_notify(app_context) => {}
+                _ = cancellation_token.cancelled() => {
+                    info!("Cancelled by cancellation token.")
+                }
+            }
+        }).await;
+
+        match jh {
             Ok(_) => {
                 info!("Notify task completed.")
             }
