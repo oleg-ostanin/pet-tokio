@@ -1,7 +1,3 @@
-use http_body_util::BodyExt;
-use hyper::body::Buf;
-use tower::{Service, ServiceExt};
-
 #[cfg(test)]
 mod tests {
     use axum::http::StatusCode;
@@ -19,8 +15,8 @@ mod tests {
     #[tokio::test]
     #[serial]
     async fn without_login() {
-        let mut ctx = TestContext::new(ServiceType::Web).await;
-        let mut user = ctx.user(6);
+        let ctx = TestContext::new(ServiceType::Web).await;
+        let user = ctx.user(6);
 
         let book_list: BookList = serde_json::from_str(BOOK_LIST).expect("must be ok");
         let request = request("add_books", Some(book_list));
@@ -34,8 +30,8 @@ mod tests {
     #[tokio::test]
     #[serial]
     async fn login_forbidden() {
-        let mut ctx = TestContext::new(ServiceType::Web).await;
-        let mut user = ctx.user(6);
+        let ctx = TestContext::new(ServiceType::Web).await;
+        let user = ctx.user(6);
 
         let auth_code_invalid = AuthCode::new(user.phone(), "invalid_code");
         ctx.mock_forbidden(json!(auth_code_invalid)).await;

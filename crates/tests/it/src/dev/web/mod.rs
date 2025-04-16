@@ -1,13 +1,11 @@
-use serde::Serialize;
-use serde_json::{json, Value};
+use serde_json::{json};
 use tracing::info;
-use uuid::Uuid;
 
 use lib_core::bmc::user::UserBmc;
 use lib_dto::user::{AuthCode, UserForCreate};
 use lib_load::requests::user_context::UserContext;
 
-use crate::context::context::{ServiceType, TestContext};
+use crate::context::context::{TestContext};
 
 mod scenario;
 mod login;

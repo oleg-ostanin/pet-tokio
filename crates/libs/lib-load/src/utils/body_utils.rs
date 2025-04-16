@@ -4,7 +4,6 @@ use hyper::body::Buf;
 use hyper::body::Incoming;
 use serde::Deserialize;
 use serde_json::Value;
-use tower::Service;
 
 #[derive(Deserialize)]
 struct ErrorDetail {
@@ -12,6 +11,7 @@ struct ErrorDetail {
     data: ErrorData,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct ErrorData {
     detail: Option<String>,

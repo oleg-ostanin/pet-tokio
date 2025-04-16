@@ -1,26 +1,19 @@
-use http_body_util::BodyExt;
-use hyper::body::Buf;
-use tower::{Service, ServiceExt};
-
 #[cfg(test)]
 mod tests {
     use std::time::Duration;
 
     use axum::http::StatusCode;
-    use rdkafka::consumer::{CommitMode, Consumer, StreamConsumer};
+    use rdkafka::consumer::{CommitMode, Consumer};
     use rdkafka::Message;
     use serde_json::{json, Value};
     use serial_test::serial;
     use tokio::select;
-    use tokio::time::sleep;
-    use tokio_util::sync::CancellationToken;
     use tracing::info;
     use tracing::log::error;
     use lib_dto::book::BookList;
     use lib_dto::order::{OrderContent, OrderId, OrderItem, OrderStatus, OrderStored};
     use lib_load::requests::user_context::UserContext;
     use lib_load::scenario::books::BOOK_LIST;
-    use lib_utils::json::body;
     use lib_utils::rpc::request;
     use lib_core::task::kafka::consumer_task::create;
 
@@ -51,7 +44,7 @@ mod tests {
 
         let mut order_ids: Vec<i64> = Vec::with_capacity(iterations);
 
-        for i in (1..iterations) {
+        for i in 1..iterations {
             let order_item_1 = OrderItem::new(1, 2);
             let order_item_2 = OrderItem::new(2, 4);
             let order_content = OrderContent::new(vec!(order_item_1, order_item_2));
@@ -63,7 +56,7 @@ mod tests {
         // waiting until all orders have expected status
         let orders: Vec<OrderStored> = select! {
             orders = check_orders(&user, order_ids) => { orders }
-            orders = tokio::time::sleep(Duration::from_secs(10)) => { Vec::default() }
+            _orders = tokio::time::sleep(Duration::from_secs(10)) => { Vec::default() }
         };
 
         assert_eq!(iterations - 1, orders.len());
@@ -71,7 +64,7 @@ mod tests {
         // waiting until all orders are consumed from kafka
         let orders_from_kafka: Vec<OrderStored> = select! {
             orders = check_kafka(&ctx, &orders) => { orders }
-            orders = tokio::time::sleep(Duration::from_secs(10)) => { Vec::default() }
+            _orders = tokio::time::sleep(Duration::from_secs(10)) => { Vec::default() }
         };
 
         assert_eq!(orders.len(), orders_from_kafka.len());
@@ -128,7 +121,7 @@ mod tests {
     #[tokio::test]
     #[serial]
     async fn cancel() {
-        let mut ctx = TestContext::new(ServiceType::Web).await;
+        let ctx = TestContext::new(ServiceType::Web).await;
 
         let token = ctx.app_context().cancellation_token();
         let cloned_token = token.clone();

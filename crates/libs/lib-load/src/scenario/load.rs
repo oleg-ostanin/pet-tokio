@@ -1,18 +1,12 @@
-use std::error::Error;
-use std::time::Duration;
-
-use axum::http::HeaderValue;
 use axum::response::Response;
 use http_body_util::BodyExt;
 use hyper::body::Buf;
 use hyper::body::Incoming;
 use serde_json::{json, Value};
 use tokio::sync::OnceCell;
-use tokio::time::sleep;
 use tracing::info;
 
 use lib_dto::book::BookList;
-use lib_dto::order::{OrderContent, OrderId, OrderItem, OrderStored};
 use lib_dto::user::{AuthCode, UserExists, UserForCreate, UserForSignIn};
 use lib_utils::json::{body, value};
 use lib_utils::rpc::request;
@@ -28,7 +22,7 @@ pub async fn start_load() {
 
 pub async fn start_user(idx: usize) -> UserContext {
     let phone = format!("{}", 2128500 + idx);
-    let mut user_ctx = UserContext::new(idx);
+    let user_ctx = UserContext::new(idx);
     let user_to_create = UserForCreate::new(phone.clone(), phone.clone(), "John", "Doe");
     let check_response = user_ctx.post("/check-if-exists", json!(&user_to_create)).await;
 
@@ -49,7 +43,7 @@ pub async fn start_user(idx: usize) -> UserContext {
     let auth_code = AuthCode::new(phone, auth_code);
     user_ctx.post("/login", json!(auth_code)).await;
 
-    if let guard = user_ctx.auth_token().lock().expect("must be ok") {
+    if let Ok(guard) = user_ctx.auth_token().lock() {
         assert!(guard.is_some());
     }
 

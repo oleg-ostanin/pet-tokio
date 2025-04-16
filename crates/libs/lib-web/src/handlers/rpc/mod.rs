@@ -19,12 +19,12 @@ use crate::handlers::rpc::order::{check_order, clean_up, pick_up_order};
 
 pub mod book;
 pub mod order;
-pub mod rpc;
 
 /// RPC ID and Method Capture
 /// Note: This will be injected into the Axum Response extensions so that
 ///       it can be used downstream by the `mw_res_map` for logging and eventual
 ///       error client JSON-RPC serialization
+#[allow(dead_code)]
 #[derive(Debug)]
 pub struct RpcInfo {
     pub id: Option<Value>,

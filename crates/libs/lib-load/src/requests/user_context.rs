@@ -1,12 +1,10 @@
-use std::fmt::Debug;
-use std::ops::Deref;
 use std::sync::Mutex;
 
 use axum::{body::Body, http::{self, Request}};
 use axum::http::{HeaderValue, StatusCode};
 use axum::response::Response;
 use dotenv::dotenv;
-use hyper::body::{Buf, Incoming};
+use hyper::body::{Incoming};
 use hyper_util::client::legacy::Client;
 use hyper_util::client::legacy::connect::HttpConnector;
 use serde::Deserialize;
@@ -20,12 +18,6 @@ use lib_utils::rpc::request;
 
 use crate::utils::body_utils::message_and_detail;
 
-#[derive(Debug, Clone)]
-struct HeaderWrapper {
-    key: String,
-    value: String,
-}
-
 pub struct UserContext {
     idx: usize,
     // todo make Arc
@@ -33,7 +25,6 @@ pub struct UserContext {
     pub client: Client<HttpConnector, Body>,
     test_socket_addr: Option<String>,
     auth_token: Mutex<Option<String>>,
-    headers: Vec<HeaderWrapper>,
 }
 
 impl UserContext {
@@ -52,7 +43,6 @@ impl UserContext {
             client,
             test_socket_addr: None,
             auth_token: Mutex::new(None),
-            headers: Vec::new(),
         }
     }
 
@@ -71,7 +61,6 @@ impl UserContext {
             client,
             test_socket_addr,
             auth_token: Mutex::new(None),
-            headers: Vec::new(),
         }
     }
 
@@ -103,8 +92,8 @@ impl UserContext {
             .uri(format!("http://{addr}{path}"))
             .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref());
 
-        if let guard = self.auth_token.lock().expect("must be ok") {
-            if let Some(auth_token) = guard.deref() {
+        if let Ok(guard) = self.auth_token.lock() {
+            if let Some(auth_token) = guard.as_ref() {
                 builder = builder.header("cookie", auth_token)
             }
         }
@@ -117,7 +106,7 @@ impl UserContext {
 
         let token = extract_token(&response);
         if let Some(token) = token {
-            if let mut guard = self.auth_token.lock().expect("must be ok") {
+            if let Ok(mut guard) = self.auth_token.lock() {
                 let _ = guard.insert(token);
             }
         }
@@ -168,10 +157,6 @@ impl UserContext {
 
     pub fn auth_token(&self) -> &Mutex<Option<String>> {
         &self.auth_token
-    }
-
-    pub fn headers(&self) -> &Vec<HeaderWrapper> {
-        &self.headers
     }
 
     pub fn idx(&self) -> usize {

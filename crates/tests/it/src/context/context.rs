@@ -1,25 +1,17 @@
 use core::net::SocketAddr;
-use std::fmt::Debug;
 use std::sync::{Arc, OnceLock};
-use std::time::Duration;
 
-use axum::{body::Body, Error, http::{self, Request, StatusCode}};
+use axum::{body::Body, http::{self, Request}};
 use axum::http::HeaderValue;
 use axum::response::Response;
-use axum::routing::get;
 use dotenv::dotenv;
-use http_body_util::BodyExt;
-use hyper::body::{Buf, Incoming};
+use hyper::body::{Incoming};
 use hyper_util::client::legacy::Client;
 use hyper_util::client::legacy::connect::HttpConnector;
-use serde::Deserialize;
-// for `collect`
 use serde_json::{json, Value};
 use sqlx::{PgPool, Pool};
 use sqlx::postgres::PgPoolOptions;
-use testcontainers::{ContainerAsync, ImageExt};
-use testcontainers::core::ContainerPort;
-// use testcontainers::{clients, Container, images::postgres::Postgres};
+use testcontainers::{ContainerAsync};
 use testcontainers::runners::AsyncRunner;
 use testcontainers_modules::kafka::Kafka;
 use testcontainers_modules::postgres::Postgres;
@@ -28,30 +20,19 @@ use tokio::select;
 use tokio::task::JoinHandle;
 use tokio_postgres::NoTls;
 use tokio_util::sync::CancellationToken;
-use tower::builder;
-use tower_cookies::{Cookie, Cookies};
 use tracing::{error, info, subscriber};
 use tracing_subscriber::{EnvFilter, fmt};
 use tracing_subscriber::layer::SubscriberExt;
-use uuid::Uuid;
 use wiremock::{Mock, MockServer, ResponseTemplate};
 use wiremock::matchers::{body_json, method, path};
 
 use lib_core::context::app_context::{AppConfig, ModelManager};
 use lib_dto::user::{AuthCode, UserForCreate, UserForSignIn};
 use lib_load::requests::user_context::UserContext;
-use lib_load::utils::body_utils::message_and_detail;
-use lib_utils::json::result;
-use lib_utils::rpc::request;
 use lib_web::app::auth_app::auth_app;
 use lib_web::app::web_app::web_app;
 
-#[derive(Debug, Clone)]
-struct HeaderWrapper {
-    key: String,
-    value: String,
-}
-
+#[allow(dead_code)]
 pub(crate) struct TestContext<> {
     app_context: Arc<ModelManager>,
     pg_container: ContainerAsync<Postgres>,
@@ -61,7 +42,6 @@ pub(crate) struct TestContext<> {
     pub(crate) mock_server: MockServer,
     pub(crate) socket_addr: SocketAddr,
     auth_token: Option<String>,
-    headers: Vec<HeaderWrapper>,
     main_join_handle: JoinHandle<()>,
 }
 
@@ -113,7 +93,7 @@ impl TestContext {
         let pg_port = pg_container.get_host_port_ipv4(5432).await.unwrap();
 
         // Define the connection to the Postgress client
-        let (pg_client, connection) = tokio_postgres::Config::new()
+        let (_pg_client, connection) = tokio_postgres::Config::new()
             .user("postgres")
             .password("root")
             .host("localhost")
@@ -190,7 +170,6 @@ impl TestContext {
             mock_server,
             socket_addr,
             auth_token: None,
-            headers: Vec::new(),
             main_join_handle,
         }
     }
@@ -268,10 +247,6 @@ impl TestContext {
 
     pub fn app_context(&self) -> &Arc<ModelManager> {
         &self.app_context
-    }
-
-    pub fn main_join_handle(&self) -> &JoinHandle<()> {
-        &self.main_join_handle
     }
 }
 
